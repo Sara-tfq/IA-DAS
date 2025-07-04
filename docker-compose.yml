@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./services/files
+    container_name: frontend
+    ports:
+      - "8002:8002" 
+    restart: unless-stopped
+    networks:
+      - webnet
+
+  gateway:
+    build: ./services/gateway
+    container_name: gateway
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    networks:
+      - webnet
+  fuseki:
+    image: stain/jena-fuseki
+    container_name: fuseki
+    ports:
+      - "3030:3030"  
+    volumes:
+      - ./fuseki:/fuseki  
+    environment:
+      - FUSEKI_DATASET=ds 
+      - ADMIN_PASSWORD=admin  
+    networks:
+      - webnet
+ 
+
+networks:
+  webnet:
+    driver: bridge

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Interrogation de l'ontologie</title>
+    <link rel="stylesheet" href="./doctor-page/doctor-page.css">
+</head>
+<header>
+    <h1>Projet IA-DAS</h1>
+    <img src="./../assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
+    <button id="switchChercheur"
+        onclick="window.location.href='./../index.html'">Acceuil</button>
+</header>
+
+<body>
+    <div class="prepared-queries">
+        <button id="query1" onclick="interrogerFuseki('query1')">Requête 1</button>
+        <button id="query2" onclick="interrogerFuseki('query2')">Requête 2</button>
+        <button id="query3" onclick="interrogerFuseki('query3')">Requête 3</button>
+    </div>
+    <div class="content-container">
+        <div class="input-container">
+            <h3>Veuillez choisi le genre ET l'age min svp</h3>
+            <select id="genderChoisie">
+                <option value="">--Choisissez le genre SVP--</option>
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="mixed">Mixed</option>
+            </select>
+            <select id="minAge">
+                <option value="">--Choisissez l'age minimum SVP--</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="17">17</option>
+                <option value="30">30</option>
+            </select>
+            <select id="sport">
+                <option value="">--Choisissez le sport SVP--</option>
+                <option value="dance">dance</option>
+                <option value="basketball">basketball</option>
+                <option value="fitness">fitness</option>
+            </select>
+            <br><br>
+            <button onclick="interrogerFuseki()">Exécuter la requête</button>
+        </div>
+        <div class="resultats"></div>
+    </div>
+
+
+    <script src="script.js"></script>
+</body>
+<footer>
+    <p>Copyright 2025 , le truc que mettent les entreprises</p>
+</footer>
+
+</html>
