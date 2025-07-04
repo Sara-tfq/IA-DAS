@@ -1,5 +1,3 @@
-# PS8
-
 ## Requirements
 
 Node.js is the only requirement.
