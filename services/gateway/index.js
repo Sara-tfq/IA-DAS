@@ -1,33 +1,43 @@
-// The http module contains methods to handle http queries.
 const http = require('http');
 const httpProxy = require('http-proxy');
 
-// We will need a proxy to send requests to the other services.
 const proxy = httpProxy.createProxyServer();
 
-/* The http module contains a createServer function, which takes one argument, which is the function that
-** will be called whenever a new request arrives to the server.
- */
 http.createServer(function (request, response) {
-    // First, let's check the URL to see if it's a REST request or a file request.
-    // We will remove all cases of "../" in the url for security purposes.
+
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+
+    if (request.method === 'OPTIONS') {
+        response.writeHead(200);
+        response.end();
+        return;
+    }
+
+    // Ensuite seulement on analyse l’URL
     let filePath = request.url.split("/").filter(function (elem) {
         return elem !== "..";
     });
 
     try {
-        // If the URL starts by /api, then it's a REST request (you can change that if you want).
         if (filePath[1] === "api" && filePath[2] === "query") {
-            console.log("Request for a REST query received, transferring to the SPARQL Generator service")
-            proxy.web(request, response, { target: "http://127.0.0.1:8003" }); // SPARQL Generator
-        }
-        else {
-            console.log("Request for a file received, transferring to the file service")
+            console.log("REST API call, redirecting to SPARQL Generator");
+            console.log(`Request URL: ${request.url}`);
+            console.log(`File Path: ${filePath}`);
+            if (filePath[1] === "api" && filePath[2] === "query") {
+                console.log("REST API call, redirecting to SPARQL Generator");
+                proxy.web(request, response, { target: "http://sparql-generator:8003" });
+            }
+
+        } else {
+            console.log("Static file request, redirecting to frontend service");
             proxy.web(request, response, { target: "http://frontend:8002" });
         }
     } catch (error) {
-        console.log(`error while processing ${request.url}: ${error}`)
+        console.log(`Error while processing ${request.url}: ${error}`);
         response.statusCode = 400;
-        response.end(`Something in your request (${request.url}) is strange...`);
+        response.end(`Something went wrong with your request: ${request.url}`);
     }
 }).listen(8000);

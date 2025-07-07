@@ -23,7 +23,7 @@
     <div class="content-container">
         <div class="input-container">
             <h2>Interroger l'ontologie</h2>
-            <select id="genderChoisie">
+            <select id="gender">
                 <option value="">-- Choisissez le sexe --</option>
                 <option value="female">Femme</option>
                 <option value="male">Homme</option>
@@ -38,21 +38,21 @@
                 <option value="30">30</option>
             </select>
 
-            <select id="sport">
+            <!-- <select id="sport">
                 <option value="">-- Choisissez le sport --</option>
                 <option value="dance">Danse</option>
                 <option value="basketball">Basket-ball</option>
                 <option value="fitness">Fitness</option>
-            </select>
+            </select> -->
 
             <br><br>
-            <button onclick="interrogerFuseki()">Exécuter la requête</button>
+            <button onclick="rechercher()">Rechercher</button>
         </div>
+        <div id="results"></div>
 
-        <div class="resultats"></div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="./input-intorregation-component/input-intorregation-component.js"></script>
 </body>
 
 <footer>
