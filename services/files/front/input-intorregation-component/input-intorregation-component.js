@@ -1,16 +1,12 @@
-// Ici dans ce fichier se passe toute la prtie de l'input 
+// Ici dans ce fichier se passe toute la partie de l'input 
 
 async function rechercher() {
-//   const sportName = document.getElementById('sport').value;
   const gender = document.getElementById('gender').value;
   const minAge = document.getElementById('minAge').value;
-//   const maxAge = document.getElementById('maxAge').value;
 
   const payload = {
-    // ...(sportName && { sportName }),
     ...(gender && { gender }),
     ...(minAge && { minAge: parseInt(minAge) })
-    // ...(maxAge && { maxAge: parseInt(maxAge) })
   };
 
   try {
@@ -23,8 +19,34 @@ async function rechercher() {
     if (!response.ok) throw new Error("Erreur HTTP " + response.status);
 
     const data = await response.json();
-    document.getElementById('results').textContent = JSON.stringify(data, null, 2);
+    
+    
+    displayResults(data);
+    
   } catch (err) {
     document.getElementById('results').textContent = "Erreur : " + err.message;
+  }
+}
+
+
+function displayResults(data) {
+  const resultsDiv = document.getElementById('results');
+  
+  
+  resultsDiv.innerHTML = '';
+  
+  
+  if (!data || !data.results || !data.results.bindings) {
+    resultsDiv.innerHTML = '<p>Aucun résultat trouvé</p>';
+    return;
+  }
+  
+  
+  try {
+    const graphComponent = new OntologyGraphComponent(resultsDiv, data);
+    graphComponent.render();
+  } catch (error) {
+    console.error('Erreur lors du rendu du graphique:', error);
+    resultsDiv.innerHTML = '<p>Erreur lors de l\'affichage des résultats</p>';
   }
 }
