@@ -1,17 +1,14 @@
 ## Requirements
 
-Node.js is the only requirement.
+Docker is the only requirement.
 
 ## Install
 
 - Clone the repository
-- In each project inside `services/` run `npm install` to download all the dependencies.
+- Run docker compose up --build 
 
-Note: this command should be run again every time you install/delete a package (which should not happen a lot)
 
-## Run
 
-In each project, run `node index.js` so the server will start listening to requests.
 
 ---
 
