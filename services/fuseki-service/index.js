@@ -1,3 +1,4 @@
+// Lancement du service Fuseki pour charger des données RDF
 const fs = require('fs');
 const fetch = require('node-fetch');
 
@@ -5,8 +6,8 @@ const ttl = fs.readFileSync('/init/data.ttl', 'utf8');
 
 const FUSEKI_URL = 'http://fuseki:3030/ds';
 const DATA_URL = `${FUSEKI_URL}/data`;
-const RETRY_INTERVAL = 2000; // ms
-const MAX_RETRIES = 15;
+const RETRY_INTERVAL = 1000; // ms
+const MAX_RETRIES = 15; // J'ai pris un truc au pif , mais ça peut être ajusté
 
 async function waitForFuseki(retries = 0) {
   try {

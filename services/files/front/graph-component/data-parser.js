@@ -1,4 +1,6 @@
-// Parser pour données SPARQL JSON - Version graphe réseau
+// Parser pour affichage ontologique concret et compréhensible
+// Ce code est la pour "Traduire" les données si y'en besoin, pas exemple + devient à risque, - devient protecteur, etc.
+
 class SPARQLDataParser {
   
   static parse(sparqlData) {
@@ -12,7 +14,7 @@ class SPARQLDataParser {
     return {
       variables: vars,
       data: bindings.map(binding => this.parseBinding(binding, vars)),
-      networkData: this.createNetworkData(bindings, vars),
+      networkData: this.createConcreteOntologyNetwork(bindings, vars),
       rawData: sparqlData
     };
   }
@@ -36,7 +38,6 @@ class SPARQLDataParser {
     const type = sparqlValue.type;
     const datatype = sparqlValue.datatype;
     
-    // Conversion selon le type
     if (type === 'literal') {
       if (datatype) {
         if (datatype.includes('decimal') || datatype.includes('double') || datatype.includes('float')) {
@@ -49,92 +50,139 @@ class SPARQLDataParser {
           return value === 'true';
         }
       }
-      return value; // String par défaut
-    }
-    
-    if (type === 'uri') {
-      return {
-        uri: value,
-        label: this.extractLabel(value)
-      };
+      return value;
     }
     
     return value;
   }
   
-  static extractLabel(uri) {
-    // Extraire le nom de l'URI pour l'affichage
-    const parts = uri.split(/[/#]/);
-    return parts[parts.length - 1] || uri;
-  }
   
-  // NOUVELLE FONCTION : Créer les données pour le graphe réseau
-  static createNetworkData(bindings, vars) {
-    const nodes = [];
-    const links = [];
-    const nodeMap = new Map(); // Pour éviter les doublons
+
+static createConcreteOntologyNetwork(bindings, vars) {
+  const nodes = [];
+  const links = [];
+  const nodeMap = new Map();
+  
+  //  Afficher les variables disponibles
+  console.log("=== DEBUG PARSER ===");
+  console.log("Variables disponibles:", vars);
+  console.log("Nombre de résultats:", bindings.length);
+  
+  //  Afficher le premier résultat
+  if (bindings.length > 0) {
+    console.log("Premier résultat:", bindings[0]);
     
-    bindings.forEach((binding, index) => {
-      // Créer un nœud central pour chaque résultat (entité principale)
-      const centralNodeId = `entity_${index}`;
-      const centralNode = {
-        id: centralNodeId,
-        label: `Entité ${index + 1}`,
-        type: 'entity',
-        size: 15,
-        color: '#3498db'
-      };
-      
-      if (!nodeMap.has(centralNodeId)) {
-        nodes.push(centralNode);
-        nodeMap.set(centralNodeId, centralNode);
-      }
-      
-      // Créer des nœuds pour chaque propriété
-      vars.forEach(varName => {
-        if (binding[varName]) {
-          const value = this.parseValue(binding[varName]);
-          const valueStr = typeof value === 'object' && value.label ? value.label : String(value);
-          const valueNodeId = `${varName}_${valueStr}`;
-          
-          // Créer le nœud de valeur s'il n'existe pas
-          if (!nodeMap.has(valueNodeId)) {
-            const valueNode = {
-              id: valueNodeId,
-              label: valueStr,
-              type: 'value',
-              property: varName,
-              size: 10,
-              color: this.getColorByProperty(varName)
-            };
-            nodes.push(valueNode);
-            nodeMap.set(valueNodeId, valueNode);
-          }
-          
-          // Créer le lien entre l'entité et la valeur
-          links.push({
-            source: centralNodeId,
-            target: valueNodeId,
-            label: varName,
-            type: 'property'
-          });
-        }
-      });
+    // Lister toutes les propriétés du premier binding
+    Object.keys(bindings[0]).forEach(key => {
+      const value = this.parseValue(bindings[0][key]);
+      console.log(`${key}: ${value}`);
     });
-    
-    return { nodes, links };
   }
   
-  static getColorByProperty(property) {
-    const colors = {
-      'gender': '#e74c3c',
-      'age': '#f39c12',
-      'sportName': '#2ecc71',
-      'name': '#9b59b6',
-      'sport': '#2ecc71',
-      'default': '#95a5a6'
+  bindings.forEach((binding, index) => {
+    console.log(`\n--- Résultat ${index + 1} ---`);
+    
+    //  Afficher chaque valeur
+    const vi = binding.vi ? this.parseValue(binding.vi) : null;
+    const vd = binding.vd ? this.parseValue(binding.vd) : null;
+    const relation = binding.resultatRelation ? this.parseValue(binding.resultatRelation) : null;
+    
+    console.log(`VI (facteur): ${vi}`);
+    console.log(`VD (ACAD): ${vd}`);
+    console.log(`Relation: ${relation}`);
+    
+    // Si on a au moins VI ou VD, créer des nœuds
+    if (vi) {
+      const factorNodeId = `factor_${vi}`;
+      if (!nodeMap.has(factorNodeId)) {
+        console.log(`Création nœud facteur: ${vi}`);
+        nodes.push({
+          id: factorNodeId,
+          label: vi,
+          type: 'factor',
+          size: 20,
+          color: '#3498db'
+        });
+        nodeMap.set(factorNodeId, true);
+      }
+    }
+    
+    if (vd) {
+      const acadNodeId = `acad_${vd}`;
+      if (!nodeMap.has(acadNodeId)) {
+        console.log(`Création nœud ACAD: ${vd}`);
+        nodes.push({
+          id: acadNodeId,
+          label: vd,
+          type: 'acad',
+          size: 20,
+          color: '#e74c3c'
+        });
+        nodeMap.set(acadNodeId, true);
+      }
+    }
+    
+    // Créer lien si on a facteur ET ACAD
+    if (vi && vd) {
+      console.log(`Création lien: ${vi} -> ${vd} (${relation})`);
+      links.push({
+        source: `factor_${vi}`,
+        target: `acad_${vd}`,
+        label: relation || 'relation',
+        type: 'factor-acad',
+        color: '#95a5a6'
+      });
+    }
+  });
+  
+  console.log(`RÉSULTAT FINAL: ${nodes.length} nœuds, ${links.length} liens`);
+  console.log("Nœuds:", nodes);
+  console.log("Liens:", links);
+  
+  return { nodes, links };
+}
+  
+
+  // FONCTIONS DE TRADUCTION POUR RENDRE COMPRÉHENSIBLE
+  static translateGender(gender) {
+    const translations = {
+      'male': 'Hommes',
+      'female': 'Femmes',
+      'mixed': 'Mixte'
     };
-    return colors[property] || colors.default;
+    return translations[gender] || gender;
+  }
+  
+  static translateRelation(relation) {
+    const translations = {
+      '+': 'Facteur de risque',
+      '-': 'Facteur protecteur',
+      'NS': 'Relation non significative'
+    };
+    return translations[relation] || relation;
+  }
+  
+  static getRelationColor(relation) {
+    console.log(`La fonction color est appelée Relation: ${relation}`);
+
+    const colors = {
+      '+': '#e74c3c',      // Rouge pour risque
+      '-': '#2ecc71',      // Vert pour protecteur
+      'NS': '#95a5a6'      // Gris pour non significatif
+    };
+    return colors[relation] || '#95a5a6';
+  }
+  
+  static getRelationStrength(binding) {
+    // Extraire la force de la relation (r, p-value, etc.)
+    const degreR = binding.degreR ? this.parseValue(binding.degreR) : null;
+    const degreP = binding.degreP ? this.parseValue(binding.degreP) : null;
+    
+    let strength = '';
+    if (degreR) strength += `r=${degreR}`;
+    if (degreP) strength += strength ? `, p=${degreP}` : `p=${degreP}`;
+    
+    return strength || 'Force inconnue';
   }
   
   static detectDataTypes(parsedData) {

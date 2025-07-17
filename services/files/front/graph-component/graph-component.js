@@ -1,4 +1,10 @@
 // Composant principal pour la visualisation d'ontologie
+// Ceci est le code injecté lors de l'affichage du résultat d'une requête SPARQL.
+
+// TODO , corriger les boutons. 
+// TODO , ajouter un bouton pour exporter les données en JSON, CSV, SPARQL.
+// TODO ,Ajouter un bouton pour prendre des screeschots de la visualisation.
+
 class OntologyGraphComponent {
   
   constructor(container, sparqlData) {
@@ -7,7 +13,6 @@ class OntologyGraphComponent {
     this.parsedData = null;
     this.renderer = null;
     
-    // Initialiser
     this.init();
   }
   

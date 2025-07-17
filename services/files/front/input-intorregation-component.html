@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Interrogation de l'ontologie</title>
+    
+    <link rel="stylesheet" href="./input-intorregation-component/input-intorregation-component.css">
+   
+</head>
+
+<div class="input-container">
+    <h2>Interroger l'ontologie</h2>
+
+    
+    
+    <select id="gender">
+        <option value="">-- Choisissez le sexe --</option>
+        <option value="female">Femme</option>
+        <option value="male">Homme</option>
+        <option value="mixed">Mixte</option>
+    </select>
+
+    <input type="number" 
+       id="minAge" 
+       placeholder="Âge minimum" 
+       min="0" 
+       max="120">
+
+    <select id="EOF">
+        <option value="">-- Choisissez la fréquence d'exercie --</option>
+    
+    </select>
+
+    <select id="SportType">
+        <option value="">-- Choisissez le type de sport --</option>
+    </select>
+
+
+
+    <br><br>
+    <button onclick="rechercher()">Rechercher</button>
+</div>
+
+</html>

@@ -1,4 +1,6 @@
 // Moteur de rendu D3.js pour graphe réseau ontologique
+// C'est ici ou la visualisation est créée et gérée.
+
 class GraphRenderer {
   
   constructor(container, parsedData) {
@@ -126,7 +128,7 @@ class GraphRenderer {
       .style('fill', '#333')
       .style('text-anchor', 'middle')
       .style('pointer-events', 'none')
-      .text(d => this.truncateLabel(d.label, 15));
+      .text(d => this.truncateLabel(d.label, 40));
     
     // Tooltip
     node.on('mouseover', (event, d) => this.showTooltip(event, d))
@@ -220,23 +222,7 @@ class GraphRenderer {
       .attr('class', 'graph-controls')
       .style('margin-bottom', '10px');
     
-    // Bouton pour redémarrer la simulation
-    controls.append('button')
-      .text('Réorganiser')
-      .on('click', () => {
-        this.simulation.alpha(0.3).restart();
-      });
-    
-    // Bouton pour centrer le graphe
-    controls.append('button')
-      .text('Centrer')
-      .style('margin-left', '10px')
-      .on('click', () => {
-        const transform = d3.zoomIdentity.translate(this.margin.left, this.margin.top);
-        this.svg.transition().duration(750).call(
-          d3.zoom().transform, transform
-        );
-      });
+   
     
     // Informations
     controls.append('span')
