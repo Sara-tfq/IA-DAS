@@ -57,22 +57,17 @@ class SPARQLDataParser {
   }
   
   
-
 static createConcreteOntologyNetwork(bindings, vars) {
   const nodes = [];
   const links = [];
   const nodeMap = new Map();
   
-  //  Afficher les variables disponibles
   console.log("=== DEBUG PARSER ===");
   console.log("Variables disponibles:", vars);
   console.log("Nombre de résultats:", bindings.length);
   
-  //  Afficher le premier résultat
   if (bindings.length > 0) {
     console.log("Premier résultat:", bindings[0]);
-    
-    // Lister toutes les propriétés du premier binding
     Object.keys(bindings[0]).forEach(key => {
       const value = this.parseValue(bindings[0][key]);
       console.log(`${key}: ${value}`);
@@ -82,16 +77,19 @@ static createConcreteOntologyNetwork(bindings, vars) {
   bindings.forEach((binding, index) => {
     console.log(`\n--- Résultat ${index + 1} ---`);
     
-    //  Afficher chaque valeur
     const vi = binding.vi ? this.parseValue(binding.vi) : null;
     const vd = binding.vd ? this.parseValue(binding.vd) : null;
+    const mediator = binding.mediator ? this.parseValue(binding.mediator) : null;
+    const moderator = binding.moderator ? this.parseValue(binding.moderator) : null;
     const relation = binding.resultatRelation ? this.parseValue(binding.resultatRelation) : null;
     
     console.log(`VI (facteur): ${vi}`);
     console.log(`VD (ACAD): ${vd}`);
+    console.log(`Médiateur: ${mediator}`);
+    console.log(`Modérateur: ${moderator}`);
     console.log(`Relation: ${relation}`);
-    
-    // Si on a au moins VI ou VD, créer des nœuds
+
+    // Créer nœud facteur
     if (vi) {
       const factorNodeId = `factor_${vi}`;
       if (!nodeMap.has(factorNodeId)) {
@@ -107,6 +105,7 @@ static createConcreteOntologyNetwork(bindings, vars) {
       }
     }
     
+    // Créer nœud ACAD
     if (vd) {
       const acadNodeId = `acad_${vd}`;
       if (!nodeMap.has(acadNodeId)) {
@@ -121,8 +120,37 @@ static createConcreteOntologyNetwork(bindings, vars) {
         nodeMap.set(acadNodeId, true);
       }
     }
-    
-    // Créer lien si on a facteur ET ACAD
+   
+    if (mediator && mediator !== 'N.A.' && mediator.trim() !== '') {
+      const mediatorNodeId = `mediator_${mediator}`;
+      if (!nodeMap.has(mediatorNodeId)) {
+        console.log(`Création nœud médiateur: ${mediator}`);
+        nodes.push({
+          id: mediatorNodeId,
+          label: mediator,
+          type: 'mediator',
+          size: 15,
+          color: '#FFD700' 
+        });
+        nodeMap.set(mediatorNodeId, true);
+      }
+    }
+ 
+    if (moderator && moderator !== 'N.A.' && moderator.trim() !== '') {
+      const moderatorNodeId = `moderator_${moderator}`;
+      if (!nodeMap.has(moderatorNodeId)) {
+        console.log(`Création nœud modérateur: ${moderator}`);
+        nodes.push({
+          id: moderatorNodeId,
+          label: moderator,
+          type: 'moderator',
+          size: 15,
+          color: '#FF8C00' 
+        });
+        nodeMap.set(moderatorNodeId, true);
+      }
+    }
+   
     if (vi && vd) {
       console.log(`Création lien: ${vi} -> ${vd} (${relation})`);
       links.push({
@@ -130,10 +158,32 @@ static createConcreteOntologyNetwork(bindings, vars) {
         target: `acad_${vd}`,
         label: relation || 'relation',
         type: 'factor-acad',
-        color: '#95a5a6'
+        color: this.getRelationColor(relation) 
       });
     }
-  });
+    
+    if (vi && mediator && mediator !== 'N.A.') {
+      links.push({
+        source: `factor_${vi}`,
+        target: `mediator_${mediator}`,
+        label: 'médiateur',
+        type: 'factor-mediator',
+        color: '#f39c12'
+      });
+    }
+    
+    // Lien facteur -> modérateur
+    if (vi && moderator && moderator !== 'N.A.') {
+      links.push({
+        source: `factor_${vi}`,
+        target: `moderator_${moderator}`,
+        label: 'modérateur',
+        type: 'factor-moderator',
+        color: '#e67e22'
+      });
+    }
+    
+  }); 
   
   console.log(`RÉSULTAT FINAL: ${nodes.length} nœuds, ${links.length} liens`);
   console.log("Nœuds:", nodes);
@@ -142,8 +192,6 @@ static createConcreteOntologyNetwork(bindings, vars) {
   return { nodes, links };
 }
   
-
-  // FONCTIONS DE TRADUCTION POUR RENDRE COMPRÉHENSIBLE
   static translateGender(gender) {
     const translations = {
       'male': 'Hommes',

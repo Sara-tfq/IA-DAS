@@ -35,19 +35,19 @@ header {
 
 header h1 {
     color: #2c3e50;
-    font-size: 1.8em;
+    font-size: 1.3em;
     font-weight: 600;
 }
 
 .logo {
-    height: 50px;
+    height: 40px;
     width: auto;
     object-fit: contain;
 }
 
 #switchChercheur {
     padding: 12px 20px;
-    font-size: 16px;
+    font-size: 13px;
     background-color: #2980b9;
     color: white;
     border: none;
@@ -105,7 +105,7 @@ main {
 /* Content container */
 .content-container {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     flex: 1;
     gap: 20px;
     padding: 0 20px 20px 20px;
@@ -187,7 +187,7 @@ main {
 }
 
 /* General form elements */
-.content-container select, 
+/* .content-container select, 
 .content-container button:not(#switchChercheur):not(.prepared-queries button):not(.view-btn) {
     padding: 10px 15px;
     font-size: 14px;
@@ -195,7 +195,7 @@ main {
     border-radius: 8px;
     margin-bottom: 8px;
     transition: all 0.3s ease;
-}
+} */
 
 .content-container select {
     background-color: white;
@@ -209,19 +209,19 @@ main {
     box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
 }
 
-.content-container button:not(#switchChercheur):not(.prepared-queries button):not(.view-btn) {
+/* .content-container button:not(#switchChercheur):not(.prepared-queries button):not(.view-btn) {
     background-color: #2980b9;
     color: white;
     cursor: pointer;
     font-weight: 500;
-    width: 100%;
+    width: 20%;
 }
 
 .content-container button:not(#switchChercheur):not(.prepared-queries button):not(.view-btn):hover {
     background-color: #1c5980;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
+} */
 
 .content-container button:disabled {
     background-color: #95a5a6;
@@ -243,7 +243,7 @@ footer {
 }
 
 /* Responsive design */
-@media (max-width: 1024px) {
+@media (max-width: 200000px) {
     .content-container {
         flex-direction: column;
         gap: 15px;
@@ -276,7 +276,7 @@ footer {
     }
     
     header h1 {
-        font-size: 1.5em;
+        font-size: 1.3em;
     }
     
     .prepared-queries {
@@ -337,3 +337,4 @@ footer {
 ::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
+

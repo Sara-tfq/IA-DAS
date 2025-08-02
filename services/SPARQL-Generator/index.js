@@ -23,25 +23,34 @@ function generateSparqlQuery(filters) {
   // Garantir qu'on a toujours une analyse comme point de départ
   whereClauses.push(`?analysis a :Analysis .`);
 
-  // STRUCTURE DE BASE POUR VI/VD - 
+  // STRUCTURE DE BASE POUR VI/VD -en vrai chai pas ce que je fous , ça devient enorme ces trucs
   // Cette structure est maintenant ajoutée systématiquement mais avec OPTIONAL
   whereClauses.push(`OPTIONAL { ?analysis :hasRelation ?relation }`);
   whereClauses.push(`OPTIONAL { ?relation :hasIndependentVariable ?variableVI }`);
   whereClauses.push(`OPTIONAL { ?relation :VD ?vd }`);
   whereClauses.push(`OPTIONAL { ?relation :resultatRelation ?resultatRelation }`);
   whereClauses.push(`OPTIONAL { ?variableVI :VI ?vi }`);
+  // STRUCTURE POUR MODERATEURS/MEDIATEURS 
+  whereClauses.push(`OPTIONAL { ?analysis :hasModerator ?moderator }`);
+  whereClauses.push(`OPTIONAL { ?analysis :moderatorMeasure ?moderatorMeasure }`);
+  whereClauses.push(`OPTIONAL { ?analysis :hasMediator ?mediator }`);
+  whereClauses.push(`OPTIONAL { ?analysis :mediatorMeasure ?mediatorMeasure }`);
 
   // Ajouter les variables VI/VD aux variables de sélection
   if (!selectVars.includes('?relation')) selectVars.push('?relation');
   if (!selectVars.includes('?vi')) selectVars.push('?vi');
   if (!selectVars.includes('?vd')) selectVars.push('?vd');
   if (!selectVars.includes('?resultatRelation')) selectVars.push('?resultatRelation');
+  if (!selectVars.includes('?moderator')) selectVars.push('?moderator');
+  if (!selectVars.includes('?moderatorMeasure')) selectVars.push('?moderatorMeasure');
+  if (!selectVars.includes('?mediator')) selectVars.push('?mediator');
+  if (!selectVars.includes('?mediatorMeasure')) selectVars.push('?mediatorMeasure');
 
   // Informations statistiques optionnelles
   whereClauses.push(`OPTIONAL { ?relation :degreR ?degreR }`);
   whereClauses.push(`OPTIONAL { ?relation :degreP ?degreP }`);
   whereClauses.push(`OPTIONAL { ?relation :degreBeta ?degreBeta }`);
-  
+
   if (!selectVars.includes('?degreR')) selectVars.push('?degreR');
   if (!selectVars.includes('?degreP')) selectVars.push('?degreP');
   if (!selectVars.includes('?degreBeta')) selectVars.push('?degreBeta');
@@ -176,10 +185,10 @@ function generateSparqlQuery(filters) {
 
   if (filters.factorCategory) {
     whereClauses.push(`OPTIONAL { ?variableVI :mainClass ?factorCategory }`);
-    
+
     // Mapper les valeurs du frontend vers les valeurs de l'ontologie
     let categoryValue;
-    switch(filters.factorCategory) {
+    switch (filters.factorCategory) {
       case 'intrapersonal':
         categoryValue = 'Intrapersonal factor related to DEAB';
         break;
@@ -195,7 +204,7 @@ function generateSparqlQuery(filters) {
       default:
         categoryValue = filters.factorCategory;
     }
-    
+
     filterConditions.push(`CONTAINS(LCASE(?factorCategory), LCASE("${categoryValue}"))`);
     if (!selectVars.includes('?factorCategory')) selectVars.push('?factorCategory');
   }
@@ -207,17 +216,27 @@ function generateSparqlQuery(filters) {
     if (!selectVars.includes('?analysisType')) selectVars.push('?analysisType');
   }
 
+  // Les clauses WHERE sont déjà ajoutées dans la structure de base je pense 
+  // On garde seulement les conditions de filtre
   if (filters.moderator) {
-    whereClauses.push(`OPTIONAL { ?analysis :hasModerator ?moderator }`);
     filterConditions.push(`CONTAINS(LCASE(?moderator), LCASE("${filters.moderator}"))`);
-    if (!selectVars.includes('?moderator')) selectVars.push('?moderator');
   }
 
   if (filters.mediator) {
-    whereClauses.push(`OPTIONAL { ?analysis :hasMediator ?mediator }`);
     filterConditions.push(`CONTAINS(LCASE(?mediator), LCASE("${filters.mediator}"))`);
-    if (!selectVars.includes('?mediator')) selectVars.push('?mediator');
   }
+
+  // if (filters.moderator) {
+  //   whereClauses.push(`OPTIONAL { ?analysis :hasModerator ?moderator }`);
+  //   filterConditions.push(`CONTAINS(LCASE(?moderator), LCASE("${filters.moderator}"))`);
+  //   if (!selectVars.includes('?moderator')) selectVars.push('?moderator');
+  // }
+
+  // if (filters.mediator) {
+  //   whereClauses.push(`OPTIONAL { ?analysis :hasMediator ?mediator }`);
+  //   filterConditions.push(`CONTAINS(LCASE(?mediator), LCASE("${filters.mediator}"))`);
+  //   if (!selectVars.includes('?mediator')) selectVars.push('?mediator');
+  // }
 
   // FILTRES ARTICLE - OPTIONAL
   if (filters.publicationYear) {
@@ -260,7 +279,7 @@ function generateSparqlQuery(filters) {
 
   // Construction de la requête finale
   const query = `${prefixes}
-SELECT DISTINCT ${selectVars.join(' ')} WHERE {
+SELECT  ${selectVars.join(' ')} WHERE {
   ${whereClauses.join('\n  ')}${filterSection ? `\n  ${filterSection}` : ''}
 }
 ${orderBy}
@@ -268,7 +287,7 @@ LIMIT 10000`;
 
   console.log("Generated SPARQL Query:");
   console.log(query);
-  
+
   return query;
 }
 
@@ -291,9 +310,9 @@ http.createServer(async (req, res) => {
       try {
         const requestPayload = JSON.parse(body);
         console.log("Received payload:", requestPayload);
-        
+
         let sparqlQuery;
-        
+
         // Traiter selon le type de requête
         if (requestPayload.queryType === 'raw_sparql') {
           // Mode SPARQL direct
@@ -350,16 +369,5 @@ http.createServer(async (req, res) => {
     res.end('Méthode non autorisée');
   }
 }).listen(8003, () => {
-  console.log("SPARQL Generator avec VI/VD obligatoires et toutes clauses OPTIONAL running on port 8003");
-  console.log("Modifications appliquées:");
-  console.log("- Toutes les requêtes incluent maintenant VI et VD");
-  console.log("- Structure de base avec relations VI/VD ajoutée systématiquement");
-  console.log("- Variables ?vi et ?vd toujours dans les résultats");
-  console.log("- ORDER BY adapté pour inclure VI et VD");
-  console.log("- NOUVELLE: Toutes les clauses sont maintenant OPTIONAL");
-  console.log("- Seule la clause '?analysis a :Analysis' reste obligatoire");
-  console.log("- Les conditions FILTER restent pour filtrer les résultats");
-  console.log("Modes supportés:");
-  console.log("- Mode formulaire: queryType: 'generated' + filtres");
-  console.log("- Mode SPARQL direct: queryType: 'raw_sparql' + rawSparqlQuery");
+  console.log("SPARQL Generator listening on port 8003");
 });
