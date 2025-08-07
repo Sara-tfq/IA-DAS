@@ -4,142 +4,24 @@ class InputInterrogationComponent extends HTMLElement {
         this.csvData = null;
         this.availableVD = [];
         this.availableVI = [];
+        this.availableCategoriesVD = [];
+        this.availableCategoriesVI = [];
+        this.availableSports = [];
+        this.sportsData = null;
+        this.availableCategoriesSports = [];
+        this.allSports = [];
         this.isQueryMode = false;
     }
-// Pour ajouter le bouton de switch en mode sparql
-// <button id="toggleMode" class="mode-toggle-btn" display="none">Mode SPARQL</button>
+    // Pour ajouter le bouton de switch en mode sparql
+    // <button id="toggleMode" class="mode-toggle-btn" display="none">Mode SPARQL</button>
 
 
     connectedCallback() {
-        this.innerHTML = `
-            <div class="input-container">
-                <div class="header-controls">
-                </div>
-                <div id="formMode">
-    <!-- COLONNE 1: ACAD -->
-    <div class="acad-section">
-        <h3>ACAD</h3>
-        
-        <div class="variable-row">
-            <label for="variableVD">ACAD :</label>
-            <div class="autocomplete-container">
-                <input type="text" id="variableVD" placeholder="Tapez pour rechercher un ACAD..." disabled>
-                <div class="autocomplete-dropdown" id="variableVD-dropdown"></div>
-            </div>
-        </div>
-    </div>
+        this.initializeComponent();
+    }
 
-    <!-- COLONNE 2: Facteurs -->
-    <div class="factors-section">
-        <h3>Variable</h3>
-        
-        <div class="variable-row">
-            <label for="variableVI">Facteur :</label>
-            <div class="autocomplete-container">
-                <input type="text" id="variableVI" placeholder="Tapez pour rechercher un facteur..." disabled>
-                <div class="autocomplete-dropdown" id="variableVI-dropdown"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- COLONNE 3: Type de relations -->
-    <div class="relations-section">
-        <h3>Type de relations</h3>
-        
-        <div class="radio-group">
-            <div class="radio-option">
-                <input type="radio" id="positive" name="relationDirection" value="+">
-                <label for="positive">Protecteur</label>
-            </div>
-            <div class="radio-option">
-                <input type="radio" id="negative" name="relationDirection" value="-">
-                <label for="negative">À risque</label>
-            </div>
-            <div class="radio-option">
-                <input type="radio" id="non-significant" name="relationDirection" value="NS">
-                <label for="non-significant">Ambigu</label>
-            </div>
-        </div>
-    </div>
-
-    <!-- COLONNE 4: Caractéristiques des populations -->
-    <div class="demographics-section">
-        <h3>Caractéristiques des populations étudiées</h3>
-        
-        <div class="demographics-grid">
-            <select id="gender">
-                <option value="">Sexe</option>
-                <option value="female">Femme</option>
-                <option value="male">Homme</option>
-                <option value="mixed">Mixte</option>
-            </select>
-
-            <input type="number" id="minAge" placeholder="Âge" min="0" max="120">
-
-            <select id="sportType">
-                <option value="">Sport</option>
-                <option value="individual">Sport individuel</option>
-                <option value="team">Sport d'équipe</option>
-                <option value="endurance">Sport d'endurance</option>
-                <option value="aesthetic">Sport esthétique</option>
-            </select>
-
-            <select id="experienceYears">
-                <option value="">Fréquence de pratique</option>
-                <option value="0-2">0-2 ans</option>
-                <option value="3-5">3-5 ans</option>
-                <option value="6-10">6-10 ans</option>
-                <option value="10+">10+ ans</option>
-            </select>
-
-            <select id="sportLevel">
-                <option value="">Années d'expérience</option>
-                <option value="amateur">Amateur</option>
-            </select>
-
-            <select id="factorCategory">
-                <option value="">Niveau sportif</option>
-                <option value="intrapersonal">Intrapersonnel</option>
-                <option value="interpersonal">Interpersonnel</option>
-                <option value="socio-environmental">Socio-environnemental</option>
-                <option value="other-behaviors">Autres comportements</option>
-            </select>
-        </div>
-    </div>
-
-    
-    <div class="search-section">
-        <button id="searchBtn" disabled>Rechercher</button>
-    </div>
-</div>
-
-                <div id="sparqlMode" style="display: none;">
-                    <div class="sparql-editor">
-                        <h3>Éditeur SPARQL</h3>
-                        
-                        <div class="sparql-controls">
-                            <button id="loadExample" class="sparql-btn">Exemple</button>
-                            <button id="clearQuery" class="sparql-btn">Effacer</button>
-                        </div>
-                        
-                        <textarea id="sparqlQuery" placeholder="PREFIX : <http://example.org/onto#>
-PREFIX ex: <http://example.org/data#>
-
-SELECT * WHERE {
-  ?s ?p ?o
-} 
-LIMIT 10" rows="8"></textarea>
-                        
-                        <div class="query-validation" id="queryValidation"></div>
-                        
-                        <button id="executeSparql" class="execute-btn">▶ Exécuter la requête</button>
-                    </div>
-                </div>
-            </div>
-
-           
-        `;
-
+    async initializeComponent() {
+        await this.loadTemplate();
         this.setupEventListeners();
         this.loadCSVData();
     }
@@ -154,9 +36,13 @@ LIMIT 10" rows="8"></textarea>
         this.querySelector('#executeSparql').addEventListener('click', () => this.executeSparqlQuery());
         this.querySelector('#sparqlQuery').addEventListener('input', () => this.validateSparqlQuery());
 
+        this.querySelector('#categoryVD').addEventListener('change', () => this.handleCategoryChangeVD());
+        this.querySelector('#categoryVI').addEventListener('change', () => this.handleCategoryChangeVI());
+
         // Autocomplete for variables
         this.setupAutocomplete('variableVI', () => this.availableVI);
         this.setupAutocomplete('variableVD', () => this.availableVD);
+        this.setupAutocomplete('sportType', () => this.availableSports);
 
         // Search button
         this.querySelector('#searchBtn').addEventListener('click', () => this.handleSearch());
@@ -187,20 +73,20 @@ LIMIT 10" rows="8"></textarea>
 
         input.addEventListener('keydown', (e) => {
             const items = dropdown.querySelectorAll('.autocomplete-item:not(.no-results)');
-            
-            switch(e.key) {
+
+            switch (e.key) {
                 case 'ArrowDown':
                     e.preventDefault();
                     currentSelection = Math.min(currentSelection + 1, items.length - 1);
                     this.updateSelection(dropdown, currentSelection);
                     break;
-                    
+
                 case 'ArrowUp':
                     e.preventDefault();
                     currentSelection = Math.max(currentSelection - 1, -1);
                     this.updateSelection(dropdown, currentSelection);
                     break;
-                    
+
                 case 'Enter':
                     e.preventDefault();
                     if (currentSelection >= 0 && items[currentSelection]) {
@@ -208,7 +94,7 @@ LIMIT 10" rows="8"></textarea>
                         currentSelection = -1;
                     }
                     break;
-                    
+
                 case 'Escape':
                     dropdown.classList.remove('show');
                     currentSelection = -1;
@@ -218,64 +104,64 @@ LIMIT 10" rows="8"></textarea>
     }
 
     showAutocompleteResults(inputId, query, data) {
-    const dropdown = this.querySelector(`#${inputId}-dropdown`);
-    
-    // Hide other dropdowns
-    this.hideAllDropdowns();
-    
-    let filteredData = data;
-    
-    if (query) {
-        filteredData = data.filter(item => {
-            // Vérification de sécurité : s'assurer que item est une chaîne
-            if (!item || typeof item !== 'string') {
-                return false;
-            }
-            return item.toLowerCase().includes(query);
-        }).sort((a, b) => {
-            // Prioritize items that start with the query
-            const aStarts = a.toLowerCase().startsWith(query);
-            const bStarts = b.toLowerCase().startsWith(query);
-            
-            if (aStarts && !bStarts) return -1;
-            if (!aStarts && bStarts) return 1;
-            
-            return a.localeCompare(b);
+        const dropdown = this.querySelector(`#${inputId}-dropdown`);
+
+        // Hide other dropdowns
+        this.hideAllDropdowns();
+
+        let filteredData = data;
+
+        if (query) {
+            filteredData = data.filter(item => {
+                // Vérification de sécurité : s'assurer que item est une chaîne
+                if (!item || typeof item !== 'string') {
+                    return false;
+                }
+                return item.toLowerCase().includes(query);
+            }).sort((a, b) => {
+                // Prioritize items that start with the query
+                const aStarts = a.toLowerCase().startsWith(query);
+                const bStarts = b.toLowerCase().startsWith(query);
+
+                if (aStarts && !bStarts) return -1;
+                if (!aStarts && bStarts) return 1;
+
+                return a.localeCompare(b);
+            });
+        }
+
+        if (filteredData.length === 0) {
+            dropdown.innerHTML = '<div class="no-results">Aucun résultat trouvé</div>';
+        } else {
+            dropdown.innerHTML = filteredData
+                // .slice(0, 10) // pas de limite je prefere
+                .map(item => `<div class="autocomplete-item">${item}</div>`)
+                .join('');
+        }
+
+        // Add click listeners to items
+        dropdown.querySelectorAll('.autocomplete-item:not(.no-results)').forEach(item => {
+            item.addEventListener('click', () => {
+                const input = this.querySelector(`#${inputId}`);
+                this.selectItem(input, dropdown, item.textContent);
+            });
         });
+
+        dropdown.classList.add('show');
     }
-
-    if (filteredData.length === 0) {
-        dropdown.innerHTML = '<div class="no-results">Aucun résultat trouvé</div>';
-    } else {
-        dropdown.innerHTML = filteredData
-            // .slice(0, 10) // pas de limite je prefere
-            .map(item => `<div class="autocomplete-item">${item}</div>`)
-            .join('');
-    }
-
-    // Add click listeners to items
-    dropdown.querySelectorAll('.autocomplete-item:not(.no-results)').forEach(item => {
-        item.addEventListener('click', () => {
-            const input = this.querySelector(`#${inputId}`);
-            this.selectItem(input, dropdown, item.textContent);
-        });
-    });
-
-    dropdown.classList.add('show');
-}
 
     selectItem(input, dropdown, value) {
         input.value = value;
         dropdown.classList.remove('show');
         this.updateSelection();
-        
+
         // Trigger change event
         input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     updateSelection(dropdown, selectedIndex) {
         if (!dropdown) return;
-        
+
         const items = dropdown.querySelectorAll('.autocomplete-item:not(.no-results)');
         items.forEach((item, index) => {
             item.classList.toggle('highlighted', index === selectedIndex);
@@ -305,6 +191,110 @@ LIMIT 10" rows="8"></textarea>
         }
     }
 
+    UniqueValues() {
+        // Extraire toutes les variables (backup)
+        this.allVD = [...new Set(
+            this.csvData
+                .map(row => row['sub-class_Final_VD'])
+                .filter(val => val != null && val !== '' && val !== undefined)
+        )].sort();
+
+        this.allVI = [...new Set(
+            this.csvData
+                .map(row => row['sub-class_Final_VI'])
+                .filter(val => val != null && val !== '' && val !== undefined)
+        )].sort();
+
+        // Extraire les catégories pour VD
+        this.availableCategoriesVD = [...new Set(
+            this.csvData
+                .filter(row => row['sub-class_Final_VD'] != null && row['sub-class_Final_VD'] !== '')
+                .map(row => row['CLASS'])
+                .filter(val => val != null && val !== '' && val !== undefined)
+        )].sort();
+
+        // Extraire les catégories pour VI
+        this.availableCategoriesVI = [...new Set(
+            this.csvData
+                .filter(row => row['sub-class_Final_VI'] != null && row['sub-class_Final_VI'] !== '')
+                .map(row => row['CLASS'])
+                .filter(val => val != null && val !== '' && val !== undefined)
+        )].sort();
+
+        // Initialiser avec toutes les variables
+        this.availableVD = [...this.allVD];
+        this.availableVI = [...this.allVI];
+
+        // Peupler les sélecteurs de catégories
+        this.populateCategorySelectors();
+    }
+
+    populateCategorySelectors() {
+        this.populateCategorySelector('#categoryVD', this.availableCategoriesVD);
+        this.populateCategorySelector('#categoryVI', this.availableCategoriesVI);
+    }
+
+    populateCategorySelector(selectId, categories) {
+        const categorySelect = this.querySelector(selectId);
+
+        // Vider les options existantes (garder la première)
+        while (categorySelect.children.length > 1) {
+            categorySelect.extractremoveChild(categorySelect.lastChild);
+        }
+
+        // Ajouter les catégories
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            categorySelect.appendChild(option);
+        });
+    }
+
+    handleCategoryChangeVD() {
+        const selectedCategory = this.querySelector('#categoryVD').value;
+
+        if (selectedCategory === '') {
+            this.availableVD = [...this.allVD];
+        } else {
+            this.availableVD = [...new Set(
+                this.csvData
+                    .filter(row => row['CLASS'] === selectedCategory && row['sub-class_Final_VD'])  // ← 'CLASS'
+                    .map(row => row['sub-class_Final_VD'])
+                    .filter(val => val != null && val !== '' && val !== undefined)
+            )].sort();
+        }
+
+        this.resetVariableInput('variableVD');
+        this.updatePlaceholder('variableVD', this.availableVD.length, 'ACAD');
+    }
+
+    handleCategoryChangeVI() {
+        const selectedCategory = this.querySelector('#categoryVI').value;
+
+        if (selectedCategory === '') {
+            this.availableVI = [...this.allVI];
+        } else {
+            this.availableVI = [...new Set(
+                this.csvData
+                    .filter(row => row['CLASS_1'] === selectedCategory && row['sub-class_Final_VI'])  // ← 'CLASS_1'
+                    .map(row => row['sub-class_Final_VI'])
+                    .filter(val => val != null && val !== '' && val !== undefined)
+            )].sort();
+        }
+
+        this.resetVariableInput('variableVI');
+        this.updatePlaceholder('variableVI', this.availableVI.length, 'facteurs');
+    }
+    resetVariableInput(inputId) {
+        this.querySelector(`#${inputId}`).value = '';
+        this.querySelector(`#${inputId}-dropdown`).classList.remove('show');
+    }
+
+    updatePlaceholder(inputId, count, type) {
+        this.querySelector(`#${inputId}`).placeholder = `Rechercher parmi ${count} ${type}...`;
+    }
+
     async loadCSVData() {
         const statusDiv = this.querySelector('#loadingStatus');
 
@@ -318,6 +308,7 @@ LIMIT 10" rows="8"></textarea>
                 throw new Error(`Erreur HTTP: ${response.status}`);
             }
 
+
             const csvText = await response.text();
             const result = Papa.parse(csvText, {
                 header: true,
@@ -325,6 +316,22 @@ LIMIT 10" rows="8"></textarea>
                 skipEmptyLines: true,
                 delimitersToGuess: [',', '\t', '|', ';']
             });
+            console.log('🔍 Colonnes détectées:', result.meta.fields);
+            console.log('🔍 Première ligne de données:', result.data[0]);
+
+
+            const response2 = await fetch('/data/Sport.csv');
+            if (!response2.ok) {
+                throw new Error(`Erreur HTTP Sport: ${response2.status}`);
+            }
+            const csvText2 = await response2.text();
+            const result2 = Papa.parse(csvText2, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                delimitersToGuess: [',', '\t', '|', ';']
+            });
+            this.sportsData = result2.data;
 
             this.csvData = result.data;
             this.extractUniqueValues();
@@ -345,26 +352,100 @@ LIMIT 10" rows="8"></textarea>
         });
     }
 
+    async loadTemplate() {
+        try {
+            const response = await fetch('../input-intorregation-component.html');
+            if (!response.ok) {
+                throw new Error(`Erreur lors du chargement du template: ${response.status}`);
+            }
+            const htmlContent = await response.text();
+            this.innerHTML = htmlContent;
+        } catch (error) {
+            console.error('Erreur lors du chargement du template:', error);
+            // Fallback vers l'ancien HTML en cas d'erreur
+            this.innerHTML = `<!-- Votre ancien HTML ici en fallback -->`;
+        }
+    }
+
     extractUniqueValues() {
-        this.availableVD = [...new Set(
+        console.log('🔍 DEBUG: csvData length:', this.csvData.length);
+
+        // Extraire toutes les variables (backup)
+        this.allVD = [...new Set(
             this.csvData
                 .map(row => row['sub-class_Final_VD'])
                 .filter(val => val != null && val !== '' && val !== undefined)
         )].sort();
 
-        this.availableVI = [...new Set(
+        this.allVI = [...new Set(
             this.csvData
                 .map(row => row['sub-class_Final_VI'])
                 .filter(val => val != null && val !== '' && val !== undefined)
         )].sort();
+
+        // Extraire les catégories pour VD (utilise 'CLASS')
+        this.availableCategoriesVD = [...new Set(
+            this.csvData
+                .filter(row => row['sub-class_Final_VD'] != null && row['sub-class_Final_VD'] !== '')
+                .map(row => row['CLASS'])
+                .filter(val => val != null && val !== '' && val !== undefined)
+        )].sort();
+
+        // Extraire les catégories pour VI (utilise 'CLASS_1')
+        this.availableCategoriesVI = [...new Set(
+            this.csvData
+                .filter(row => row['sub-class_Final_VI'] != null && row['sub-class_Final_VI'] !== '')
+                .map(row => row['CLASS_1'])  // ← CHANGEMENT ICI
+                .filter(val => val != null && val !== '' && val !== undefined)
+        )].sort();
+
+        console.log('🔍 Categories VD:', this.availableCategoriesVD);
+        console.log('🔍 Categories VI:', this.availableCategoriesVI);
+
+        // Initialiser avec toutes les variables
+        this.availableVD = [...this.allVD];
+        this.availableVI = [...this.allVI];
+
+        // Extraire les sports depuis Sport.csv avec logique hiérarchique
+        this.allSports = [...new Set(
+            this.sportsData
+                .map(row => {
+                    // Priorité : Sub class 3, sinon Sub class 2
+                    const sportLevel3 = row['Sub class 3'];
+                    const sportLevel2 = row['Sub class 2'];
+
+                    // Si Sub class 3 existe et n'est pas vide
+                    if (sportLevel3 && sportLevel3.toString().trim() !== '') {
+                        return sportLevel3.toString().trim();
+                    }
+                    // Sinon utiliser Sub class 2 si elle existe
+                    if (sportLevel2 && sportLevel2.toString().trim() !== '') {
+                        return sportLevel2.toString().trim();
+                    }
+                    // Sinon ignorer cette ligne
+                    return null;
+                })
+                .filter(val => val !== null) // Eliminer les lignes sans sport
+        )].sort();
+
+        // Initialiser avec tous les sports
+        this.availableSports = [...this.allSports];
+
+        console.log('🔍 Sports extraits depuis Sport.csv:', this.availableSports.length, this.availableSports.slice(0, 10));
+        // Peupler les sélecteurs de catégories
+        this.populateCategorySelectors();
     }
 
     enableInputs() {
         const variableVIInput = this.querySelector('#variableVI');
         const variableVDInput = this.querySelector('#variableVD');
         const searchBtn = this.querySelector('#searchBtn');
+        const sportTypeInput = this.querySelector('#sportType');
+        sportTypeInput.placeholder = `Rechercher parmi ${this.availableSports.length} sports...`;
+        sportTypeInput.disabled = false;
 
         // Update placeholders
+
         variableVIInput.placeholder = `Rechercher parmi ${this.availableVI.length} facteurs...`;
         variableVDInput.placeholder = `Rechercher parmi ${this.availableVD.length} ACAD...`;
 
@@ -382,7 +463,7 @@ LIMIT 10" rows="8"></textarea>
             minAge: this.querySelector('#minAge').value,
             sportLevel: this.querySelector('#sportLevel').value,
             relationDirection: this.querySelector('input[name="relationDirection"]:checked')?.value || '',
-            factorCategory: this.querySelector('#factorCategory').value,
+
             sportType: this.querySelector('#sportType').value,
             experienceYears: this.querySelector('#experienceYears').value,
             queryType: 'variable_relation'
@@ -456,5 +537,7 @@ LIMIT 20`;
         }));
     }
 }
+
+
 
 customElements.define('input-intorregation-component', InputInterrogationComponent);

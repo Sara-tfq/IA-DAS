@@ -171,3 +171,195 @@ function createOntologyGraph(containerId, sparqlData) {
   component.render();
   return component;
 }
+
+async function exportGraphToPNG() {
+    try {
+        const graphContainer = document.getElementById('graph-container');
+        if (!graphContainer) {
+            alert('Aucun graphique à exporter');
+            return;
+        }
+
+        // Import de html2canvas
+        if (typeof html2canvas === 'undefined') {
+            await loadHtml2Canvas();
+        }
+
+        // Capture du graphique
+        const canvas = await html2canvas(graphContainer, {
+            scale: 2, // Haute résolution
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true
+        });
+
+        // Ajouter le logo
+        const finalCanvas = await addLogoToCanvas(canvas);
+        
+        // Télécharger
+        downloadCanvas(finalCanvas, 'ia-das-graph.png');
+        
+    } catch (error) {
+        console.error('Erreur export:', error);
+        alert('Erreur lors de l\'export: ' + error.message);
+    }
+}
+
+async function addLogoToCanvas(originalCanvas) {
+    return new Promise((resolve, reject) => {
+        const logoPath = '/assets/ia-das-logo.png'; // À adapter selon votre structure
+        const logoImg = new Image();
+        
+        logoImg.onload = () => {
+            // Créer nouveau canvas avec marge pour le logo
+            const finalCanvas = document.createElement('canvas');
+            const ctx = finalCanvas.getContext('2d');
+            
+            // Dimensions finales (graphique + marge)
+            const margin = 20;
+            const logoSize = 80; // Taille bien visible
+            finalCanvas.width = originalCanvas.width + margin;
+            finalCanvas.height = originalCanvas.height + margin;
+            
+            // Fond blanc
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+            
+            // Dessiner le graphique
+            ctx.drawImage(originalCanvas, margin/2, margin/2);
+            
+            // Dessiner le logo en haut à droite
+            const logoX = finalCanvas.width - logoSize - margin;
+            const logoY = margin;
+            ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+            
+            resolve(finalCanvas);
+        };
+        
+        logoImg.onerror = () => reject(new Error('Impossible de charger le logo'));
+        logoImg.src = logoPath;
+    });
+}
+
+// Charger html2canvas si nécessaire
+async function loadHtml2Canvas() {
+    return new Promise((resolve, reject) => {
+        if (typeof html2canvas !== 'undefined') {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+// Fonction principale d'export
+async function exportGraphToPNG() {
+    try {
+        const graphContainer = document.getElementById('graph-container');
+        if (!graphContainer) {
+            alert('Aucun graphique à exporter');
+            return;
+        }
+
+        console.log('Début de l\'export PNG...');
+        
+        // Charger html2canvas
+        await loadHtml2Canvas();
+        
+        // Capture du graphique en haute résolution
+        const canvas = await html2canvas(graphContainer, {
+            scale: 2, // Haute résolution (2x)
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            width: graphContainer.scrollWidth,
+            height: graphContainer.scrollHeight
+        });
+
+        console.log('Graphique capturé, ajout du logo...');
+        
+        // Ajouter le logo IA-DAS
+        const finalCanvas = await addLogoToCanvas(canvas);
+        
+        console.log('Logo ajouté, téléchargement...');
+        
+        // Télécharger le fichier
+        downloadCanvas(finalCanvas, 'ia-das-graph-export.png');
+        
+    } catch (error) {
+        console.error('Erreur export:', error);
+        alert('Erreur lors de l\'export: ' + error.message);
+    }
+}
+
+// Ajouter le logo en haut à droite
+async function addLogoToCanvas(originalCanvas) {
+    return new Promise((resolve, reject) => {
+        const logoPath = '/assets/logo_IA-DAS-No-Background.png';
+        const logoImg = new Image();
+        
+        logoImg.onload = () => {
+            try {
+                // Créer nouveau canvas avec espace pour le logo
+                const finalCanvas = document.createElement('canvas');
+                const ctx = finalCanvas.getContext('2d');
+                
+                // Dimensions avec marge pour le logo
+                const margin = 30;
+                const logoSize = 100; // Taille bien visible
+                const padding = 15;
+                
+                finalCanvas.width = originalCanvas.width + margin;
+                finalCanvas.height = originalCanvas.height + margin;
+                
+                // Fond blanc
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+                
+                // Dessiner le graphique (centré avec marge)
+                ctx.drawImage(originalCanvas, margin/2, margin/2);
+                
+                // Position du logo en haut à droite
+                const logoX = finalCanvas.width - logoSize - padding;
+                const logoY = padding;
+                
+                // Dessiner le logo
+                ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+                
+                console.log(`Logo ajouté à la position (${logoX}, ${logoY})`);
+                resolve(finalCanvas);
+                
+            } catch (error) {
+                reject(error);
+            }
+        };
+        
+        logoImg.onerror = () => {
+            console.error('Impossible de charger le logo:', logoPath);
+            reject(new Error('Impossible de charger le logo IA-DAS'));
+        };
+        
+        logoImg.crossOrigin = 'anonymous'; // Pour éviter les problèmes CORS
+        logoImg.src = logoPath;
+    });
+}
+
+// Télécharger le canvas final
+function downloadCanvas(canvas, filename) {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png', 1.0); // Qualité maximale
+    
+    // Déclencher le téléchargement
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('Export terminé:', filename);
+}

@@ -151,38 +151,57 @@ static createConcreteOntologyNetwork(bindings, vars) {
       }
     }
    
-    if (vi && vd) {
-      console.log(`Création lien: ${vi} -> ${vd} (${relation})`);
-      links.push({
-        source: `factor_${vi}`,
-        target: `acad_${vd}`,
-        label: relation || 'relation',
-        type: 'factor-acad',
-        color: this.getRelationColor(relation) 
-      });
-    }
-    
-    if (vi && mediator && mediator !== 'N.A.') {
-      links.push({
-        source: `factor_${vi}`,
-        target: `mediator_${mediator}`,
-        label: 'médiateur',
-        type: 'factor-mediator',
-        color: '#f39c12'
-      });
-    }
-    
-    // Lien facteur -> modérateur
-    if (vi && moderator && moderator !== 'N.A.') {
-      links.push({
-        source: `factor_${vi}`,
-        target: `moderator_${moderator}`,
-        label: 'modérateur',
-        type: 'factor-moderator',
-        color: '#e67e22'
-      });
-    }
-    
+   // Logique conditionnelle pour créer les chemins
+if (vi && vd) {
+  const hasMediator = mediator && mediator !== 'N.A.' && mediator.trim() !== '';
+  const hasModerator = moderator && moderator !== 'N.A.' && moderator.trim() !== '';
+  
+  if (hasMediator) {
+    // Chemin : Facteur → Médiateur → ACAD
+    console.log(`Création chemin via médiateur: ${vi} -> ${mediator} -> ${vd}`);
+    links.push({
+      source: `factor_${vi}`,
+      target: `mediator_${mediator}`,
+      label: 'via médiateur',
+      type: 'factor-mediator',
+      color: '#f39c12'
+    });
+    links.push({
+      source: `mediator_${mediator}`,
+      target: `acad_${vd}`,
+      label: relation || 'relation',
+      type: 'mediator-acad',
+      color: this.getRelationColor(relation)
+    });
+  } else if (hasModerator) {
+    // Chemin : Facteur → Modérateur → ACAD
+    console.log(`Création chemin via modérateur: ${vi} -> ${moderator} -> ${vd}`);
+    links.push({
+      source: `factor_${vi}`,
+      target: `moderator_${moderator}`,
+      label: 'via modérateur',
+      type: 'factor-moderator',
+      color: '#e67e22'
+    });
+    links.push({
+      source: `moderator_${moderator}`,
+      target: `acad_${vd}`,
+      label: relation || 'relation',
+      type: 'moderator-acad',
+      color: this.getRelationColor(relation)
+    });
+  } else {
+    // Chemin direct : Facteur → ACAD
+    console.log(`Création lien direct: ${vi} -> ${vd} (${relation})`);
+    links.push({
+      source: `factor_${vi}`,
+      target: `acad_${vd}`,
+      label: relation || 'relation',
+      type: 'factor-acad',
+      color: this.getRelationColor(relation)
+    });
+  }
+}
   }); 
   
   console.log(`RÉSULTAT FINAL: ${nodes.length} nœuds, ${links.length} liens`);

@@ -1,46 +1,135 @@
-
-<!DOCTYPE html>
-<html lang="fr">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Interrogation de l'ontologie</title>
-    
-    <link rel="stylesheet" href="./input-intorregation-component/input-intorregation-component.css">
-   
-</head>
-
 <div class="input-container">
-    <h2>Interroger l'ontologie</h2>
+    <div class="header-controls">
+    </div>
+    <div id="formMode">
+        <!-- COLONNE 1: ACAD -->
+        <div class="acad-section">
+            <h3>ACAD</h3>
 
-    
-    
-    <select id="gender">
-        <option value="">-- Choisissez le sexe --</option>
-        <option value="female">Femme</option>
-        <option value="male">Homme</option>
-        <option value="mixed">Mixte</option>
-    </select>
+            <!-- NOUVEAU: Sélecteur de catégorie pour VD -->
+            <div class="variable-row">
+                <label for="categoryVD">Catégorie ACAD :</label>
+                <select id="categoryVD">
+                    <option value="">Toutes les catégories</option>
+                </select>
+            </div>
 
-    <input type="number" 
-       id="minAge" 
-       placeholder="Âge minimum" 
-       min="0" 
-       max="120">
+            <div class="variable-row">
+                <label for="variableVD">ACAD :</label>
+                <div class="autocomplete-container">
+                    <input type="text" id="variableVD" placeholder="Tapez pour rechercher un ACAD..." disabled>
+                    <div class="autocomplete-dropdown" id="variableVD-dropdown"></div>
+                </div>
+            </div>
+        </div>
 
-    <select id="EOF">
-        <option value="">-- Choisissez la fréquence d'exercie --</option>
-    
-    </select>
+        <!-- COLONNE 2: Facteurs -->
+        <!-- COLONNE 2: Facteurs -->
+        <div class="factors-section">
+            <h3>Variable</h3>
 
-    <select id="SportType">
-        <option value="">-- Choisissez le type de sport --</option>
-    </select>
+            <!-- NOUVEAU: Sélecteur de catégorie pour VI -->
+            <div class="variable-row">
+                <label for="categoryVI">Catégorie Variable :</label>
+                <select id="categoryVI">
+                    <option value="">Toutes les catégories</option>
+                </select>
+            </div>
 
+            <div class="variable-row">
+                <label for="variableVI">Facteur :</label>
+                <div class="autocomplete-container">
+                    <input type="text" id="variableVI" placeholder="Tapez pour rechercher un facteur..." disabled>
+                    <div class="autocomplete-dropdown" id="variableVI-dropdown"></div>
+                </div>
+            </div>
+        </div>
 
+        <!-- COLONNE 3: Type de relations -->
+        <div class="relations-section">
+            <h3>Type de relations</h3>
 
-    <br><br>
-    <button onclick="rechercher()">Rechercher</button>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="positive" name="relationDirection" value="+">
+                    <label for="positive">Protecteur</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="negative" name="relationDirection" value="-">
+                    <label for="negative">À risque</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="non-significant" name="relationDirection" value="NS">
+                    <label for="non-significant">Ambigu</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="non-significant" name="relationDirection" value="NS">
+                    <label for="non-significant">None</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLONNE 4: Caractéristiques des populations -->
+        <div class="demographics-section">
+            <h3>Caractéristiques des populations étudiées</h3>
+
+            <div class="demographics-grid">
+                <select id="gender">
+                    <option value="">Sexe</option>
+                    <option value="female">Femme</option>
+                    <option value="male">Homme</option>
+                    <option value="mixed">Mixte</option>
+                </select>
+
+                <input type="number" id="minAge" placeholder="Âge" min="0" max="120">
+
+                <div class="autocomplete-container">
+                    <input type="text" id="sportType" placeholder="Chargement des sports..." disabled>
+                    <div class="autocomplete-dropdown" id="sportType-dropdown"></div>
+                </div>
+
+                <select id="experienceYears">
+                    <option value="">Fréquence de pratique</option>
+                    <option value="0-2">0-2 ans</option>
+                    <option value="3-5">3-5 ans</option>
+                    <option value="6-10">6-10 ans</option>
+                    <option value="10+">10+ ans</option>
+                </select>
+
+                <select id="sportLevel">
+                    <option value="">Années d'expérience</option>
+                    <option value="amateur">Amateur</option>
+                </select>
+
+                
+            </div>
+        </div>
+
+        <div class="search-section">
+            <button id="searchBtn" disabled>Rechercher</button>
+        </div>
+    </div>
+
+    <div id="sparqlMode" style="display: none;">
+        <div class="sparql-editor">
+            <h3>Éditeur SPARQL</h3>
+
+            <div class="sparql-controls">
+                <button id="loadExample" class="sparql-btn">Exemple</button>
+                <button id="clearQuery" class="sparql-btn">Effacer</button>
+            </div>
+
+            <textarea id="sparqlQuery" placeholder="PREFIX : <http://example.org/onto#>
+PREFIX ex: <http://example.org/data#>
+
+SELECT * WHERE {
+  ?s ?p ?o
+} 
+LIMIT 10" rows="8"></textarea>
+
+            <div class="query-validation" id="queryValidation"></div>
+
+            <button id="executeSparql" class="execute-btn">▶ Exécuter la requête</button>
+        </div>
+    </div>
 </div>
-
-</html>

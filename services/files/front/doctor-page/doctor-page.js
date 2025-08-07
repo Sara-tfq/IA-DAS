@@ -217,10 +217,31 @@ function displayTableView() {
 function displayGraphView() {
     const displayDiv = document.getElementById('result-display');
     
+    const exportButton = `
+        <div style="margin-bottom: 15px;">
+            <button id="exportGraph" style="
+                background: #007bff; 
+                color: white; 
+                border: none; 
+                padding: 10px 20px; 
+                border-radius: 5px; 
+                cursor: pointer;
+                font-size: 14px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            ">
+                📥 Exporter PNG avec logo IA-DAS
+            </button>
+        </div>
+    `;
+    
     try {
-        displayDiv.innerHTML = '';
-        const graphComponent = new OntologyGraphComponent(displayDiv, currentData);
+        displayDiv.innerHTML = exportButton + '<div id="graph-container"></div>';
+        const graphContainer = document.getElementById('graph-container');
+        const graphComponent = new OntologyGraphComponent(graphContainer, currentData);
         graphComponent.render();
+        
+        // Événement d'export
+        document.getElementById('exportGraph').onclick = () => exportGraphToPNG();
     } catch (error) {
         console.error('Erreur graphique:', error);
         displayDiv.innerHTML = '<p>Erreur lors de l\'affichage du graphique</p>';
