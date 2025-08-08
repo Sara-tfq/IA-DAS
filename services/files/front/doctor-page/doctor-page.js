@@ -48,6 +48,8 @@ async function rechercher(data) {
             ...(data.variableType && { variableType: data.variableType }),
             ...(data.selectedVI && { selectedVI: data.selectedVI }),
             ...(data.selectedVD && { selectedVD: data.selectedVD }),
+            ...(data.categoryVI && { categoryVI: data.categoryVI }),        // ← NOUVEAU
+            ...(data.categoryVD && { categoryVD: data.categoryVD }),        // ← NOUVEAU
             ...(data.factorType && { factorType: data.factorType }),
             ...(data.factorCategory && { factorCategory: data.factorCategory }),
             ...(data.sportType && { sportType: data.sportType }),
@@ -70,7 +72,6 @@ async function rechercher(data) {
         const data = await response.json();
         console.log("Réponse API:", data);
         
-        // Afficher les résultats
         displayResults(data);
         
     } catch (err) {

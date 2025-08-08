@@ -456,25 +456,26 @@ class InputInterrogationComponent extends HTMLElement {
     }
 
     handleSearch() {
-        const searchData = {
-            selectedVI: this.querySelector('#variableVI').value,
-            selectedVD: this.querySelector('#variableVD').value,
-            gender: this.querySelector('#gender').value,
-            minAge: this.querySelector('#minAge').value,
-            sportLevel: this.querySelector('#sportLevel').value,
-            relationDirection: this.querySelector('input[name="relationDirection"]:checked')?.value || '',
+    const searchData = {
+        selectedVI: this.querySelector('#variableVI').value,
+        selectedVD: this.querySelector('#variableVD').value,
+        categoryVI: this.querySelector('#categoryVI').value,      // ← NOUVEAU
+        categoryVD: this.querySelector('#categoryVD').value,      // ← NOUVEAU
+        gender: this.querySelector('#gender').value,
+        minAge: this.querySelector('#minAge').value,
+        sportLevel: this.querySelector('#sportLevel').value,
+        relationDirection: this.querySelector('input[name="relationDirection"]:checked')?.value || '',
+        sportType: this.querySelector('#sportType').value,
+        experienceYears: this.querySelector('#experienceYears').value,
+        queryType: 'variable_relation'
+    };
 
-            sportType: this.querySelector('#sportType').value,
-            experienceYears: this.querySelector('#experienceYears').value,
-            queryType: 'variable_relation'
-        };
+    console.log("Recherche avec critères:", searchData);
 
-        console.log("Recherche avec critères:", searchData);
-
-        this.dispatchEvent(new CustomEvent('search', {
-            detail: searchData
-        }));
-    }
+    this.dispatchEvent(new CustomEvent('search', {
+        detail: searchData
+    }));
+}
 
     // SPARQL methods
     loadExampleQuery() {
