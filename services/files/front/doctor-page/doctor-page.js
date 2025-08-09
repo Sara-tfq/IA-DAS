@@ -4,8 +4,44 @@ let currentMode = 'table';
 
 console.log("Script principal chargé !");
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log("Page prête !");
+    
+    // ✅ CHANGEMENT : Utiliser des chemins Excel au lieu de CSV
+    const excelPaths = [
+        './data/IA-DAS-Data1.xlsx',     // ✅ Nouveau chemin Excel
+        './../data/IA-DAS-Data1.xlsx'   // ✅ Chemin alternatif
+    ];
+    
+    let excelLoaded = false;
+    for (const excelPath of excelPaths) {
+        try {
+            console.log(`🔍 Tentative chargement Excel: ${excelPath}`);
+            
+            // ✅ CHANGEMENT : Utiliser window.csvLoader (qui pointe vers ExcelLoader)
+            if (window.csvLoader && typeof window.csvLoader.loadExcelData === 'function') {
+                const excelData = await window.csvLoader.loadExcelData(excelPath);
+                if (excelData && excelData.length > 0) {
+                    console.log(`✅ Excel chargé avec succès: ${excelData.length} analyses depuis ${excelPath}`);
+                    excelLoaded = true;
+                    break;
+                }
+            } else {
+                console.log(`⏳ ExcelLoader pas encore disponible, attente...`);
+                // Attendre que ExcelLoader soit disponible
+                await new Promise(resolve => setTimeout(resolve, 100));
+                continue;
+            }
+        } catch (error) {
+            console.log(`❌ Échec chargement ${excelPath}:`, error.message);
+        }
+    }
+    
+    if (!excelLoaded) {
+        console.error("❌ Aucun fichier Excel trouvé ! Vérifiez le nom et l'emplacement du fichier.");
+        console.log("📁 Fichiers tentés:", excelPaths);
+        console.log("💡 Astuce: Assurez-vous d'avoir converti IA-DAS-Data1.csv en IA-DAS-Data1.xlsx");
+    }
     
     // Attendre un peu que le composant soit initialisé
     setTimeout(() => {
@@ -48,8 +84,8 @@ async function rechercher(data) {
             ...(data.variableType && { variableType: data.variableType }),
             ...(data.selectedVI && { selectedVI: data.selectedVI }),
             ...(data.selectedVD && { selectedVD: data.selectedVD }),
-            ...(data.categoryVI && { categoryVI: data.categoryVI }),        // ← NOUVEAU
-            ...(data.categoryVD && { categoryVD: data.categoryVD }),        // ← NOUVEAU
+            ...(data.categoryVI && { categoryVI: data.categoryVI }),
+            ...(data.categoryVD && { categoryVD: data.categoryVD }),
             ...(data.factorType && { factorType: data.factorType }),
             ...(data.factorCategory && { factorCategory: data.factorCategory }),
             ...(data.sportType && { sportType: data.sportType }),
@@ -79,35 +115,6 @@ async function rechercher(data) {
         document.getElementById('results').textContent = "Erreur : " + err.message;
     }
 }
-
-
-// async function rechercher(data) {
-//     console.log("=== RECHERCHE APPELÉE ===");
-//     console.log("Données:", data);
-    
-//     try {
-//         // Générer la requête SPARQL
-//         const sparqlQuery = generateSparqlQuery(data);
-        
-//         const response = await fetch('http://localhost:8003', {
-//             method: 'POST',
-//             headers: { 'Content-Type': 'application/json' },
-//             body: JSON.stringify(data)
-//         });
-
-//         if (!response.ok) throw new Error("Erreur HTTP " + response.status);
-
-//         const responseData = await response.json();
-//         console.log("Réponse API:", responseData);
-        
-//         // Passer aussi la requête pour l'affichage SPARQL
-//         displayResults(responseData, sparqlQuery);
-        
-//     } catch (err) {
-//         console.error("Erreur API:", err);
-//         document.getElementById('results').textContent = "Erreur : " + err.message;
-//     }
-// }
 
 function displayResults(data, query = null) {
     currentData = data;

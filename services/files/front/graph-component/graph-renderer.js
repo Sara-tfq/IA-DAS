@@ -1,5 +1,5 @@
 // Moteur de rendu D3.js pour graphe réseau ontologique
-// C'est ici ou la visualisation est créée et gérée.
+// Modifié pour utiliser les couleurs du parser + panneau latéral + liens courbés + chargement forcé Excel
 
 class GraphRenderer {
 
@@ -46,31 +46,48 @@ class GraphRenderer {
     const nodes = [...networkData.nodes]; // Copie pour D3
     const links = [...networkData.links]; // Copie pour D3
 
-    console.log('Rendu du graphe réseau:', { nodes: nodes.length, links: links.length });
+    console.log('🎨 Rendu du graphe avec liens courbés:', { nodes: nodes.length, links: links.length });
+    
+    // Debug : Afficher les nœuds avec leur taille
+    nodes.forEach(node => {
+      console.log(`🎨 Nœud "${node.label}" (${node.type}) -> Couleur: ${node.color}, Taille: ${node.size}, Analyses: ${node.analyses ? node.analyses.length : 'N/A'}`);
+    });
+
+    // Debug : Afficher les couleurs des liens
+    links.forEach(link => {
+      console.log(`🔗 Lien "${link.label}" -> Couleur: ${link.color}`);
+    });
+
+    // 🆕 NOUVELLE LOGIQUE : Calculer les courbes pour liens multiples
+    const processedLinks = this.calculateLinkCurves(links);
 
     // Créer la simulation de force
     this.simulation = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(links).id(d => d.id).distance(100))
-      .force('charge', d3.forceManyBody().strength(-300))
+      .force('link', d3.forceLink(processedLinks).id(d => d.id).distance(120))
+      .force('charge', d3.forceManyBody().strength(-400))
       .force('center', d3.forceCenter(this.width / 2, this.height / 2))
-      .force('collision', d3.forceCollide().radius(d => d.size + 5));
+      .force('collision', d3.forceCollide().radius(d => d.size + 10));
 
-    // Dessiner les liens
+    // 🆕 DESSINER LES LIENS COURBÉS au lieu de lignes droites
     const link = this.g.append('g')
       .attr('class', 'links')
-      .selectAll('line')
-      .data(links)
-      .enter().append('line')
+      .selectAll('path') // ← CHANGEMENT : path au lieu de line
+      .data(processedLinks)
+      .enter().append('path')
       .attr('class', 'link')
-      .style('stroke', '#aaa')
-      .style('stroke-width', 2)
-      .style('opacity', 0.7);
+      .style('fill', 'none')
+      .style('stroke', d => {
+        console.log(`🔗 Application couleur lien: ${d.color}`);
+        return d.color || '#aaa'; // Utiliser la couleur du parser ou gris par défaut
+      })
+      .style('stroke-width', 3) // Plus épais pour mieux voir les couleurs
+      .style('opacity', 0.8);
 
-    // Labels des liens
+    // Labels des liens (repositionnés pour les courbes)
     const linkLabels = this.g.append('g')
       .attr('class', 'link-labels')
       .selectAll('text')
-      .data(links)
+      .data(processedLinks)
       .enter().append('text')
       .attr('class', 'link-label')
       .style('font-size', '10px')
@@ -79,7 +96,7 @@ class GraphRenderer {
       .style('pointer-events', 'none')
       .text(d => d.label);
 
-    // Dessiner les nœuds
+    // Dessiner les nœuds AVEC les couleurs du parser
     const node = this.g.append('g')
       .attr('class', 'nodes')
       .selectAll('g')
@@ -91,55 +108,17 @@ class GraphRenderer {
         .on('drag', (event, d) => this.dragged(event, d))
         .on('end', (event, d) => this.dragended(event, d)));
 
-    // Formes des nœuds selon le type
-   // Formes des nœuds selon le type
-node.append('circle')
-  .attr('r', d => d.size)
-  .style('fill', d => {
-    // ACAD en rouge
-    if (d.type === 'acad' || d.type === 'VD' || d.label.toLowerCase().includes('acad') || d.property === 'VD') {
-      return '#DC143C'; // Rouge
-    }
-    
-    // Facteurs (VI) en différents bleus selon la catégorie
-    if (d.type === 'factor' || d.type === 'VI' || d.property === 'VI') {
-      // Vérifier la catégorie du facteur
-      if (d.category || d.factorCategory) {
-        const category = (d.category || d.factorCategory).toLowerCase();
-        
-        if (category.includes('intrapersonal')) {
-          return '#000080'; // Bleu foncé
-        }
-        if (category.includes('interpersonal')) {
-          return '#4169E1'; // Bleu royal
-        }
-        if (category.includes('socio-environmental') || category.includes('environmental')) {
-          return '#1E90FF'; // Bleu dodger
-        }
-        if (category.includes('other') || category.includes('behavior')) {
-          return '#87CEEB'; // Bleu ciel
-        }
-      }
-      
-      // Bleu par défaut pour les facteurs sans catégorie
-      return '#4682B4'; // Bleu acier
-    }
-    
-    // Médiateurs en jaune
-    if (d.type === 'mediator' || d.label.toLowerCase().includes('mediator') || d.property === 'mediator') {
-      return '#FFD700'; // Jaune
-    }
-    
-    // Modérateurs en orange
-    if (d.type === 'moderator' || d.label.toLowerCase().includes('moderator') || d.property === 'moderator') {
-      return '#FF8C00'; // Orange
-    }
-    
-    // Couleur par défaut pour les autres types
-    return d.color || '#808080'; // Gris par défaut
-  })
-  .style('stroke', '#fff')
-  .style('stroke-width', d => d.type === 'entity' ? 3 : 2);
+    // Cercles des nœuds avec couleurs du parser
+    node.append('circle')
+      .attr('r', d => d.size)
+      .style('fill', d => {
+        console.log(`🎨 Application couleur nœud "${d.label}": ${d.color}`);
+        return d.color || '#808080'; // Utiliser la couleur du parser ou gris par défaut
+      })
+      .style('stroke', '#fff')
+      .style('stroke-width', d => d.type === 'entity' ? 3 : 2)
+      .style('cursor', 'pointer'); // ← NOUVEAU : Indique que c'est cliquable
+
     // Labels des nœuds
     const nodeLabels = this.g.append('g')
       .attr('class', 'node-labels')
@@ -154,35 +133,304 @@ node.append('circle')
       .style('pointer-events', 'none')
       .text(d => this.truncateLabel(d.label, 40));
 
-    // Tooltip
+    // Tooltip amélioré avec catégories et instruction
     node.on('mouseover', (event, d) => this.showTooltip(event, d))
       .on('mouseout', () => this.hideTooltip());
 
-    // Double-clic pour fixer/libérer un nœud
+    // 🆕 DOUBLE-CLIC pour ouvrir le panneau latéral
     node.on('dblclick', (event, d) => {
-      d.fx = d.fx ? null : d.x;
-      d.fy = d.fy ? null : d.y;
-      this.simulation.alpha(0.3).restart();
+      console.log(`📋 Double-clic sur nœud: ${d.label}`);
+      
+      // Empêcher les autres comportements
+      event.stopPropagation();
+      event.preventDefault();
+      
+      // Ouvrir le panneau avec les données
+      this.openAnalysisPanel(d);
     });
 
-    // Mise à jour des positions à chaque tick
+    // 🔄 SIMPLE CLIC pour fixer/libérer un nœud (modifié)
+    node.on('click', (event, d) => {
+      // Délai pour distinguer simple clic du double-clic
+      setTimeout(() => {
+        if (event.detail === 1) { // Simple clic seulement
+          d.fx = d.fx ? null : d.x;
+          d.fy = d.fy ? null : d.y;
+          this.simulation.alpha(0.3).restart();
+          console.log(`📌 Nœud ${d.fx ? 'fixé' : 'libéré'}: ${d.label}`);
+        }
+      }, 200);
+    });
+
+    // 🆕 NOUVELLE LOGIQUE : Mise à jour avec chemins courbés
     this.simulation.on('tick', () => {
-      link
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
+      // Mettre à jour les chemins courbés
+      link.attr('d', d => this.createCurvedPath(d));
 
+      // Mettre à jour les labels sur les courbes
       linkLabels
-        .attr('x', d => (d.source.x + d.target.x) / 2)
-        .attr('y', d => (d.source.y + d.target.y) / 2);
+        .attr('x', d => this.getCurveMidpoint(d).x)
+        .attr('y', d => this.getCurveMidpoint(d).y);
 
+      // Mettre à jour les nœuds
       node.attr('transform', d => `translate(${d.x},${d.y})`);
       nodeLabels.attr('transform', d => `translate(${d.x},${d.y + d.size + 15})`);
     });
   }
 
-  // Fonctions de drag
+  // 🆕 NOUVELLE FONCTION : Calculer les courbes pour liens multiples
+  calculateLinkCurves(links) {
+    // Grouper les liens par paire source-target
+    const linkGroups = new Map();
+    
+    links.forEach(link => {
+      const key = `${link.source}_${link.target}`;
+      const reverseKey = `${link.target}_${link.source}`;
+      
+      // Utiliser la clé dans un sens cohérent
+      const groupKey = key < reverseKey ? key : reverseKey;
+      
+      if (!linkGroups.has(groupKey)) {
+        linkGroups.set(groupKey, []);
+      }
+      linkGroups.get(groupKey).push(link);
+    });
+
+    // Assigner des courbes à chaque groupe
+    const processedLinks = [];
+    
+    linkGroups.forEach((groupLinks, groupKey) => {
+      const linkCount = groupLinks.length;
+      
+      groupLinks.forEach((link, index) => {
+        // Calculer l'offset de courbe
+        let curveOffset = 0;
+        
+        if (linkCount > 1) {
+          // Répartir les liens autour de la ligne droite
+          const step = 60 / (linkCount - 1); // 60 pixels d'étalement maximum
+          curveOffset = (index - (linkCount - 1) / 2) * step;
+        }
+        
+        processedLinks.push({
+          ...link,
+          curveOffset: curveOffset,
+          linkIndex: index,
+          totalLinks: linkCount
+        });
+        
+        console.log(`🔗 Lien ${link.label}: offset ${curveOffset}, groupe de ${linkCount} liens`);
+      });
+    });
+
+    return processedLinks;
+  }
+
+  // 🆕 NOUVELLE FONCTION : Créer un chemin courbé
+  createCurvedPath(d) {
+    const sourceX = d.source.x;
+    const sourceY = d.source.y;
+    const targetX = d.target.x;
+    const targetY = d.target.y;
+    
+    // Si pas de courbe, ligne droite
+    if (!d.curveOffset || d.curveOffset === 0) {
+      return `M${sourceX},${sourceY}L${targetX},${targetY}`;
+    }
+    
+    // Calculer le point de contrôle pour la courbe
+    const midX = (sourceX + targetX) / 2;
+    const midY = (sourceY + targetY) / 2;
+    
+    // Vecteur perpendiculaire pour l'offset
+    const dx = targetX - sourceX;
+    const dy = targetY - sourceY;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    
+    if (length === 0) return `M${sourceX},${sourceY}L${targetX},${targetY}`;
+    
+    // Point de contrôle décalé perpendiculairement
+    const offsetX = midX + (-dy / length) * d.curveOffset;
+    const offsetY = midY + (dx / length) * d.curveOffset;
+    
+    // Créer une courbe quadratique
+    return `M${sourceX},${sourceY}Q${offsetX},${offsetY} ${targetX},${targetY}`;
+  }
+
+  // 🆕 NOUVELLE FONCTION : Point milieu d'une courbe
+  getCurveMidpoint(d) {
+    const sourceX = d.source.x;
+    const sourceY = d.source.y;
+    const targetX = d.target.x;
+    const targetY = d.target.y;
+    
+    if (!d.curveOffset || d.curveOffset === 0) {
+      return {
+        x: (sourceX + targetX) / 2,
+        y: (sourceY + targetY) / 2
+      };
+    }
+    
+    // Calculer le point milieu de la courbe
+    const midX = (sourceX + targetX) / 2;
+    const midY = (sourceY + targetY) / 2;
+    
+    const dx = targetX - sourceX;
+    const dy = targetY - sourceY;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    
+    if (length === 0) return { x: midX, y: midY };
+    
+    const offsetX = midX + (-dy / length) * d.curveOffset * 0.5; // Milieu de la courbe
+    const offsetY = midY + (dx / length) * d.curveOffset * 0.5;
+    
+    return { x: offsetX, y: offsetY };
+  }
+
+  // 🆕 NOUVELLE FONCTION : Ouvrir le panneau latéral avec toutes les analyses
+  openAnalysisPanel(nodeData) {
+    console.log(`📋 Ouverture panneau pour nœud: ${nodeData.label}`);
+    console.log(`📊 Analyses liées: ${nodeData.analyses ? nodeData.analyses.length : 0}`);
+    
+    // Vérifier que le panneau est disponible
+    if (typeof window.analysisPanel === 'undefined') {
+      console.error('❌ AnalysisPanel non disponible ! Assurez-vous qu\'il est chargé.');
+      alert('Erreur: Le panneau d\'analyse n\'est pas disponible.\n\nVérifiez que analysis-panel.js est chargé.');
+      return;
+    }
+
+    // Récupérer TOUTES les données d'analyses pour ce nœud
+    this.getAllAnalysesData(nodeData).then(allAnalysesData => {
+      // Ouvrir le panneau avec toutes les analyses
+      window.analysisPanel.openMultipleAnalyses(nodeData.label, allAnalysesData);
+    });
+  }
+
+  // 🆕 NOUVELLE FONCTION : Récupérer TOUTES les données d'analyses d'un nœud (async)
+  async getAllAnalysesData(nodeData) {
+    console.log(`🔍 Récupération de toutes les analyses pour: ${nodeData.label}`);
+    
+    const allAnalyses = [];
+    
+    if (nodeData.analyses && nodeData.analyses.length > 0) {
+      for (const analysisId of nodeData.analyses) {
+        const analysisData = await this.getAnalysisData(analysisId);
+        allAnalyses.push(analysisData);
+      }
+    }
+    
+    console.log(`✅ ${allAnalyses.length} analyses récupérées pour ${nodeData.label}`);
+    return allAnalyses;
+  }
+
+  // 🆕 FONCTION AVEC CHARGEMENT FORCÉ : Récupérer les données d'UNE analyse
+  async getAnalysisData(analysisId) {
+    console.log(`🔍 Récupération données pour analyse: ${analysisId}`);
+    
+    // ✅ FORCER LE CHARGEMENT EXCEL SI NÉCESSAIRE
+    if (!window.csvLoader?.isCSVLoaded()) {
+      console.log("🔄 Forçage du chargement Excel...");
+      return await this.loadExcelAndGetAnalysis(analysisId);
+    }
+
+    // Chercher dans le CSV
+    const csvRow = window.csvLoader.findAnalysisById(analysisId);
+    
+    if (csvRow) {
+      console.log(`✅ Données trouvées pour analyse ${analysisId}:`, csvRow);
+      
+      return {
+        id: analysisId,
+        title: csvRow['Title'] || `Analyse ${analysisId}`,
+        vi: csvRow['VI'] || 'N/A',
+        vd: csvRow['VD'] || csvRow['ACADS'] || 'N/A',
+        relation: csvRow['Resultat_de_relation'] || csvRow['Degre_de_relation'] || 'N/A',
+        moderator: csvRow['Moderator'] || 'N/A',
+        mediator: csvRow['Mediator'] || 'N/A',
+        categoryVI: csvRow['sub-class_Final_VI'] || 'N/A',
+        categoryVD: csvRow['sub-class_Final_VD'] || 'N/A',
+        rawData: csvRow 
+      };
+    } else {
+      console.log(`⚠️ Données non trouvées pour analyse ${analysisId}`);
+      return this.createErrorAnalysis(analysisId, 'Données non trouvées');
+    }
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Charger Excel et récupérer l'analyse
+  async loadExcelAndGetAnalysis(analysisId) {
+    try {
+      console.log("⏳ Chargement Excel en cours...");
+      
+      // Tester différents chemins
+      const paths = [
+        './data/IA-DAS-Data1.xlsx',
+        'data/IA-DAS-Data1.xlsx',
+        '../data/IA-DAS-Data1.xlsx'
+      ];
+      
+      let data = null;
+      for (const path of paths) {
+        try {
+          console.log(`🔍 Test chemin Excel: ${path}`);
+          data = await window.excelLoader.loadExcelData(path);
+          if (data && data.length > 0) {
+            console.log(`✅ Excel chargé avec succès: ${data.length} analyses depuis ${path}`);
+            break;
+          }
+        } catch (pathError) {
+          console.log(`❌ Échec ${path}:`, pathError.message);
+        }
+      }
+      
+      if (data && data.length > 0) {
+        // Maintenant chercher l'analyse
+        const csvRow = window.csvLoader.findAnalysisById(analysisId);
+        
+        if (csvRow) {
+          console.log(`✅ Analyse ${analysisId} trouvée après chargement Excel:`, csvRow);
+          return {
+            id: analysisId,
+            title: csvRow['Title'] || `Analyse ${analysisId}`,
+            vi: csvRow['VI'] || 'N/A',
+            vd: csvRow['VD'] || csvRow['ACADS'] || 'N/A',
+            relation: csvRow['Resultat_de_relation'] || 'N/A',
+            moderator: csvRow['Moderator'] || 'N/A',
+            mediator: csvRow['Mediator'] || 'N/A',
+            rawData: csvRow
+          };
+        }
+      }
+    } catch (error) {
+      console.error("❌ Erreur chargement Excel:", error);
+    }
+    
+    return this.createErrorAnalysis(analysisId, 'Chargement Excel échoué');
+  }
+
+  // Méthode utilitaire pour créer une analyse d'erreur
+  createErrorAnalysis(analysisId, errorMessage) {
+    return {
+      id: analysisId,
+      title: `Analyse ${analysisId}`,
+      vi: 'N/A',
+      vd: 'N/A',
+      relation: 'N/A',
+      moderator: 'N/A',
+      mediator: 'N/A',
+      categoryVI: 'N/A',
+      categoryVD: 'N/A',
+      error: errorMessage,
+      rawData: {
+        Analysis_ID: analysisId,
+        Title: `Analyse ${analysisId} (erreur)`,
+        Authors: 'Données non disponibles',
+        Year: 'N/A'
+      }
+    };
+  }
+
+  // Fonctions de drag (inchangées)
   dragstarted(event, d) {
     if (!event.active) this.simulation.alphaTarget(0.3).restart();
     d.fx = d.x;
@@ -196,7 +444,7 @@ node.append('circle')
 
   dragended(event, d) {
     if (!event.active) this.simulation.alphaTarget(0);
-    // Ne pas libérer automatiquement - laisser l'utilisateur double-cliquer
+    // Ne pas libérer automatiquement - laisser l'utilisateur cliquer
   }
 
   truncateLabel(text, maxLength) {
@@ -221,8 +469,10 @@ node.append('circle')
 
     let tooltipText = `<strong>${d.label}</strong><br/>`;
     tooltipText += `Type: ${d.type}<br/>`;
-    if (d.property) tooltipText += `Propriété: ${d.property}<br/>`;
-    tooltipText += `ID: ${d.id}`;
+    if (d.category) tooltipText += `Catégorie: ${d.category}<br/>`;
+    if (d.analyses) tooltipText += `Analyses: ${d.analyses.length}<br/>`;
+    else if (d.analysisId) tooltipText += `Analyse: ${d.analysisId}<br/>`;
+    tooltipText += `<em>Double-clic pour ouvrir le panneau</em>`;
 
     tooltip.html(tooltipText)
       .style('left', (event.pageX + 10) + 'px')
@@ -246,18 +496,47 @@ node.append('circle')
       .attr('class', 'graph-controls')
       .style('margin-bottom', '10px');
 
+    // Légende des couleurs
+    this.addColorLegend(controls);
 
+    // Instructions d'interaction
+    this.addInteractionInstructions(controls);
 
     // Informations
     controls.append('span')
       .style('margin-left', '20px')
       .text(`${this.parsedData.networkData.nodes.length} nœuds, ${this.parsedData.networkData.links.length} liens`);
+  }
 
-    // Instructions
+  addColorLegend(controls) {
+    const legend = controls.append('div')
+      .style('margin-bottom', '10px')
+      .style('font-size', '12px');
+
+    legend.append('strong').text('Légende: ');
+
+    // Légende relations
+    legend.append('span')
+      .style('margin-left', '10px')
+      .html('🔗 <span style="color: #E53E3E;">■</span> Risque (+) ' +
+            '<span style="color: #38A169;">■</span> Protecteur (-) ' +
+            '<span style="color: #718096;">■</span> Non significatif (NS)');
+
+    // Légende types de nœuds
+    legend.append('div')
+      .style('margin-top', '5px')
+      .html('🎯 <span style="color: #C62828;">●</span> ACAD ' +
+            '<span style="color: #1565C0;">●</span> Facteurs ' +
+            '<span style="color: #FFD700;">●</span> Médiateurs ' +
+            '<span style="color: #FF8C00;">●</span> Modérateurs');
+  }
+
+  addInteractionInstructions(controls) {
     controls.append('div')
       .style('font-size', '11px')
       .style('color', '#666')
       .style('margin-top', '5px')
-      .text('Glissez pour déplacer • Double-clic pour fixer • Molette pour zoomer');
+      .style('font-weight', 'bold')
+      .html('💡 <strong>Double-clic sur un nœud</strong> pour ouvrir le panneau • <strong>Chargement Excel automatique</strong> • Taille = nombre d\'analyses');
   }
 }

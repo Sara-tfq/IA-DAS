@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./doctor-page/doctor-page.css">
     <link rel="stylesheet" href="./input-intorregation-component/input-intorregation-component.css">
     <link rel="stylesheet" href="./graph-component/graph-component.css">
+    <link rel="stylesheet" href="./analysis-panel/analysis-panel.css">
 </head>
 
 <header>
@@ -22,30 +23,37 @@
         <button id="query3" onclick="interrogerFuseki('query3')">Requête 3</button>
     </div> -->
 
-
-    
-
     <div class="content-container">
         <input-intorregation-component></input-intorregation-component>
        
-<div id="results">
-  
-    <div id="result-controls" style="display: none; margin-bottom: 20px;">
-        <button id="viewTable" class="view-btn active">Tableau</button>
-        <button id="viewGraph" class="view-btn">Graphique</button>
-        <button id="viewSparql" class="view-btn">SPARQL</button>
+        <div id="results">
+            <div id="result-controls" style="display: none; margin-bottom: 20px;">
+                <button id="viewTable" class="view-btn active">Tableau</button>
+                <button id="viewGraph" class="view-btn">Graphique</button>
+                <button id="viewSparql" class="view-btn">SPARQL</button>
+            </div>
+            
+            <div id="result-display"></div>
+        </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+
+
+    <!-- ✅ ORDRE CORRIGÉ : Excel-loader EN PREMIER -->
+    <script src="./data/excel-loader.js"></script>
     
-    <div id="result-display"></div>
-</div>
-
-    </div>
-
-    <script src="./input-intorregation-component/input-intorregation-component.js"></script>
+    <!-- ✅ Puis D3.js (requis par graph-renderer) -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- ✅ Puis les composants qui utilisent window.csvLoader -->
+    <script src="./analysis-panel/analysis-panel.js"></script>
     <script src="./graph-component/graph-component.js"></script>
     <script src="./graph-component/data-parser.js"></script>
     <script src="./graph-component/graph-renderer.js"></script>
+    
+    <!-- ✅ Puis les autres composants -->
+    <script src="./input-intorregation-component/input-intorregation-component.js"></script>
     <script src="./doctor-page/doctor-page.js"></script>
    
 </body>

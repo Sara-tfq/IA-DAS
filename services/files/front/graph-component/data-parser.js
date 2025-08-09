@@ -1,8 +1,28 @@
-// Parser pour affichage ontologique concret et compréhensible
-// Ce code est la pour "Traduire" les données si y'en besoin, pas exemple + devient à risque, - devient protecteur, etc.
-
+// Parser pour affichage ontologique avec filtrage intelligent des liens
 class SPARQLDataParser {
   
+  // Palettes de couleurs par catégorie
+  static acadColorPalette = {
+    "DEAB": "#C62828",        // Rouge foncé pour DEAB
+    "Multiple": "#EF5350",    // Rouge moyen pour Multiple
+    "default": "#F44336"      // Rouge par défaut
+  };
+
+  static factorColorPalette = {
+    "Interpersonal factor related to DEAB": "#0D47A1",    // Bleu très foncé
+    "Intrapersonal factor related to DEAB": "#1565C0",    // Bleu foncé
+    "Other behaviors": "#1976D2",                          // Bleu moyen
+    "Sociocultural factor related to DEAB": "#42A5F5",    // Bleu clair
+    "default": "#64B5F6"                                   // Bleu très clair par défaut
+  };
+
+  static relationColorPalette = {
+    "+": "#E53E3E",          // Rouge pour risque
+    "-": "#38A169",          // Vert pour protecteur
+    "NS": "#718096",         // Gris pour non significatif
+    "default": "#A0AEC0"     // Gris clair par défaut
+  };
+
   static parse(sparqlData) {
     if (!sparqlData || !sparqlData.results || !sparqlData.results.bindings) {
       throw new Error('Format de données SPARQL invalide');
@@ -55,162 +75,303 @@ class SPARQLDataParser {
     
     return value;
   }
-  
-  
-static createConcreteOntologyNetwork(bindings, vars) {
-  const nodes = [];
-  const links = [];
-  const nodeMap = new Map();
-  
-  console.log("=== DEBUG PARSER ===");
-  console.log("Variables disponibles:", vars);
-  console.log("Nombre de résultats:", bindings.length);
-  
-  if (bindings.length > 0) {
-    console.log("Premier résultat:", bindings[0]);
-    Object.keys(bindings[0]).forEach(key => {
-      const value = this.parseValue(bindings[0][key]);
-      console.log(`${key}: ${value}`);
-    });
-  }
-  
-  bindings.forEach((binding, index) => {
-    console.log(`\n--- Résultat ${index + 1} ---`);
-    
-    const vi = binding.vi ? this.parseValue(binding.vi) : null;
-    const vd = binding.vd ? this.parseValue(binding.vd) : null;
-    const mediator = binding.mediator ? this.parseValue(binding.mediator) : null;
-    const moderator = binding.moderator ? this.parseValue(binding.moderator) : null;
-    const relation = binding.resultatRelation ? this.parseValue(binding.resultatRelation) : null;
-    
-    console.log(`VI (facteur): ${vi}`);
-    console.log(`VD (ACAD): ${vd}`);
-    console.log(`Médiateur: ${mediator}`);
-    console.log(`Modérateur: ${moderator}`);
-    console.log(`Relation: ${relation}`);
 
-    // Créer nœud facteur
-    if (vi) {
-      const factorNodeId = `factor_${vi}`;
-      if (!nodeMap.has(factorNodeId)) {
-        console.log(`Création nœud facteur: ${vi}`);
-        nodes.push({
-          id: factorNodeId,
-          label: vi,
-          type: 'factor',
-          size: 20,
-          color: '#3498db'
-        });
-        nodeMap.set(factorNodeId, true);
-      }
-    }
+  // Extraire l'ID d'analyse depuis l'URI
+  static extractAnalysisId(analysisUri) {
+    if (!analysisUri) return 'unknown';
     
-    // Créer nœud ACAD
-    if (vd) {
-      const acadNodeId = `acad_${vd}`;
-      if (!nodeMap.has(acadNodeId)) {
-        console.log(`Création nœud ACAD: ${vd}`);
-        nodes.push({
-          id: acadNodeId,
-          label: vd,
-          type: 'acad',
-          size: 20,
-          color: '#e74c3c'
-        });
-        nodeMap.set(acadNodeId, true);
-      }
-    }
-   
-    if (mediator && mediator !== 'N.A.' && mediator.trim() !== '') {
-      const mediatorNodeId = `mediator_${mediator}`;
-      if (!nodeMap.has(mediatorNodeId)) {
-        console.log(`Création nœud médiateur: ${mediator}`);
-        nodes.push({
-          id: mediatorNodeId,
-          label: mediator,
-          type: 'mediator',
-          size: 15,
-          color: '#FFD700' 
-        });
-        nodeMap.set(mediatorNodeId, true);
-      }
-    }
- 
-    if (moderator && moderator !== 'N.A.' && moderator.trim() !== '') {
-      const moderatorNodeId = `moderator_${moderator}`;
-      if (!nodeMap.has(moderatorNodeId)) {
-        console.log(`Création nœud modérateur: ${moderator}`);
-        nodes.push({
-          id: moderatorNodeId,
-          label: moderator,
-          type: 'moderator',
-          size: 15,
-          color: '#FF8C00' 
-        });
-        nodeMap.set(moderatorNodeId, true);
-      }
-    }
-   
-   // Logique conditionnelle pour créer les chemins
-if (vi && vd) {
-  const hasMediator = mediator && mediator !== 'N.A.' && mediator.trim() !== '';
-  const hasModerator = moderator && moderator !== 'N.A.' && moderator.trim() !== '';
-  
-  if (hasMediator) {
-    // Chemin : Facteur → Médiateur → ACAD
-    console.log(`Création chemin via médiateur: ${vi} -> ${mediator} -> ${vd}`);
-    links.push({
-      source: `factor_${vi}`,
-      target: `mediator_${mediator}`,
-      label: 'via médiateur',
-      type: 'factor-mediator',
-      color: '#f39c12'
-    });
-    links.push({
-      source: `mediator_${mediator}`,
-      target: `acad_${vd}`,
-      label: relation || 'relation',
-      type: 'mediator-acad',
-      color: this.getRelationColor(relation)
-    });
-  } else if (hasModerator) {
-    // Chemin : Facteur → Modérateur → ACAD
-    console.log(`Création chemin via modérateur: ${vi} -> ${moderator} -> ${vd}`);
-    links.push({
-      source: `factor_${vi}`,
-      target: `moderator_${moderator}`,
-      label: 'via modérateur',
-      type: 'factor-moderator',
-      color: '#e67e22'
-    });
-    links.push({
-      source: `moderator_${moderator}`,
-      target: `acad_${vd}`,
-      label: relation || 'relation',
-      type: 'moderator-acad',
-      color: this.getRelationColor(relation)
-    });
-  } else {
-    // Chemin direct : Facteur → ACAD
-    console.log(`Création lien direct: ${vi} -> ${vd} (${relation})`);
-    links.push({
-      source: `factor_${vi}`,
-      target: `acad_${vd}`,
-      label: relation || 'relation',
-      type: 'factor-acad',
-      color: this.getRelationColor(relation)
-    });
+    const match = analysisUri.match(/Analysis_(.+)$/);
+    return match ? match[1] : 'unknown';
   }
-}
-  }); 
+
+  static getColorByCategory(type, category) {
+    console.log(`🎨 Couleur demandée pour: type="${type}", category="${category}"`);
+    
+    switch (type) {
+      case 'acad':
+      case 'VD':
+        const acadColor = this.acadColorPalette[category] || this.acadColorPalette.default;
+        console.log(`   → Couleur ACAD: ${acadColor}`);
+        return acadColor;
+        
+      case 'factor':
+      case 'VI':
+        const factorColor = this.factorColorPalette[category] || this.factorColorPalette.default;
+        console.log(`   → Couleur Facteur: ${factorColor}`);
+        return factorColor;
+        
+      case 'mediator':
+        return '#FFD700'; // Jaune pour médiateurs
+        
+      case 'moderator':
+        return '#FF8C00'; // Orange pour modérateurs
+        
+      default:
+        return '#808080'; // Gris par défaut
+    }
+  }
+
+  static getRelationColor(relation) {
+    const color = this.relationColorPalette[relation] || this.relationColorPalette.default;
+    console.log(`🔗 Couleur relation "${relation}": ${color}`);
+    return color;
+  }
   
-  console.log(`RÉSULTAT FINAL: ${nodes.length} nœuds, ${links.length} liens`);
-  console.log("Nœuds:", nodes);
-  console.log("Liens:", links);
+  static createConcreteOntologyNetwork(bindings, vars) {
+    const nodes = [];
+    const links = [];
+    const nodeMap = new Map(); // Pour éviter les doublons de nœuds
+    const allRelations = []; // Stocker TOUTES les relations avant filtrage
+    
+    console.log("=== PARSER AVEC FILTRAGE INTELLIGENT ===");
+    console.log("Variables disponibles:", vars);
+    console.log("Nombre de résultats:", bindings.length);
+    
+    bindings.forEach((binding, index) => {
+      console.log(`\n--- Résultat ${index + 1} ---`);
+      
+      // Extraire toutes les données
+      const analysisUri = binding.analysis ? this.parseValue(binding.analysis) : null;
+      const analysisId = this.extractAnalysisId(analysisUri);
+      const vi = binding.vi ? this.parseValue(binding.vi) : null;
+      const vd = binding.vd ? this.parseValue(binding.vd) : null;
+      const categoryVI = binding.categoryVI ? this.parseValue(binding.categoryVI) : null;
+      const categoryVD = binding.categoryVD ? this.parseValue(binding.categoryVD) : null;
+      const mediator = binding.mediator ? this.parseValue(binding.mediator) : null;
+      const moderator = binding.moderator ? this.parseValue(binding.moderator) : null;
+      const relation = binding.resultatRelation ? this.parseValue(binding.resultatRelation) : null;
+      
+      console.log(`Analysis ID: ${analysisId}`);
+      console.log(`VI (facteur): ${vi} [Catégorie: ${categoryVI}]`);
+      console.log(`VD (ACAD): ${vd} [Catégorie: ${categoryVD}]`);
+      console.log(`Médiateur: ${mediator}`);
+      console.log(`Modérateur: ${moderator}`);
+      console.log(`Relation: ${relation}`);
+
+      // Créer nœud facteur UNIQUE (pas par analyse)
+      if (vi) {
+        const factorNodeId = `factor_${vi}`;
+        if (!nodeMap.has(factorNodeId)) {
+          console.log(`🔵 Création nœud facteur UNIQUE: ${vi} [${categoryVI}]`);
+          nodes.push({
+            id: factorNodeId,
+            label: vi,
+            type: 'factor',
+            category: categoryVI,
+            size: 20, // Taille fixe
+            color: this.getColorByCategory('factor', categoryVI),
+            analyses: [] // Liste des analyses liées
+          });
+          nodeMap.set(factorNodeId, nodes.length - 1);
+        }
+        // Ajouter l'analyse à la liste
+        const nodeIndex = nodeMap.get(factorNodeId);
+        if (!nodes[nodeIndex].analyses.includes(analysisId)) {
+          nodes[nodeIndex].analyses.push(analysisId);
+        }
+      }
+      
+      // Créer nœud ACAD UNIQUE (pas par analyse)
+      if (vd) {
+        const acadNodeId = `acad_${vd}`;
+        if (!nodeMap.has(acadNodeId)) {
+          console.log(`🔴 Création nœud ACAD UNIQUE: ${vd} [${categoryVD}]`);
+          nodes.push({
+            id: acadNodeId,
+            label: vd,
+            type: 'acad',
+            category: categoryVD,
+            size: 20, // Taille fixe
+            color: this.getColorByCategory('acad', categoryVD),
+            analyses: []
+          });
+          nodeMap.set(acadNodeId, nodes.length - 1);
+        }
+        const nodeIndex = nodeMap.get(acadNodeId);
+        if (!nodes[nodeIndex].analyses.includes(analysisId)) {
+          nodes[nodeIndex].analyses.push(analysisId);
+        }
+      }
+     
+      // Créer nœud médiateur UNIQUE (pas par analyse)
+      if (mediator && mediator !== 'N.A.' && mediator.trim() !== '') {
+        const mediatorNodeId = `mediator_${mediator}`;
+        if (!nodeMap.has(mediatorNodeId)) {
+          console.log(`🟡 Création nœud médiateur UNIQUE: ${mediator}`);
+          nodes.push({
+            id: mediatorNodeId,
+            label: mediator,
+            type: 'mediator',
+            size: 15, // Taille fixe
+            color: this.getColorByCategory('mediator', null),
+            analyses: []
+          });
+          nodeMap.set(mediatorNodeId, nodes.length - 1);
+        }
+        const nodeIndex = nodeMap.get(mediatorNodeId);
+        if (!nodes[nodeIndex].analyses.includes(analysisId)) {
+          nodes[nodeIndex].analyses.push(analysisId);
+        }
+      }
+   
+      // Créer nœud modérateur UNIQUE (pas par analyse)
+      if (moderator && moderator !== 'N.A.' && moderator.trim() !== '') {
+        const moderatorNodeId = `moderator_${moderator}`;
+        if (!nodeMap.has(moderatorNodeId)) {
+          console.log(`🟠 Création nœud modérateur UNIQUE: ${moderator}`);
+          nodes.push({
+            id: moderatorNodeId,
+            label: moderator,
+            type: 'moderator',
+            size: 15, // Taille fixe
+            color: this.getColorByCategory('moderator', null),
+            analyses: []
+          });
+          nodeMap.set(moderatorNodeId, nodes.length - 1);
+        }
+        const nodeIndex = nodeMap.get(moderatorNodeId);
+        if (!nodes[nodeIndex].analyses.includes(analysisId)) {
+          nodes[nodeIndex].analyses.push(analysisId);
+        }
+      }
+     
+     // 🆕 STOCKER TOUTES LES RELATIONS (avant filtrage)
+    if (vi && vd) {
+      const hasMediator = mediator && mediator !== 'N.A.' && mediator.trim() !== '';
+      const hasModerator = moderator && moderator !== 'N.A.' && moderator.trim() !== '';
+      
+      if (hasMediator) {
+        // Relations via médiateur
+        allRelations.push({
+          source: `factor_${vi}`,
+          target: `mediator_${mediator}`,
+          relation: 'mediator',
+          label: 'via médiateur',
+          type: 'factor-mediator',
+          analysisId: analysisId,
+          color: '#f39c12'
+        });
+        
+        allRelations.push({
+          source: `mediator_${mediator}`,
+          target: `acad_${vd}`,
+          relation: relation || 'unknown',
+          label: relation || 'relation',
+          type: 'mediator-acad',
+          analysisId: analysisId,
+          color: this.getRelationColor(relation)
+        });
+        
+      } else if (hasModerator) {
+        // Relations via modérateur
+        allRelations.push({
+          source: `factor_${vi}`,
+          target: `moderator_${moderator}`,
+          relation: 'moderator',
+          label: 'via modérateur',
+          type: 'factor-moderator',
+          analysisId: analysisId,
+          color: '#e67e22'
+        });
+        
+        allRelations.push({
+          source: `moderator_${moderator}`,
+          target: `acad_${vd}`,
+          relation: relation || 'unknown',
+          label: relation || 'relation',
+          type: 'moderator-acad',
+          analysisId: analysisId,
+          color: this.getRelationColor(relation)
+        });
+        
+      } else {
+        // Relations directes
+        allRelations.push({
+          source: `factor_${vi}`,
+          target: `acad_${vd}`,
+          relation: relation || 'unknown',
+          label: relation || 'relation',
+          type: 'factor-acad',
+          analysisId: analysisId,
+          color: this.getRelationColor(relation)
+        });
+      }
+    }
+    }); 
+    
+    // 🆕 FILTRAGE INTELLIGENT : 1 lien par type de relation
+    const filteredLinks = this.applySmartFiltering(allRelations);
+    
+    console.log(`🎨 RÉSULTAT FILTRÉ: ${nodes.length} nœuds, ${filteredLinks.length} liens (sur ${allRelations.length} originaux)`);
+    console.log("Nœuds:", nodes);
+    console.log("Liens filtrés:", filteredLinks);
+    
+    return { nodes, links: filteredLinks };
+  }
+
+  // 🆕 NOUVELLE FONCTION : Filtrage intelligent des liens
+  static applySmartFiltering(allRelations) {
+    console.log("🔍 Application du filtrage intelligent...");
+    
+    // Grouper par paire source-target
+    const relationGroups = new Map();
+    
+    allRelations.forEach(rel => {
+      const pairKey = `${rel.source}_${rel.target}`;
+      
+      if (!relationGroups.has(pairKey)) {
+        relationGroups.set(pairKey, {
+          '+': [],
+          '-': [],
+          'NS': [],
+          'mediator': [],
+          'moderator': [],
+          'unknown': []
+        });
+      }
+      
+      const group = relationGroups.get(pairKey);
+      group[rel.relation].push(rel);
+    });
+    
+    // Filtrer : prendre 1 représentant par type de relation
+    const filteredLinks = [];
+    
+    relationGroups.forEach((group, pairKey) => {
+      console.log(`\n🔗 Paire ${pairKey}:`);
+      
+      // Pour chaque type de relation (+, -, NS, etc.)
+      Object.keys(group).forEach(relationType => {
+        const relations = group[relationType];
+        
+        if (relations.length > 0) {
+          // Prendre le premier représentant
+          const representative = relations[0];
+          
+          // Enrichir avec les métadonnées de tous les liens du même type
+          const enrichedLink = {
+            ...representative,
+            id: `${pairKey}_${relationType}`,
+            allAnalyses: relations.map(r => r.analysisId),
+            count: relations.length,
+            detailedLabel: relations.length > 1 
+              ? `${representative.label} (${relations.length} analyses)`
+              : representative.label
+          };
+          
+          filteredLinks.push(enrichedLink);
+          
+          console.log(`   ✅ ${relationType}: ${relations.length} relations → 1 lien affiché`);
+          console.log(`      Analyses: ${relations.map(r => r.analysisId).join(', ')}`);
+        }
+      });
+    });
+    
+    console.log(`🎯 Filtrage terminé: ${allRelations.length} → ${filteredLinks.length} liens`);
+    return filteredLinks;
+  }
   
-  return { nodes, links };
-}
-  
+  // Méthodes utilitaires inchangées
   static translateGender(gender) {
     const translations = {
       'male': 'Hommes',
@@ -229,19 +390,7 @@ if (vi && vd) {
     return translations[relation] || relation;
   }
   
-  static getRelationColor(relation) {
-    console.log(`La fonction color est appelée Relation: ${relation}`);
-
-    const colors = {
-      '+': '#e74c3c',      // Rouge pour risque
-      '-': '#2ecc71',      // Vert pour protecteur
-      'NS': '#95a5a6'      // Gris pour non significatif
-    };
-    return colors[relation] || '#95a5a6';
-  }
-  
   static getRelationStrength(binding) {
-    // Extraire la force de la relation (r, p-value, etc.)
     const degreR = binding.degreR ? this.parseValue(binding.degreR) : null;
     const degreP = binding.degreP ? this.parseValue(binding.degreP) : null;
     
