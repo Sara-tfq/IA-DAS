@@ -226,7 +226,7 @@ class AnalysisPanel {
 
   formatAPATitle(analysis) {
     const authors = analysis.rawData?.Authors || 'Auteur inconnu';
-    const year = analysis.rawData?.Year || 'Année inconnue';
+    const year = analysis.rawData?.['Year '] || 'Année inconnue';          // ✅ Avec espace
     const title = analysis.rawData?.Title || analysis.title || `Analyse ${analysis.id}`;
     
     const shortAuthors = authors.length > 50 ? authors.substring(0, 47) + '...' : authors;
@@ -303,7 +303,7 @@ class AnalysisPanel {
       ['Analysis ID', data.Analysis_ID],
       ['Titre', data.Title],
       ['Auteurs', data.Authors],
-      ['Année', data.Year],
+      ['Année', data['Year ']],
       ['Journal', data.Journal],
       ['Pays', data.Country]
     ]);

@@ -27,8 +27,8 @@
 #analysis-panel {
   position: fixed;
   top: 0;
-  right: -30%;
-  width: 30%;
+  right: -40%;
+  width: 40%;
   min-width: 350px;
   max-width: 500px;
   height: 100%;
