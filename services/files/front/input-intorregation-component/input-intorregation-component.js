@@ -46,6 +46,8 @@ class InputInterrogationComponent extends HTMLElement {
 
         // Search button
         this.querySelector('#searchBtn').addEventListener('click', () => this.handleSearch());
+        this.setupCustomFieldHandlers();
+
 
         // Close dropdowns when clicking outside
         document.addEventListener('click', (e) => {
@@ -367,6 +369,89 @@ class InputInterrogationComponent extends HTMLElement {
         }
     }
 
+    setupCustomFieldHandlers() {
+    // Gestion âge custom
+    const ageCategory = this.querySelector('#ageCategory');
+    if (ageCategory) {
+        ageCategory.addEventListener('change', () => this.handleAgeCategoryChange());
+    }
+    
+    // Gestion fréquence custom
+    const exerciseFrequency = this.querySelector('#exerciseFrequency');
+    if (exerciseFrequency) {
+        exerciseFrequency.addEventListener('change', () => this.handleFrequencyCategoryChange());
+    }
+    
+    // Gestion expérience custom
+    const experienceCategory = this.querySelector('#experienceCategory');
+    if (experienceCategory) {
+        experienceCategory.addEventListener('change', () => this.handleExperienceCategoryChange());
+    }
+}
+
+// 3. NOUVELLES MÉTHODES pour gérer les modes custom
+handleAgeCategoryChange() {
+    const ageCategory = this.querySelector('#ageCategory');
+    const ageCustom = this.querySelector('#ageCustom');
+    
+    if (!ageCategory || !ageCustom) return;
+    
+    if (ageCategory.value === 'custom') {
+        ageCustom.classList.remove('hidden');
+        // Focus sur le premier champ
+        const ageMin = this.querySelector('#ageMin');
+        if (ageMin) ageMin.focus();
+    } else {
+        ageCustom.classList.add('hidden');
+        // Reset des valeurs custom
+        this.resetCustomFields(['ageMin', 'ageMax']);
+    }
+}
+
+handleFrequencyCategoryChange() {
+    const exerciseFrequency = this.querySelector('#exerciseFrequency');
+    const frequencyCustom = this.querySelector('#frequencyCustom');
+    
+    if (!exerciseFrequency || !frequencyCustom) return;
+    
+    if (exerciseFrequency.value === 'custom') {
+        frequencyCustom.classList.remove('hidden');
+        // Focus sur le premier champ
+        const frequencyMin = this.querySelector('#frequencyMin');
+        if (frequencyMin) frequencyMin.focus();
+    } else {
+        frequencyCustom.classList.add('hidden');
+        // Reset des valeurs custom
+        this.resetCustomFields(['frequencyMin', 'frequencyMax']);
+    }
+}
+
+handleExperienceCategoryChange() {
+    const experienceCategory = this.querySelector('#experienceCategory');
+    const experienceCustom = this.querySelector('#experienceCustom');
+    
+    if (!experienceCategory || !experienceCustom) return;
+    
+    if (experienceCategory.value === 'custom') {
+        experienceCustom.classList.remove('hidden');
+        // Focus sur le premier champ
+        const experienceMin = this.querySelector('#experienceMin');
+        if (experienceMin) experienceMin.focus();
+    } else {
+        experienceCustom.classList.add('hidden');
+        // Reset des valeurs custom
+        this.resetCustomFields(['experienceMin', 'experienceMax']);
+    }
+}
+
+// 4. MÉTHODE UTILITAIRE pour reset les champs
+resetCustomFields(fieldIds) {
+    fieldIds.forEach(id => {
+        const field = this.querySelector(`#${id}`);
+        if (field) field.value = '';
+    });
+}
+
     extractUniqueValues() {
         console.log('🔍 DEBUG: csvData length:', this.csvData.length);
 
@@ -455,26 +540,123 @@ class InputInterrogationComponent extends HTMLElement {
         searchBtn.disabled = false;
     }
 
-    handleSearch() {
-    const searchData = {
-        selectedVI: this.querySelector('#variableVI').value,
-        selectedVD: this.querySelector('#variableVD').value,
-        categoryVI: this.querySelector('#categoryVI').value,      // ← NOUVEAU
-        categoryVD: this.querySelector('#categoryVD').value,      // ← NOUVEAU
-        gender: this.querySelector('#gender').value,
-        minAge: this.querySelector('#minAge').value,
-        sportLevel: this.querySelector('#sportLevel').value,
-        relationDirection: this.querySelector('input[name="relationDirection"]:checked')?.value || '',
-        sportType: this.querySelector('#sportType').value,
-        experienceYears: this.querySelector('#experienceYears').value,
-        queryType: 'variable_relation'
-    };
+  async handleSearch() {
+    try {
+        // 🆕 1. AFFICHER LE LOADING
+        if (window.loadingManager) {
+            window.loadingManager.show("Recherche dans la base IA-DAS...");
+        }
 
-    console.log("Recherche avec critères:", searchData);
+        // Récupérer les valeurs des champs existants
+        const searchData = {
+            selectedVI: this.querySelector('#variableVI').value,
+            selectedVD: this.querySelector('#variableVD').value,
+            categoryVI: this.querySelector('#categoryVI').value,
+            categoryVD: this.querySelector('#categoryVD').value,
+            gender: this.querySelector('#gender').value,
+            relationDirection: this.querySelector('input[name="relationDirection"]:checked')?.value || '',
+            sportType: this.querySelector('#sportType').value,
+            queryType: 'variable_relation'
+        };
 
-    this.dispatchEvent(new CustomEvent('search', {
-        detail: searchData
-    }));
+        // NOUVEAUX CHAMPS : Gestion de l'âge
+        const ageCategory = this.querySelector('#ageCategory').value;
+        if (ageCategory) {
+            if (ageCategory === 'custom') {
+                const ageMin = this.querySelector('#ageMin').value;
+                const ageMax = this.querySelector('#ageMax').value;
+                if (ageMin) searchData.ageMin = parseInt(ageMin);
+                if (ageMax) searchData.ageMax = parseInt(ageMax);
+            } else {
+                searchData.ageCategory = ageCategory;
+            }
+        }
+
+        // NOUVEAUX CHAMPS : Gestion de la fréquence
+        const exerciseFrequency = this.querySelector('#exerciseFrequency').value;
+        if (exerciseFrequency) {
+            if (exerciseFrequency === 'custom') {
+                const frequencyMin = this.querySelector('#frequencyMin').value;
+                const frequencyMax = this.querySelector('#frequencyMax').value;
+                if (frequencyMin) searchData.frequencyMin = parseInt(frequencyMin);
+                if (frequencyMax) searchData.frequencyMax = parseInt(frequencyMax);
+            } else {
+                searchData.exerciseFrequency = exerciseFrequency;
+            }
+        }
+
+        // NOUVEAUX CHAMPS : Gestion de l'expérience
+        const experienceCategory = this.querySelector('#experienceCategory').value;
+        if (experienceCategory) {
+            if (experienceCategory === 'custom') {
+                const experienceMin = this.querySelector('#experienceMin').value;
+                const experienceMax = this.querySelector('#experienceMax').value;
+                if (experienceMin) searchData.experienceMin = parseInt(experienceMin);
+                if (experienceMax) searchData.experienceMax = parseInt(experienceMax);
+            } else {
+                searchData.experienceCategory = experienceCategory;
+            }
+        }
+
+        console.log("Recherche avec nouveaux critères:", searchData);
+
+        // 🆕 2. DISPATCHER L'ÉVÉNEMENT (qui sera capturé par doctor-page.js)
+        this.dispatchEvent(new CustomEvent('search', {
+            detail: searchData
+        }));
+
+    } catch (error) {
+        console.error('Erreur lors de la recherche:', error);
+        
+        // 🆕 3. AFFICHER L'ERREUR DANS LE LOADING
+        if (window.loadingManager) {
+            window.loadingManager.showError('Erreur de recherche', error.message);
+        }
+    }
+}
+
+// 6. OPTIONNEL : Méthode pour valider les champs custom
+validateCustomFields() {
+    let isValid = true;
+    const errors = [];
+
+    // Validation âge custom
+    const ageMin = this.querySelector('#ageMin');
+    const ageMax = this.querySelector('#ageMax');
+    if (ageMin && ageMax && ageMin.value && ageMax.value) {
+        if (parseInt(ageMin.value) >= parseInt(ageMax.value)) {
+            errors.push("L'âge minimum doit être inférieur à l'âge maximum");
+            isValid = false;
+        }
+    }
+
+    // Validation fréquence custom
+    const frequencyMin = this.querySelector('#frequencyMin');
+    const frequencyMax = this.querySelector('#frequencyMax');
+    if (frequencyMin && frequencyMax && frequencyMin.value && frequencyMax.value) {
+        if (parseInt(frequencyMin.value) >= parseInt(frequencyMax.value)) {
+            errors.push("La fréquence minimum doit être inférieure à la fréquence maximum");
+            isValid = false;
+        }
+    }
+
+    // Validation expérience custom
+    const experienceMin = this.querySelector('#experienceMin');
+    const experienceMax = this.querySelector('#experienceMax');
+    if (experienceMin && experienceMax && experienceMin.value && experienceMax.value) {
+        if (parseInt(experienceMin.value) >= parseInt(experienceMax.value)) {
+            errors.push("L'expérience minimum doit être inférieure à l'expérience maximum");
+            isValid = false;
+        }
+    }
+
+    // Afficher les erreurs si nécessaire
+    if (!isValid) {
+        console.warn("Erreurs de validation:", errors);
+        // Tu peux afficher les erreurs à l'utilisateur ici
+    }
+
+    return { isValid, errors };
 }
 
     // SPARQL methods

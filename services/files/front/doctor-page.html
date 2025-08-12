@@ -8,37 +8,77 @@
     <link rel="stylesheet" href="./input-intorregation-component/input-intorregation-component.css">
     <link rel="stylesheet" href="./graph-component/graph-component.css">
     <link rel="stylesheet" href="./analysis-panel/analysis-panel.css">
+    <!-- ✅ NOUVEAU : CSS pour le loading -->
+    <link rel="stylesheet" href="./components/loading-overlay.css">
 </head>
 
-<header>
-    <h1>Projet IA-DAS</h1>
-    <img src="./../assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
-    <button id="switchChercheur" onclick="window.location.href='./index.html'">Accueil</button>
-</header>
-
 <body>
-    <!-- <div class="prepared-queries">
-        <button id="query1" onclick="interrogerFuseki('query1')">Requête 1</button>
-        <button id="query2" onclick="interrogerFuseki('query2')">Requête 2</button>
-        <button id="query3" onclick="interrogerFuseki('query3')">Requête 3</button>
-    </div> -->
+    <!-- 🆕 Overlay d'initialisation (au début de body) -->
+    <div id="initialization-overlay" class="init-overlay">
+        <div class="init-content">
+            <div class="init-logo">
+                <img src="./../assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" style="max-width: 150px;">
+            </div>
+            <h2>Initialisation d'IA-DAS</h2>
+            <p>Préparation de la base de données en cours...</p>
+            <p class="init-subtext">Cette étape ne prend qu'une minute, puis tout sera rapide !</p>
+            <div class="init-spinner"></div>
+        </div>
+    </div>
+
+    <!-- ✅ Overlay de chargement pour les recherches -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3 id="loading-title">Chargement des données...</h3>
+            <div id="loading-steps">
+                <div class="step" id="step-warmup">
+                    <span class="step-icon">🔥</span>
+                    <span class="step-text">Préparation de Fuseki...</span>
+                </div>
+                <div class="step" id="step-query">
+                    <span class="step-icon">🎯</span>
+                    <span class="step-text">Exécution de la requête...</span>
+                </div>
+                <div class="step" id="step-parsing">
+                    <span class="step-icon">📊</span>
+                    <span class="step-text">Traitement des résultats...</span>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <div id="loading-details">Initialisation...</div>
+            <div id="loading-timer">Temps écoulé: <span id="timer-value">0s</span></div>
+        </div>
+    </div>
+
+    <header>
+        <h1>Projet IA-DAS</h1>
+        <img src="./../assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
+        <button id="switchChercheur" onclick="window.location.href='./index.html'" disabled>Accueil</button>
+    </header>
 
     <div class="content-container">
         <input-intorregation-component></input-intorregation-component>
        
         <div id="results">
             <div id="result-controls" style="display: none; margin-bottom: 20px;">
-                <button id="viewTable" class="view-btn active">Tableau</button>
-                <button id="viewGraph" class="view-btn">Graphique</button>
-                <button id="viewSparql" class="view-btn">SPARQL</button>
+                <button id="viewTable" class="view-btn active" disabled>Tableau</button>
+                <button id="viewGraph" class="view-btn" disabled>Graphique</button>
+                <button id="viewSparql" class="view-btn" disabled>SPARQL</button>
             </div>
             
             <div id="result-display"></div>
         </div>
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-
+    <!-- 🆕 NOUVEAU : Page initializer EN PREMIER -->
+    <script src="./components/page-initializer.js"></script>
+    <!-- ✅ Loading manager -->
+    <script src="./components/loading-manager.js"></script>
 
     <!-- ✅ ORDRE CORRIGÉ : Excel-loader EN PREMIER -->
     <script src="./data/excel-loader.js"></script>

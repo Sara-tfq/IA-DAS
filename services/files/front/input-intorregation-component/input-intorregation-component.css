@@ -171,6 +171,7 @@
 
 /* Grille démographique */
 .demographics-grid {
+    align-items: start;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4px;
@@ -187,6 +188,8 @@
     font-size: 0.65em;
     box-sizing: border-box;
     height: 18px;
+    margin: 0;              /* ← AJOUTER */
+    vertical-align: top;
 }
 
 .demographics-grid select:focus,
@@ -369,4 +372,137 @@
 
 .execute-btn:hover {
     background-color: #2ecc71;
+}
+
+/* ======================================
+   NOUVEAUX STYLES POUR LES CHAMPS DÉMOGRAPHIQUES
+   ====================================== */
+
+/* Conteneurs pour les champs avec mode custom */
+.age-container,
+.frequency-container, 
+.experience-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 18px;
+    justify-content: flex-start;
+}
+
+/* Champs custom cachés par défaut */
+.custom-fields {
+    margin-top: 2px;
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
+
+.custom-fields.hidden {
+    display: none;
+}
+
+/* Inputs dans les champs custom */
+.custom-fields input {
+    flex: 1;
+    padding: 2px 4px;
+    border: none;
+    border-radius: 3px;
+    background-color: #f8f9fa;
+    color: #333;
+    font-size: 0.6em;
+    height: 16px;
+    box-sizing: border-box;
+    border: 1px solid #e0e0e0;
+}
+
+.custom-fields input:focus {
+    border: 1px solid #2c3e50;
+    outline: none;
+    background-color: white;
+}
+
+.custom-fields input::placeholder {
+    color: #888;
+    font-size: 0.6em;
+}
+
+/* Mise à jour de la grille démographique pour accommoder plus de champs */
+.demographics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    height: calc(100% - 20px); /* Ajuster selon la hauteur du titre */
+    overflow-y: auto; /* Au cas où on a trop de champs */
+}
+
+/* Pour les conteneurs qui peuvent s'étendre sur 2 colonnes si nécessaire */
+.demographics-grid > .full-width {
+    grid-column: 1 / -1;
+}
+
+/* Styles spécifiques pour les selects des nouvelles catégories */
+.demographics-grid select.category-select {
+    background-color: white;
+    border: 1px solid #ddd;
+    color: #333;
+    font-weight: 500;
+}
+
+.demographics-grid select.category-select:focus {
+    border: 1px solid #2c3e50;
+    box-shadow: 0 0 3px rgba(44, 62, 80, 0.3);
+}
+
+/* Animation pour l'apparition des champs custom */
+.custom-fields {
+    transition: all 0.3s ease;
+    opacity: 1;
+}
+
+.custom-fields.hidden {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    margin-top: 0;
+}
+
+/* Responsive : sur petits écrans, une seule colonne */
+@media (max-width: 768px) {
+    .demographics-grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+}
+
+
+.custom-fields label {
+    font-size: 0.6em;
+    color: #555;
+    margin-right: 4px;
+    white-space: nowrap;
+}
+
+
+.age-container:has(.custom-fields:not(.hidden)),
+.frequency-container:has(.custom-fields:not(.hidden)),
+.experience-container:has(.custom-fields:not(.hidden)) {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 3px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+
+.demographics-grid select option[value="custom"] {
+    font-style: italic;
+    color: #666;
+}
+
+
+.demographics-grid input:invalid {
+    border-color: #e74c3c;
+}
+
+.demographics-grid input:valid {
+    border-color: #27ae60;
 }

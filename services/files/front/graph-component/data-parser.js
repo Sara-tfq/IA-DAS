@@ -374,9 +374,9 @@ class SPARQLDataParser {
   // Méthodes utilitaires inchangées
   static translateGender(gender) {
     const translations = {
-      'male': 'Hommes',
-      'female': 'Femmes',
-      'mixed': 'Mixte'
+      'Male': 'Hommes',
+      'Female': 'Femmes',
+      'Mixed': 'Mixte'
     };
     return translations[gender] || gender;
   }

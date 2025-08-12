@@ -1,25 +1,54 @@
-// Lancement du service Fuseki avec barre de progression visuelle
+// Lancement du service Fuseki avec barre de progression visuelle + DEBUG COMPLET
 const fs = require('fs');
 const fetch = require('node-fetch');
+const crypto = require('crypto');
 
+console.log('🔧 === DÉBUT DEBUG FUSEKI LOADER ===');
+
+// Lecture et analyse du fichier TTL
 const ttl = fs.readFileSync('/init/data.ttl', 'utf8');
+const fileHash = crypto.createHash('md5').update(ttl).digest('hex');
+const fileSizeKB = Math.round(ttl.length / 1024);
+const fileSizeMB = (ttl.length / (1024 * 1024)).toFixed(1);
+
+console.log('📁 ANALYSE DU FICHIER TTL:');
+console.log(`   📏 Taille: ${ttl.length} caractères (${fileSizeKB} KB / ${fileSizeMB} MB)`);
+console.log(`   🔑 Hash MD5: ${fileHash}`);
+console.log(`   🔍 Début du fichier: ${ttl.substring(0, 200)}...`);
+console.log(`   🔍 Fin du fichier: ...${ttl.substring(ttl.length - 200)}`);
+
+// Compter quelques éléments dans le TTL
+const prefixCount = (ttl.match(/@prefix/g) || []).length;
+const tripleEstimate = (ttl.match(/\.\s*$/gm) || []).length;
+const analysisCount = (ttl.match(/iadas:Analysis/g) || []).length;
+
+console.log('📊 CONTENU TTL:');
+console.log(`   🏷️  Préfixes: ${prefixCount}`);
+console.log(`   📈 Triples estimés: ${tripleEstimate}`);
+console.log(`   🔬 Mentions "Analysis": ${analysisCount}`);
 
 const FUSEKI_URL = 'http://fuseki:3030/ds';
 const DATA_URL = `${FUSEKI_URL}/data`;
-const PING_URL = 'http://fuseki:3030/$/ping'; // Plus fiable pour le health check
-const RETRY_INTERVAL = 2000; // 2 secondes
-const MAX_RETRIES = 30; // 1 minute total
+const SPARQL_URL = `${FUSEKI_URL}/sparql`;
+const PING_URL = 'http://fuseki:3030/$/ping';
+const RETRY_INTERVAL = 2000;
+const MAX_RETRIES = 30;
 const auth = Buffer.from("admin:admin").toString('base64');
+
+console.log('⚙️  CONFIGURATION:');
+console.log(`   🌐 FUSEKI_URL: ${FUSEKI_URL}`);
+console.log(`   📤 DATA_URL: ${DATA_URL}`);
+console.log(`   🔍 SPARQL_URL: ${SPARQL_URL}`);
+console.log(`   🏓 PING_URL: ${PING_URL}`);
+console.log(`   🔐 Auth: ${auth}`);
 
 let startTime;
 
-// Fonction pour dessiner la barre de progression
 function drawProgressBar(current, total, width = 40) {
   const percentage = Math.round((current / total) * 100);
   const filled = Math.round((current / total) * width);
   const empty = width - filled;
   
-  // Utiliser différents caractères pour une meilleure lisibilité
   const filledChar = '█';
   const emptyChar = '░';
   const bar = filledChar.repeat(filled) + emptyChar.repeat(empty);
@@ -27,7 +56,6 @@ function drawProgressBar(current, total, width = 40) {
   return `[${bar}] ${percentage}%`;
 }
 
-// Fonction pour formater le temps écoulé
 function formatTime(seconds) {
   if (seconds < 60) {
     return `${seconds}s`;
@@ -40,59 +68,57 @@ function formatTime(seconds) {
 async function waitForFuseki(retries = 0) {
   if (retries === 0) {
     startTime = Date.now();
-    console.log('🚀 Démarrage de la vérification Fuseki...');
-    console.log(`📊 Configuration: ${MAX_RETRIES} tentatives max, intervalle ${RETRY_INTERVAL/1000}s`);
-    
-    // Afficher la taille du fichier à charger
-    const fileSizeKB = Math.round(ttl.length / 1024);
-    const fileSizeMB = (ttl.length / (1024 * 1024)).toFixed(1);
-    console.log(`📁 Fichier TTL: ${fileSizeKB} KB (${fileSizeMB} MB) à charger`);
-    console.log(''); // Ligne vide pour la lisibilité
+    console.log('\n🚀 DÉMARRAGE VÉRIFICATION FUSEKI:');
+    console.log(`   ⏱️  Max retries: ${MAX_RETRIES}`);
+    console.log(`   🔄 Intervalle: ${RETRY_INTERVAL/1000}s`);
+    console.log('');
   }
 
   try {
-    // Utiliser l'endpoint ping qui est plus rapide
+    console.log(`\n🏓 PING Fuseki (tentative ${retries + 1}):`);
+    console.log(`   📡 URL: ${PING_URL}`);
+    
     const res = await fetch(PING_URL, { 
       method: 'GET',
-      timeout: 3000 // Timeout de 3 secondes
+      timeout: 3000
     });
+    
+    console.log(`   📨 Réponse: Status ${res.status} ${res.statusText}`);
+    console.log(`   🔗 Headers: ${JSON.stringify(Object.fromEntries(res.headers))}`);
     
     if (res.ok) {
       const elapsedTime = Math.round((Date.now() - startTime) / 1000);
-      console.log(''); // Ligne vide après la barre de progression
-      console.log(`✅ Fuseki est prêt ! Temps d'attente: ${formatTime(elapsedTime)}`);
-      console.log('📤 Début du chargement des données RDF...');
+      console.log(`\n✅ FUSEKI PRÊT! Temps d'attente: ${formatTime(elapsedTime)}`);
+      console.log('📤 Début du chargement des données RDF...\n');
       await uploadData();
     } else {
-      throw new Error(`Status: ${res.status}`);
+      const errorText = await res.text();
+      console.log(`   ❌ Erreur response: ${errorText}`);
+      throw new Error(`Status: ${res.status} - ${errorText}`);
     }
   } catch (err) {
+    console.log(`   💥 Erreur fetch: ${err.message}`);
+    console.log(`   🔍 Type erreur: ${err.name}`);
+    console.log(`   📚 Stack: ${err.stack?.substring(0, 200)}...`);
+    
     if (retries < MAX_RETRIES) {
       const elapsedTime = Math.round((Date.now() - startTime) / 1000);
-      const estimatedTotalTime = Math.round((MAX_RETRIES * RETRY_INTERVAL) / 1000);
       const remainingTime = Math.round(((MAX_RETRIES - retries) * RETRY_INTERVAL) / 1000);
       
-      // Créer la barre de progression
       const progressBar = drawProgressBar(retries, MAX_RETRIES);
       
-      // Affichage avec retour à la ligne pour nettoyer l'affichage précédent
-      process.stdout.write('\r'); // Retour au début de la ligne
+      process.stdout.write('\r');
       process.stdout.write(`⏳ ${progressBar} Tentative ${retries + 1}/${MAX_RETRIES} | Écoulé: ${formatTime(elapsedTime)} | Reste: ~${formatTime(remainingTime)}`);
       
-      // Afficher des détails d'erreur occasionnellement (sur une nouvelle ligne)
-      if (retries % 10 === 0 && retries > 0) {
-        console.log(''); // Nouvelle ligne
-        console.log(`   💭 Détail erreur: ${err.message}`);
-        console.log(`   💡 Temps estimé total: ~${formatTime(estimatedTotalTime)}`);
+      if (retries % 5 === 0 && retries > 0) {
+        console.log(`\n   💭 Erreur persistante: ${err.message}`);
       }
       
       setTimeout(() => waitForFuseki(retries + 1), RETRY_INTERVAL);
     } else {
       const totalTime = Math.round((Date.now() - startTime) / 1000);
-      console.log(''); // Nouvelle ligne après la barre de progression
-      console.error(`❌ Timeout après ${formatTime(totalTime)} : Fuseki ne répond pas.`);
-      console.error(`   💡 Vérifiez les logs: docker-compose logs fuseki`);
-      console.error(`   🔧 Ou augmentez MAX_RETRIES (actuellement ${MAX_RETRIES})`);
+      console.log(`\n❌ TIMEOUT après ${formatTime(totalTime)} : Fuseki ne répond pas.`);
+      console.error(`   💡 Vérifiez: docker-compose logs fuseki`);
       process.exit(1);
     }
   }
@@ -101,115 +127,139 @@ async function waitForFuseki(retries = 0) {
 async function uploadData() {
   const uploadStartTime = Date.now();
   
+  console.log('📤 DÉBUT UPLOAD:');
+  console.log(`   🎯 Destination: ${DATA_URL}`);
+  console.log(`   📦 Content-Type: text/turtle`);
+  console.log(`   📏 Taille body: ${ttl.length} caractères`);
+  
   try {
-    // Barre de progression pour l'upload
     process.stdout.write('📊 Upload en cours ');
     
-    // Animation pendant l'upload
     const uploadAnimation = setInterval(() => {
       process.stdout.write('.');
     }, 500);
     
-    const res = await fetch(DATA_URL, {
+    const requestOptions = {
       method: 'POST',
       headers: {
         'Content-Type': 'text/turtle',
-        'Authorization': `Basic ${auth}`
+        'Authorization': `Basic ${auth}`,
+        'Content-Length': ttl.length.toString()
       },
       body: ttl
-    });
+    };
+    
+    console.log(`\n📋 OPTIONS REQUEST:`);
+    console.log(`   Method: ${requestOptions.method}`);
+    console.log(`   Headers: ${JSON.stringify(requestOptions.headers)}`);
+    console.log(`   Body length: ${requestOptions.body.length}`);
+    
+    const res = await fetch(DATA_URL, requestOptions);
     
     clearInterval(uploadAnimation);
-    console.log(''); // Nouvelle ligne
+    console.log('\n');
+    
+    console.log(`📨 RÉPONSE UPLOAD:`);
+    console.log(`   Status: ${res.status} ${res.statusText}`);
+    console.log(`   Headers: ${JSON.stringify(Object.fromEntries(res.headers))}`);
     
     if (!res.ok) {
       const errorText = await res.text();
+      console.log(`   ❌ Erreur body: ${errorText}`);
       throw new Error(`HTTP ${res.status}: ${errorText}`);
     }
     
-    const text = await res.text();
+    const responseText = await res.text();
     const uploadTime = Math.round((Date.now() - uploadStartTime) / 1000);
     const totalTime = Math.round((Date.now() - startTime) / 1000);
     
-    console.log(`✅ Données RDF chargées avec succès !`);
-    console.log(`⏱️  Temps upload: ${formatTime(uploadTime)} | Temps total: ${formatTime(totalTime)}`);
+    console.log(`   ✅ Response body: "${responseText}"`);
+    console.log(`   ⏱️  Temps upload: ${formatTime(uploadTime)}`);
+    console.log(`   ⏱️  Temps total: ${formatTime(totalTime)}`);
     
-    // Afficher la réponse du serveur si elle contient des infos utiles
-    if (text && text.trim()) {
-      console.log(`📈 Réponse serveur: ${text.trim()}`);
-    }
-    
-    // Vérification optionnelle que les données sont bien là
-    console.log('🔍 Vérification du chargement...');
+    console.log('\n🔍 VÉRIFICATION DU CHARGEMENT...');
     await verifyDataLoaded();
     
   } catch (err) {
-    console.log(''); // Nouvelle ligne en cas d'erreur
-    console.error('❌ Échec du chargement RDF :', err.message);
+    console.log('\n❌ ÉCHEC UPLOAD:');
+    console.log(`   Message: ${err.message}`);
+    console.log(`   Type: ${err.name}`);
+    console.log(`   Stack: ${err.stack}`);
     process.exit(1);
   }
 }
 
-// Fonction pour vérifier que les données sont bien chargées
 async function verifyDataLoaded() {
-  try {
-    const queryUrl = `${FUSEKI_URL}/sparql`;
-    const testQuery = 'SELECT (COUNT(*) as ?count) WHERE { ?s ?p ?o }';
-    
-    const res = await fetch(queryUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/sparql-query',
-        'Accept': 'application/sparql-results+json',
-        'Authorization': `Basic ${auth}`
-      },
-      body: testQuery
-    });
-    
-    if (res.ok) {
-      const result = await res.json();
-      const count = result.results.bindings[0]?.count?.value || '0';
-      const formattedCount = parseInt(count).toLocaleString();
-      console.log(`🔢 Vérification réussie: ${formattedCount} triples chargés dans le dataset`);
+  const queries = [
+    {
+      name: 'Comptage total triples',
+      query: 'SELECT (COUNT(*) as ?count) WHERE { ?s ?p ?o }'
+    },
+    {
+      name: 'Comptage Analysis',
+      query: 'SELECT (COUNT(*) as ?count) WHERE { ?s a <http://ia-das.org/onto#Analysis> }'
+    },
+    {
+      name: 'Échantillon triples',
+      query: 'SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 5'
+    },
+    {
+      name: 'Préfixes utilisés',
+      query: 'SELECT DISTINCT ?p WHERE { ?s ?p ?o } LIMIT 10'
+    }
+  ];
+  
+  for (const {name, query} of queries) {
+    try {
+      console.log(`\n🔍 TEST: ${name}`);
+      console.log(`   📝 Requête: ${query}`);
       
-      // Test de performance simple
-      const queryTime = Date.now();
-      const simpleQuery = 'SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 1';
-      const testRes = await fetch(queryUrl, {
+      const startQuery = Date.now();
+      const res = await fetch(SPARQL_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/sparql-query',
           'Accept': 'application/sparql-results+json',
           'Authorization': `Basic ${auth}`
         },
-        body: simpleQuery
+        body: query
       });
       
-      if (testRes.ok) {
-        const queryDuration = Date.now() - queryTime;
-        console.log(`⚡ Test de requête: ${queryDuration}ms (performances OK)`);
+      const queryTime = Date.now() - startQuery;
+      console.log(`   📨 Status: ${res.status} (${queryTime}ms)`);
+      
+      if (res.ok) {
+        const result = await res.json();
+        console.log(`   📊 Résultat: ${JSON.stringify(result, null, 2)}`);
+        
+        if (result.results?.bindings) {
+          console.log(`   🔢 Nombre bindings: ${result.results.bindings.length}`);
+        }
+      } else {
+        const errorText = await res.text();
+        console.log(`   ❌ Erreur: ${errorText}`);
       }
       
-    } else {
-      console.log('⚠️  Impossible de vérifier le dataset (mais le chargement semble réussi)');
+    } catch (err) {
+      console.log(`   💥 Exception: ${err.message}`);
     }
-  } catch (err) {
-    console.log('⚠️  Erreur lors de la vérification (ce n\'est pas critique):', err.message);
   }
+  
+  console.log('\n🎉 VÉRIFICATION TERMINÉE!');
 }
 
-// Gestion propre de l'arrêt du script
+// Gestion des signaux
 process.on('SIGINT', () => {
-  console.log('\n🛑 Arrêt du script demandé par l\'utilisateur');
+  console.log('\n🛑 Arrêt demandé par utilisateur');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Arrêt du script demandé par le système');
+  console.log('\n🛑 Arrêt demandé par système');
   process.exit(0);
 });
 
-// Démarrage du script
-console.log('🎯 Script de chargement IA-DAS avec barre de progression');
+// Démarrage
+console.log('\n🎯 DÉMARRAGE SCRIPT DEBUG');
 console.log('💡 Appuyez sur Ctrl+C pour arrêter\n');
 waitForFuseki();

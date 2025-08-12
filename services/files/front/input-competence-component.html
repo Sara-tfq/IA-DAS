@@ -1,0 +1,72 @@
+<div class="competence-input-container">
+    <div class="header-controls">
+        <h2>Questions de Compétences</h2>
+    </div>
+
+    <div class="accordion-section">
+        <!-- Question 1 : ACAD spécifique (pas de sous-options) -->
+        <div class="accordion-item">
+            <div class="accordion-header" data-question="q1">
+                <h3>Pour une ACAD spécifique, quel est l'ensemble des facteurs psychosociaux associés ?</h3>
+                <span class="accordion-icon">🔍</span>
+            </div>
+        </div>
+
+        <!-- Question 2 : Facteur spécifique (avec sous-options) -->
+        <div class="accordion-item">
+            <div class="accordion-header" data-toggle="accordion-2">
+                <h3>Pour un facteur spécifique, à quels types d'ACAD sont-ils reliés ?</h3>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content" id="accordion-2">
+                <div class="sub-option" data-question="q2-protecteur">
+                    <span class="sub-icon">➤</span>
+                    <span>Facteur protecteur</span>
+                </div>
+                <div class="sub-option" data-question="q2-risque">
+                    <span class="sub-icon">➤</span>
+                    <span>Facteur à risque</span>
+                </div>
+                <div class="sub-option" data-question="q2-ambigu">
+                    <span class="sub-icon">➤</span>
+                    <span>Facteur ambigu</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question 3 : Catégorie de facteurs (avec sous-options) -->
+        <div class="accordion-item">
+            <div class="accordion-header" data-toggle="accordion-3">
+                <h3>Pour une catégorie de facteurs, à quels types d'ACAD sont-ils reliés ?</h3>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content" id="accordion-3">
+                <div class="sub-option" data-question="q3-intrapersonnels">
+                    <span class="sub-icon">➤</span>
+                    <span>Facteurs intrapersonnels</span>
+                </div>
+                <div class="sub-option" data-question="q3-interpersonnels">
+                    <span class="sub-icon">➤</span>
+                    <span>Facteurs interpersonnels</span>
+                </div>
+                <div class="sub-option" data-question="q3-socioenvironnementaux">
+                    <span class="sub-icon">➤</span>
+                    <span>Facteurs socio-environnementaux</span>
+                </div>
+                <div class="sub-option" data-question="q3-autres">
+                    <span class="sub-icon">➤</span>
+                    <span>Autres comportements</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="selected-question" id="selectedQuestion" style="display: none;">
+        <div class="selected-info">
+            <h4>Question sélectionnée :</h4>
+            <p id="selectedQuestionText"></p>
+        </div>
+        <button id="searchBtn">Rechercher</button>
+        <button id="resetBtn">Changer de question</button>
+    </div>
+</div>

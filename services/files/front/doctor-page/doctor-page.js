@@ -5,12 +5,24 @@ let currentMode = 'table';
 console.log("Script principal chargé !");
 
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log("Page prête !");
+    console.log("📄 Page chargée, début de l'initialisation...");
     
-    // ✅ CHANGEMENT : Utiliser des chemins Excel au lieu de CSV
+    // 🆕 Désactiver tous les inputs pendant l'initialisation
+    const inputs = document.querySelectorAll('input, button, select');
+    inputs.forEach(input => input.disabled = true);
+    
+    // 🆕 Lancer l'initialisation
+    try {
+        await window.pageInitializer.initializePage();
+        console.log('✅ Initialisation terminée avec succès');
+    } catch (error) {
+        console.error('❌ Échec de l\'initialisation:', error);
+    }
+    
+    // ✅ GARDER votre logique Excel existante (après l'initialisation)
     const excelPaths = [
-        './data/IA-DAS-Data1.xlsx',     // ✅ Nouveau chemin Excel
-        './../data/IA-DAS-Data1.xlsx'   // ✅ Chemin alternatif
+        './data/IA-DAS-Data1.xlsx',
+        './../data/IA-DAS-Data1.xlsx'
     ];
     
     let excelLoaded = false;
@@ -18,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             console.log(`🔍 Tentative chargement Excel: ${excelPath}`);
             
-            // ✅ CHANGEMENT : Utiliser window.csvLoader (qui pointe vers ExcelLoader)
             if (window.csvLoader && typeof window.csvLoader.loadExcelData === 'function') {
                 const excelData = await window.csvLoader.loadExcelData(excelPath);
                 if (excelData && excelData.length > 0) {
@@ -28,7 +39,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             } else {
                 console.log(`⏳ ExcelLoader pas encore disponible, attente...`);
-                // Attendre que ExcelLoader soit disponible
                 await new Promise(resolve => setTimeout(resolve, 100));
                 continue;
             }
@@ -38,81 +48,135 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     if (!excelLoaded) {
-        console.error("❌ Aucun fichier Excel trouvé ! Vérifiez le nom et l'emplacement du fichier.");
-        console.log("📁 Fichiers tentés:", excelPaths);
-        console.log("💡 Astuce: Assurez-vous d'avoir converti IA-DAS-Data1.csv en IA-DAS-Data1.xlsx");
+        console.error("❌ Aucun fichier Excel trouvé !");
     }
     
-    // Attendre un peu que le composant soit initialisé
+    // ✅ GARDER votre setup du composant
     setTimeout(() => {
         const component = document.querySelector('input-intorregation-component');
         if (component) {
             console.log("Composant trouvé, ajout du listener !");
-            
             component.addEventListener('search', (event) => {
                 console.log("=== ÉVÉNEMENT REÇU DANS LA PAGE PRINCIPALE ===");
-                console.log("Données reçues:", event.detail);
-                
-                // Appeler la recherche
                 rechercher(event.detail);
             });
-        } else {
-            console.log("Composant non trouvé !");
         }
     }, 100);
 });
-
 // Fonction pour les requêtes prédéfinies
+// Fonction pour les requêtes prédéfinies - MISE À JOUR COMPLÈTE
 async function rechercher(data) {
-    console.log("=== RECHERCHE APPELÉE ===");
-    console.log("Données:", data);
-    
-    let payload;
-    
-    if (data.queryType === 'raw_sparql') {
-        payload = {
-            queryType: 'raw_sparql',
-            rawSparqlQuery: data.rawSparqlQuery
-        };
-    } else {
-        payload = {
-            queryType: 'generated',
-            ...(data.gender && { gender: data.gender }),
-            ...(data.minAge && { minAge: parseInt(data.minAge) }),
-            ...(data.sportLevel && { sportLevel: data.sportLevel }),
-            ...(data.relationDirection && { relationDirection: data.relationDirection }),
-            ...(data.variableType && { variableType: data.variableType }),
-            ...(data.selectedVI && { selectedVI: data.selectedVI }),
-            ...(data.selectedVD && { selectedVD: data.selectedVD }),
-            ...(data.categoryVI && { categoryVI: data.categoryVI }),
-            ...(data.categoryVD && { categoryVD: data.categoryVD }),
-            ...(data.factorType && { factorType: data.factorType }),
-            ...(data.factorCategory && { factorCategory: data.factorCategory }),
-            ...(data.sportType && { sportType: data.sportType }),
-            ...(data.experienceYears && { experienceYears: data.experienceYears }),
-            ...(data.practiceFrequency && { practiceFrequency: data.practiceFrequency })
-        };
-    }
-    
-    console.log("Payload à envoyer:", payload);
-    
     try {
-        const response = await fetch('http://localhost:8000/api/query', {
+        // 🆕 Vérifier que la page est prête
+        const isReady = await window.pageInitializer.ensureReady();
+        if (!isReady) {
+            console.log('❌ Page pas prête pour la recherche');
+            return;
+        }
+        
+        console.log("=== RECHERCHE AVEC PAGE INITIALISÉE ===");
+        console.log("Données reçues:", data);
+        
+        // 🆕 Loading plus simple (pas de warmup, Fuseki est déjà chaud)
+        window.loadingManager.show("Recherche en cours...");
+        window.loadingManager.startQuery(1, 1); // Une seule tentative nécessaire
+        
+        let payload;
+        
+        if (data.queryType === 'raw_sparql') {
+            payload = {
+                queryType: 'raw_sparql',
+                rawSparqlQuery: data.rawSparqlQuery
+            };
+        } else {
+            payload = { queryType: 'generated' };
+
+            // ✅ GARDER tous vos filtres existants
+            if (data.selectedVI) payload.selectedVI = data.selectedVI;
+            if (data.selectedVD) payload.selectedVD = data.selectedVD;
+            if (data.categoryVI) payload.categoryVI = data.categoryVI;
+            if (data.categoryVD) payload.categoryVD = data.categoryVD;
+            if (data.relationDirection) payload.relationDirection = data.relationDirection;
+            if (data.sportType) payload.sportType = data.sportType;
+            if (data.gender) payload.gender = data.gender;
+
+            // Nouveaux filtres âge
+            if (data.ageCategory) {
+                payload.ageCategory = data.ageCategory;
+            } else {
+                if (data.ageMin) payload.ageMin = parseInt(data.ageMin);
+                if (data.ageMax) payload.ageMax = parseInt(data.ageMax);
+            }
+
+            // Nouveaux filtres fréquence
+            if (data.exerciseFrequency) {
+                payload.exerciseFrequency = data.exerciseFrequency;
+            } else {
+                if (data.frequencyMin) payload.frequencyMin = parseInt(data.frequencyMin);
+                if (data.frequencyMax) payload.frequencyMax = parseInt(data.frequencyMax);
+            }
+
+            // Nouveaux filtres expérience
+            if (data.experienceCategory) {
+                payload.experienceCategory = data.experienceCategory;
+            } else {
+                if (data.experienceMin) payload.experienceMin = parseInt(data.experienceMin);
+                if (data.experienceMax) payload.experienceMax = parseInt(data.experienceMax);
+            }
+        }
+        
+        console.log("Payload complet:", payload);
+        
+        // 🔧 CORRECTION : URL sans /api/query
+        const response = await fetch('http://localhost:8003/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error("Erreur HTTP " + response.status);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+        }
 
-        const data = await response.json();
-        console.log("Réponse API:", data);
+        const responseData = await response.json();
+        console.log("Réponse API:", responseData);
         
-        displayResults(data);
+        window.loadingManager.completeQuery(responseData.results?.bindings?.length);
+        window.loadingManager.startParsing();
         
-    } catch (err) {
-        console.error("Erreur API:", err);
-        document.getElementById('results').textContent = "Erreur : " + err.message;
+        // Parser les données si nécessaire
+        let parsedData = responseData;
+        if (window.SPARQLDataParser && typeof window.SPARQLDataParser.parse === 'function') {
+            parsedData = window.SPARQLDataParser.parse(responseData);
+        }
+        
+        window.loadingManager.completeParsing();
+        
+        displayResults(parsedData);
+        window.loadingManager.completeAll();
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de la recherche:', error);
+        
+        window.loadingManager.showError('Erreur de recherche', error.message);
+        
+        // ✅ GARDER votre affichage d'erreur existant
+        const resultsDiv = document.getElementById('results');
+        if (resultsDiv) {
+            resultsDiv.innerHTML = `
+                <div style="color: red; padding: 20px; background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 5px;">
+                    <h4>Erreur de recherche</h4>
+                    <p><strong>Message:</strong> ${error.message}</p>
+                    <p><strong>Suggestions:</strong></p>
+                    <ul>
+                        <li>Vérifiez que le serveur SPARQL Generator fonctionne (port 8003)</li>
+                        <li>Essayez avec moins de filtres pour éviter les timeouts</li>
+                        <li>Vérifiez la console pour plus de détails</li>
+                    </ul>
+                </div>
+            `;
+        }
     }
 }
 

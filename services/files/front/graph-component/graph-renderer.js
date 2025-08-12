@@ -513,30 +513,27 @@ class GraphRenderer {
       .style('margin-bottom', '10px')
       .style('font-size', '12px');
 
-    legend.append('strong').text('Légende: ');
+    // legend.append('strong').text('Légende: ');
 
     // Légende relations
-    legend.append('span')
-      .style('margin-left', '10px')
-      .html('🔗 <span style="color: #E53E3E;">■</span> Risque (+) ' +
-            '<span style="color: #38A169;">■</span> Protecteur (-) ' +
-            '<span style="color: #718096;">■</span> Non significatif (NS)');
+  //   legend.append('span')
+  //     .style('margin-left', '10px')
+  //     .html('🔗 <span style="color: #E53E3E;">■</span> Risque (+) ' +
+  //           '<span style="color: #38A169;">■</span> Protecteur (-) ' +
+  //           '<span style="color: #718096;">■</span> Non significatif (NS)');
 
-    // Légende types de nœuds
-    legend.append('div')
-      .style('margin-top', '5px')
-      .html('🎯 <span style="color: #C62828;">●</span> ACAD ' +
-            '<span style="color: #1565C0;">●</span> Facteurs ' +
-            '<span style="color: #FFD700;">●</span> Médiateurs ' +
-            '<span style="color: #FF8C00;">●</span> Modérateurs');
+  //   // Légende types de nœuds
+  //   legend.append('div')
+  //     .style('margin-top', '5px')
+  //     .html('🎯 <span style="color: #C62828;">●</span> ACAD ' +
+  //           '<span style="color: #1565C0;">●</span> Facteurs ' +
+  //           '<span style="color: #FFD700;">●</span> Médiateurs ' +
+  //           '<span style="color: #FF8C00;">●</span> Modérateurs');
+  // }
   }
 
   addInteractionInstructions(controls) {
-    controls.append('div')
-      .style('font-size', '11px')
-      .style('color', '#666')
-      .style('margin-top', '5px')
-      .style('font-weight', 'bold')
-      .html('💡 <strong>Double-clic sur un nœud</strong> pour ouvrir le panneau • <strong>Chargement Excel automatique</strong> • Taille = nombre d\'analyses');
+   
   }
+  
 }
