@@ -18,7 +18,6 @@ class CSVLoader {
       
       console.log("📄 Taille du fichier CSV:", csvText.length, "caractères");
       
-      // ✅ CORRECTION : Parser le CSV avec des POINTS-VIRGULES
       const lines = csvText.split('\n');
       const headers = lines[0].split(';').map(h => h.trim().replace(/"/g, '')); // Enlever guillemets
       
@@ -29,7 +28,6 @@ class CSVLoader {
       for (let i = 1; i < lines.length; i++) {
         if (lines[i].trim() === '') continue; // Ignorer lignes vides
         
-        // ✅ CORRECTION : Split par point-virgule
         const values = lines[i].split(';').map(v => v.trim().replace(/"/g, ''));
         const row = {};
         
@@ -42,7 +40,6 @@ class CSVLoader {
           console.log(`📋 Ligne ${i}:`, row);
         }
         
-        // ✅ CORRECTION : Chercher Analysis_ID (peut être décimal)
         const analysisId = row['Analysis_ID'];
         
         if (analysisId && analysisId !== '' && analysisId !== 'N.A.' && analysisId !== 'NA') {
@@ -70,14 +67,13 @@ class CSVLoader {
       return data;
       
     } catch (error) {
-      console.error("❌ Erreur chargement CSV:", error);
+      console.error("Erreur chargement CSV:", error);
       this.csvData = [];
       this.isLoaded = false;
       return [];
     }
   }
 
-  // ✅ NOUVELLE MÉTHODE : Parser une ligne CSV avec guillemets
   static parseCSVLine(line) {
     const result = [];
     let current = '';
@@ -107,7 +103,6 @@ class CSVLoader {
       return null;
     }
 
-    // ✅ CORRECTION : Nettoyer l'ID et gérer format français (virgule)
     let cleanId = analysisId.toString()
       .replace(/^Analysis_/, '')    // Enlever préfixe
       .replace(/\.0$/, '')          // Enlever .0 à la fin

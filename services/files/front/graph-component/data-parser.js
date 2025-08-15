@@ -235,7 +235,6 @@ class SPARQLDataParser {
         }
       }
      
-     // 🆕 STOCKER TOUTES LES RELATIONS (avant filtrage)
     if (vi && vd) {
       const hasMediator = mediator && mediator !== 'N.A.' && mediator.trim() !== '';
       const hasModerator = moderator && moderator !== 'N.A.' && moderator.trim() !== '';
@@ -299,17 +298,15 @@ class SPARQLDataParser {
     }
     }); 
     
-    // 🆕 FILTRAGE INTELLIGENT : 1 lien par type de relation
     const filteredLinks = this.applySmartFiltering(allRelations);
     
-    console.log(`🎨 RÉSULTAT FILTRÉ: ${nodes.length} nœuds, ${filteredLinks.length} liens (sur ${allRelations.length} originaux)`);
+    console.log(` RÉSULTAT FILTRÉ: ${nodes.length} nœuds, ${filteredLinks.length} liens (sur ${allRelations.length} originaux)`);
     console.log("Nœuds:", nodes);
     console.log("Liens filtrés:", filteredLinks);
     
     return { nodes, links: filteredLinks };
   }
 
-  // 🆕 NOUVELLE FONCTION : Filtrage intelligent des liens
   static applySmartFiltering(allRelations) {
     console.log("🔍 Application du filtrage intelligent...");
     

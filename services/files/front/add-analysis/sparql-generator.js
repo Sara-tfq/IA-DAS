@@ -10,7 +10,6 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>`;
     }
 
-    // Nettoyer les valeurs pour SPARQL (échapper les guillemets, etc.)
     cleanValue(value) {
         if (!value || value === 'N.A.') return 'N.A.';
         return value.toString().replace(/"/g, '\\"').replace(/\n/g, '\\n');
@@ -138,7 +137,6 @@ INSERT DATA {
 }`;
     }
 
-    // Générer la requête pour les statistiques de fréquence d'exercice
     generateExerciseStatsInsert(data) {
         const analysisId = this.cleanValue(data.analysisId);
 
@@ -156,7 +154,6 @@ INSERT DATA {
 }`;
     }
 
-    // Générer la requête pour les statistiques d'expérience
     generateExperienceStatsInsert(data) {
         const analysisId = this.cleanValue(data.analysisId);
 
@@ -173,7 +170,6 @@ INSERT DATA {
 }`;
     }
 
-    // Générer la requête pour le Sport
     generateSportInsert(data) {
         const analysisId = this.cleanValue(data.analysisId);
 
@@ -208,7 +204,6 @@ INSERT DATA {
 }`;
     }
 
-    // Générer la requête pour la Variable Indépendante
     generateVIInsert(data) {
         const analysisId = this.cleanValue(data.analysisId);
 
@@ -228,7 +223,6 @@ INSERT DATA {
 }`;
     }
 
-    // Générer la requête pour les Relations
     generateRelationsInsert(data) {
         const analysisId = this.cleanValue(data.analysisId);
 
@@ -250,7 +244,6 @@ INSERT DATA {
 }`;
     }
 
-    // Générer toutes les requêtes INSERT
     generateAllInserts(data) {
         console.log('Génération de toutes les requêtes SPARQL...');
         
@@ -272,7 +265,6 @@ INSERT DATA {
         return queries;
     }
 
-    // Générer une seule requête combinée (optionnel)
     generateCombinedInsert(data) {
         const analysisId = this.cleanValue(data.analysisId);
         const doi = this.cleanValue(data.doi);

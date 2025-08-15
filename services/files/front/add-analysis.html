@@ -11,7 +11,7 @@
 <body>
     <header>
         <h1>Ajouter une nouvelle analyse</h1>
-        <img src="../services/files/assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
+        <img src="./assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
         <button id="backToUpdate" onclick="window.location.href = './update-page.html'">Retour</button>
     </header>
 
@@ -92,7 +92,6 @@
                 </div>
             </section>
 
-            <!-- Section Population -->
             <section class="form-section" data-section="population">
                 <h2>Population d'étude</h2>
                 <div class="form-row">
@@ -132,7 +131,6 @@
                     </div>
                 </div>
                 
-                <!-- Statistiques d'âge -->
                 <h3>Statistiques d'âge</h3>
                 <div class="form-group">
                     <label for="ageDescription">Description de l'âge</label>
@@ -159,7 +157,6 @@
                     </div>
                 </div>
 
-                <!-- Statistiques BMI -->
                 <h3>Statistiques d'IMC</h3>
                 <div class="form-group">
                     <label for="bmiDescription">Description de l'IMC</label>
@@ -186,7 +183,6 @@
                     </div>
                 </div>
 
-                <!-- Statistiques fréquence d'exercice -->
                 <h3>Statistiques de fréquence d'exercice</h3>
                 <div class="form-group">
                     <label for="exerciseFreqDescription">Description de la fréquence d'exercice</label>
@@ -223,7 +219,6 @@
                     </div>
                 </div>
 
-                <!-- Statistiques années d'expérience -->
                 <h3>Statistiques d'années d'expérience</h3>
                 <div class="form-group">
                     <label for="experienceDescription">Description de l'expérience</label>
@@ -255,7 +250,6 @@
                 </div>
             </section>
 
-            <!-- Section Sport -->
             <section class="form-section" data-section="sport">
                 <h2>Activité sportive</h2>
                 <div class="form-group">
@@ -276,11 +270,9 @@
                 </div>
             </section>
 
-            <!-- Section Variables -->
             <section class="form-section" data-section="variables">
                 <h2>Variables de l'étude</h2>
                 
-                <!-- Variable Dépendante -->
                 <h3>Variable Dépendante (VD)</h3>
                 <div class="form-group">
                     <label for="vdName">Nom de la VD (sub-class Final VD) *</label>
@@ -311,7 +303,6 @@
                     <input type="text" id="vdSubClass4" name="vdSubClass4">
                 </div>
 
-                <!-- Variable Indépendante -->
                 <h3>Variable Indépendante (VI)</h3>
                 <div class="form-group">
                     <label for="viName">Nom de la VI (sub-class Final VI) *</label>
@@ -343,7 +334,6 @@
                 </div>
             </section>
 
-            <!-- Section Relations statistiques -->
             <section class="form-section" data-section="relations">
                 <h2>Relations statistiques</h2>
                 <div class="form-row">
@@ -374,7 +364,6 @@
                 
             </section>
 
-            <!-- Section Médiateurs/Modérateurs -->
             <section class="form-section" data-section="mediateurs">
                 <h2>Médiateurs et Modérateurs (optionnel)</h2>
                 <div class="form-row">
@@ -399,7 +388,6 @@
                 </div>
             </section>
 
-            <!-- Boutons d'action -->
             <div class="form-actions">
                 <button type="button" id="previewBtn" class="btn-secondary">Prévisualiser</button>
                 <button type="submit" id="submitBtn" class="btn-primary">Ajouter l'analyse</button>

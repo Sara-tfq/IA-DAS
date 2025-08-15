@@ -168,7 +168,6 @@ class LoadingManager {
         }, 3000);
     }
 
-    // 🆕 MÉTHODE POUR COMPLÉTER AUTOMATIQUEMENT
 completeAll() {
     console.log('🎉 Finalisation complète');
     

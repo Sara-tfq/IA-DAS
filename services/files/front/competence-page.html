@@ -4,13 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Questions de Compétences - IA-DAS</title>
-    <!-- Styles de la page doctor (réutilisés) -->
     <link rel="stylesheet" href="./doctor-page/doctor-page.css">
-    <!-- Styles spécifiques à cette page -->
     <link rel="stylesheet" href="./competence-page.css">
-    <!-- Styles du nouveau composant input -->
     <link rel="stylesheet" href="./input-competence-component/input-competence-component.css">
-    <!-- Styles des composants existants (graph et analysis) -->
     <link rel="stylesheet" href="./graph-component/graph-component.css">
     <link rel="stylesheet" href="./analysis-panel/analysis-panel.css">
 </head>
@@ -24,10 +20,8 @@
 
 <body>
     <div class="content-container">
-        <!-- Le nouveau composant pour les questions de compétences -->
         <input-competence-component></input-competence-component>
        
-        <!-- Zone d'affichage des résultats -->
         <div id="results">
             <div id="result-controls" style="display: none; margin-bottom: 20px;">
                 <button id="viewTable" class="view-btn active">Tableau</button>
@@ -39,26 +33,18 @@
         </div>
     </div>
 
-    <!-- Scripts nécessaires -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <!-- Excel-loader en premier -->
     <script src="./data/excel-loader.js"></script>
-    
-    <!-- D3.js pour le graphique -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    
-    <!-- Composants graphiques -->
+    <script src="js/fuseki-analysis-retriever.js"></script>
     <script src="./analysis-panel/analysis-panel.js"></script>
-    <script src="./graph-component/graph-component.js"></script>
     <script src="./graph-component/data-parser.js"></script>
+    <script src="./graph-component/graph-component.js"></script>
+    <script src="js/fuseki-analysis-retriever.js"></script>
     <script src="./graph-component/graph-renderer.js"></script>
-    
-    <!-- Nouveau composant input -->
     <script src="./input-competence-component/input-competence-component.js"></script>
-    
-    <!-- Logique de la page -->
     <script src="./competence-page/competence-page.js"></script>
+
 </body>
 
 <footer>

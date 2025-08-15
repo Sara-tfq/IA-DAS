@@ -58,7 +58,6 @@ class GraphRenderer {
       console.log(`🔗 Lien "${link.label}" -> Couleur: ${link.color}`);
     });
 
-    // 🆕 NOUVELLE LOGIQUE : Calculer les courbes pour liens multiples
     const processedLinks = this.calculateLinkCurves(links);
 
     // Créer la simulation de force
@@ -68,7 +67,6 @@ class GraphRenderer {
       .force('center', d3.forceCenter(this.width / 2, this.height / 2))
       .force('collision', d3.forceCollide().radius(d => d.size + 10));
 
-    // 🆕 DESSINER LES LIENS COURBÉS au lieu de lignes droites
     const link = this.g.append('g')
       .attr('class', 'links')
       .selectAll('path') // ← CHANGEMENT : path au lieu de line
@@ -137,7 +135,6 @@ class GraphRenderer {
     node.on('mouseover', (event, d) => this.showTooltip(event, d))
       .on('mouseout', () => this.hideTooltip());
 
-    // 🆕 DOUBLE-CLIC pour ouvrir le panneau latéral
     node.on('dblclick', (event, d) => {
       console.log(`📋 Double-clic sur nœud: ${d.label}`);
       
@@ -149,7 +146,6 @@ class GraphRenderer {
       this.openAnalysisPanel(d);
     });
 
-    // 🔄 SIMPLE CLIC pour fixer/libérer un nœud (modifié)
     node.on('click', (event, d) => {
       // Délai pour distinguer simple clic du double-clic
       setTimeout(() => {
@@ -157,12 +153,11 @@ class GraphRenderer {
           d.fx = d.fx ? null : d.x;
           d.fy = d.fy ? null : d.y;
           this.simulation.alpha(0.3).restart();
-          console.log(`📌 Nœud ${d.fx ? 'fixé' : 'libéré'}: ${d.label}`);
+          console.log(` Nœud ${d.fx ? 'fixé' : 'libéré'}: ${d.label}`);
         }
       }, 200);
     });
 
-    // 🆕 NOUVELLE LOGIQUE : Mise à jour avec chemins courbés
     this.simulation.on('tick', () => {
       // Mettre à jour les chemins courbés
       link.attr('d', d => this.createCurvedPath(d));
@@ -178,7 +173,6 @@ class GraphRenderer {
     });
   }
 
-  // 🆕 NOUVELLE FONCTION : Calculer les courbes pour liens multiples
   calculateLinkCurves(links) {
     // Grouper les liens par paire source-target
     const linkGroups = new Map();
@@ -226,7 +220,6 @@ class GraphRenderer {
     return processedLinks;
   }
 
-  // 🆕 NOUVELLE FONCTION : Créer un chemin courbé
   createCurvedPath(d) {
     const sourceX = d.source.x;
     const sourceY = d.source.y;
@@ -257,7 +250,6 @@ class GraphRenderer {
     return `M${sourceX},${sourceY}Q${offsetX},${offsetY} ${targetX},${targetY}`;
   }
 
-  // 🆕 NOUVELLE FONCTION : Point milieu d'une courbe
   getCurveMidpoint(d) {
     const sourceX = d.source.x;
     const sourceY = d.source.y;
@@ -287,126 +279,168 @@ class GraphRenderer {
     return { x: offsetX, y: offsetY };
   }
 
-  // 🆕 NOUVELLE FONCTION : Ouvrir le panneau latéral avec toutes les analyses
-  openAnalysisPanel(nodeData) {
-    console.log(`📋 Ouverture panneau pour nœud: ${nodeData.label}`);
-    console.log(`📊 Analyses liées: ${nodeData.analyses ? nodeData.analyses.length : 0}`);
-    
-    // Vérifier que le panneau est disponible
-    if (typeof window.analysisPanel === 'undefined') {
-      console.error('❌ AnalysisPanel non disponible ! Assurez-vous qu\'il est chargé.');
-      alert('Erreur: Le panneau d\'analyse n\'est pas disponible.\n\nVérifiez que analysis-panel.js est chargé.');
-      return;
-    }
+ openAnalysisPanel(nodeData) {
+  console.log(`📋 Ouverture panneau pour nœud: ${nodeData.label}`);
+  console.log(`📊 Analyses liées: ${nodeData.analyses ? nodeData.analyses.length : 0}`);
+  
+  // Vérifier que le panneau est disponible
+  if (typeof window.analysisPanel === 'undefined') {
+    console.error('AnalysisPanel non disponible ! Assurez-vous qu\'il est chargé.');
+    alert('Erreur: Le panneau d\'analyse n\'est pas disponible.\n\nVérifiez que analysis-panel.js est chargé.');
+    return;
+  }
 
-    // Récupérer TOUTES les données d'analyses pour ce nœud
-    this.getAllAnalysesData(nodeData).then(allAnalysesData => {
+  // Vérifier que FusekiAnalysisRetriever est disponible
+  if (typeof window.fusekiRetriever === 'undefined') {
+    console.error('FusekiAnalysisRetriever non disponible ! Assurez-vous qu\'il est chargé.');
+    alert('Erreur: Le système de récupération Fuseki n\'est pas disponible.\n\nVérifiez que fuseki-analysis-retriever.js est chargé.');
+    return;
+  }
+
+  // Utiliser FusekiAnalysisRetriever au lieu de la logique CSV locale
+  window.fusekiRetriever.getAllAnalysesData(nodeData)
+    .then(allAnalysesData => {
+      console.log(`✅ Analyses récupérées depuis Fuseki pour ${nodeData.label}:`, allAnalysesData);
+      
       // Ouvrir le panneau avec toutes les analyses
       window.analysisPanel.openMultipleAnalyses(nodeData.label, allAnalysesData);
+    })
+    .catch(error => {
+      console.error(`❌ Erreur lors de la récupération des analyses pour ${nodeData.label}:`, error);
+      
+      // Afficher un message d'erreur mais ouvrir quand même le panneau avec des données d'erreur
+      const errorAnalyses = nodeData.analyses ? nodeData.analyses.map(id => ({
+        id: id,
+        title: `Analyse ${id}`,
+        vi: 'N/A',
+        vd: 'N/A',
+        relation: 'N/A',
+        moderator: 'N/A',
+        mediator: 'N/A',
+        categoryVI: 'N/A',
+        categoryVD: 'N/A',
+        source: 'error',
+        error: error.message,
+        rawData: {
+          Analysis_ID: id,
+          Title: `Analyse ${id} (erreur Fuseki)`,
+          Authors: 'Erreur de récupération',
+          'Year ': 'N/A',
+          ERROR: error.message
+        }
+      })) : [];
+      
+      // Ouvrir le panneau même en cas d'erreur pour informer l'utilisateur
+      window.analysisPanel.openMultipleAnalyses(
+        `${nodeData.label} (Erreur Fuseki)`, 
+        errorAnalyses
+      );
+      
+      // Optionnel : afficher une notification
+      if (confirm(`Erreur lors de la récupération des données depuis Fuseki:\n\n${error.message}\n\nVoulez-vous réessayer ?`)) {
+        // Réessayer après un délai
+        setTimeout(() => this.openAnalysisPanel(nodeData), 1000);
+      }
     });
-  }
+}
 
-  // 🆕 NOUVELLE FONCTION : Récupérer TOUTES les données d'analyses d'un nœud (async)
-  async getAllAnalysesData(nodeData) {
-    console.log(`🔍 Récupération de toutes les analyses pour: ${nodeData.label}`);
+  // async getAllAnalysesData(nodeData) {
+  //   console.log(`🔍 Récupération de toutes les analyses pour: ${nodeData.label}`);
     
-    const allAnalyses = [];
+  //   const allAnalyses = [];
     
-    if (nodeData.analyses && nodeData.analyses.length > 0) {
-      for (const analysisId of nodeData.analyses) {
-        const analysisData = await this.getAnalysisData(analysisId);
-        allAnalyses.push(analysisData);
-      }
-    }
+  //   if (nodeData.analyses && nodeData.analyses.length > 0) {
+  //     for (const analysisId of nodeData.analyses) {
+  //       const analysisData = await this.getAnalysisData(analysisId);
+  //       allAnalyses.push(analysisData);
+  //     }
+  //   }
     
-    console.log(`✅ ${allAnalyses.length} analyses récupérées pour ${nodeData.label}`);
-    return allAnalyses;
-  }
+  //   console.log(`✅ ${allAnalyses.length} analyses récupérées pour ${nodeData.label}`);
+  //   return allAnalyses;
+  // }
 
-  // 🆕 FONCTION AVEC CHARGEMENT FORCÉ : Récupérer les données d'UNE analyse
-  async getAnalysisData(analysisId) {
-    console.log(`🔍 Récupération données pour analyse: ${analysisId}`);
+  // async getAnalysisData(analysisId) {
+  //   console.log(`🔍 Récupération données pour analyse: ${analysisId}`);
     
-    // ✅ FORCER LE CHARGEMENT EXCEL SI NÉCESSAIRE
-    if (!window.csvLoader?.isCSVLoaded()) {
-      console.log("🔄 Forçage du chargement Excel...");
-      return await this.loadExcelAndGetAnalysis(analysisId);
-    }
+  //   if (!window.csvLoader?.isCSVLoaded()) {
+  //     console.log("🔄 Forçage du chargement Excel...");
+  //     return await this.loadExcelAndGetAnalysis(analysisId);
+  //   }
 
-    // Chercher dans le CSV
-    const csvRow = window.csvLoader.findAnalysisById(analysisId);
+  //   // Chercher dans le CSV
+  //   const csvRow = window.csvLoader.findAnalysisById(analysisId);
     
-    if (csvRow) {
-      console.log(`✅ Données trouvées pour analyse ${analysisId}:`, csvRow);
+  //   if (csvRow) {
+  //     console.log(`✅ Données trouvées pour analyse ${analysisId}:`, csvRow);
       
-      return {
-        id: analysisId,
-        title: csvRow['Title'] || `Analyse ${analysisId}`,
-        vi: csvRow['VI'] || 'N/A',
-        vd: csvRow['VD'] || csvRow['ACADS'] || 'N/A',
-        relation: csvRow['Resultat_de_relation'] || csvRow['Degre_de_relation'] || 'N/A',
-        moderator: csvRow['Moderator'] || 'N/A',
-        mediator: csvRow['Mediator'] || 'N/A',
-        categoryVI: csvRow['sub-class_Final_VI'] || 'N/A',
-        categoryVD: csvRow['sub-class_Final_VD'] || 'N/A',
-        rawData: csvRow 
-      };
-    } else {
-      console.log(`⚠️ Données non trouvées pour analyse ${analysisId}`);
-      return this.createErrorAnalysis(analysisId, 'Données non trouvées');
-    }
-  }
+  //     return {
+  //       id: analysisId,
+  //       title: csvRow['Title'] || `Analyse ${analysisId}`,
+  //       vi: csvRow['VI'] || 'N/A',
+  //       vd: csvRow['VD'] || csvRow['ACADS'] || 'N/A',
+  //       relation: csvRow['Resultat_de_relation'] || csvRow['Degre_de_relation'] || 'N/A',
+  //       moderator: csvRow['Moderator'] || 'N/A',
+  //       mediator: csvRow['Mediator'] || 'N/A',
+  //       categoryVI: csvRow['sub-class_Final_VI'] || 'N/A',
+  //       categoryVD: csvRow['sub-class_Final_VD'] || 'N/A',
+  //       rawData: csvRow 
+  //     };
+  //   } else {
+  //     console.log(`⚠️ Données non trouvées pour analyse ${analysisId}`);
+  //     return this.createErrorAnalysis(analysisId, 'Données non trouvées');
+  //   }
+  // }
 
-  // ✅ NOUVELLE MÉTHODE : Charger Excel et récupérer l'analyse
-  async loadExcelAndGetAnalysis(analysisId) {
-    try {
-      console.log("⏳ Chargement Excel en cours...");
+  // async loadExcelAndGetAnalysis(analysisId) {
+  //   try {
+  //     console.log("⏳ Chargement Excel en cours...");
       
-      // Tester différents chemins
-      const paths = [
-        './data/IA-DAS-Data1.xlsx',
-        'data/IA-DAS-Data1.xlsx',
-        '../data/IA-DAS-Data1.xlsx'
-      ];
+  //     // Tester différents chemins
+  //     const paths = [
+  //       './data/IA-DAS-Data1.xlsx',
+  //       'data/IA-DAS-Data1.xlsx',
+  //       '../data/IA-DAS-Data1.xlsx'
+  //     ];
       
-      let data = null;
-      for (const path of paths) {
-        try {
-          console.log(`🔍 Test chemin Excel: ${path}`);
-          data = await window.excelLoader.loadExcelData(path);
-          if (data && data.length > 0) {
-            console.log(`✅ Excel chargé avec succès: ${data.length} analyses depuis ${path}`);
-            break;
-          }
-        } catch (pathError) {
-          console.log(`❌ Échec ${path}:`, pathError.message);
-        }
-      }
+  //     let data = null;
+  //     for (const path of paths) {
+  //       try {
+  //         console.log(`🔍 Test chemin Excel: ${path}`);
+  //         data = await window.excelLoader.loadExcelData(path);
+  //         if (data && data.length > 0) {
+  //           console.log(`✅ Excel chargé avec succès: ${data.length} analyses depuis ${path}`);
+  //           break;
+  //         }
+  //       } catch (pathError) {
+  //         console.log(`❌ Échec ${path}:`, pathError.message);
+  //       }
+  //     }
       
-      if (data && data.length > 0) {
-        // Maintenant chercher l'analyse
-        const csvRow = window.csvLoader.findAnalysisById(analysisId);
+  //     if (data && data.length > 0) {
+  //       // Maintenant chercher l'analyse
+  //       const csvRow = window.csvLoader.findAnalysisById(analysisId);
         
-        if (csvRow) {
-          console.log(`✅ Analyse ${analysisId} trouvée après chargement Excel:`, csvRow);
-          return {
-            id: analysisId,
-            title: csvRow['Title'] || `Analyse ${analysisId}`,
-            vi: csvRow['VI'] || 'N/A',
-            vd: csvRow['VD'] || csvRow['ACADS'] || 'N/A',
-            relation: csvRow['Resultat_de_relation'] || 'N/A',
-            moderator: csvRow['Moderator'] || 'N/A',
-            mediator: csvRow['Mediator'] || 'N/A',
-            rawData: csvRow
-          };
-        }
-      }
-    } catch (error) {
-      console.error("❌ Erreur chargement Excel:", error);
-    }
+  //       if (csvRow) {
+  //         console.log(`✅ Analyse ${analysisId} trouvée après chargement Excel:`, csvRow);
+  //         return {
+  //           id: analysisId,
+  //           title: csvRow['Title'] || `Analyse ${analysisId}`,
+  //           vi: csvRow['VI'] || 'N/A',
+  //           vd: csvRow['VD'] || csvRow['ACADS'] || 'N/A',
+  //           relation: csvRow['Resultat_de_relation'] || 'N/A',
+  //           moderator: csvRow['Moderator'] || 'N/A',
+  //           mediator: csvRow['Mediator'] || 'N/A',
+  //           rawData: csvRow
+  //         };
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("❌ Erreur chargement Excel:", error);
+  //   }
     
-    return this.createErrorAnalysis(analysisId, 'Chargement Excel échoué');
-  }
+  //   return this.createErrorAnalysis(analysisId, 'Chargement Excel échoué');
+  // }
 
   // Méthode utilitaire pour créer une analyse d'erreur
   createErrorAnalysis(analysisId, errorMessage) {
@@ -513,23 +547,7 @@ class GraphRenderer {
       .style('margin-bottom', '10px')
       .style('font-size', '12px');
 
-    // legend.append('strong').text('Légende: ');
-
-    // Légende relations
-  //   legend.append('span')
-  //     .style('margin-left', '10px')
-  //     .html('🔗 <span style="color: #E53E3E;">■</span> Risque (+) ' +
-  //           '<span style="color: #38A169;">■</span> Protecteur (-) ' +
-  //           '<span style="color: #718096;">■</span> Non significatif (NS)');
-
-  //   // Légende types de nœuds
-  //   legend.append('div')
-  //     .style('margin-top', '5px')
-  //     .html('🎯 <span style="color: #C62828;">●</span> ACAD ' +
-  //           '<span style="color: #1565C0;">●</span> Facteurs ' +
-  //           '<span style="color: #FFD700;">●</span> Médiateurs ' +
-  //           '<span style="color: #FF8C00;">●</span> Modérateurs');
-  // }
+   
   }
 
   addInteractionInstructions(controls) {

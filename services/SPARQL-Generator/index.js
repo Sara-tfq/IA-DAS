@@ -10,7 +10,6 @@ const RETRY_DELAY = 2000; // 2 secondes entre tentatives
 const FUSEKI_UPDATE_URL = 'http://fuseki:3030/ds/update';
 
 
-// 🆕 FONCTION DE WARMUP avec la requête fallback
 async function warmupFuseki(endpoint) {
   console.log('🔥 WARMUP de Fuseki avec requête fallback...');
 
@@ -26,21 +25,20 @@ async function warmupFuseki(endpoint) {
     return true;
 
   } catch (error) {
-    console.error('❌ Warmup échoué même avec retry:', error.message);
+    console.error(' Warmup échoué même avec retry:', error.message);
     return false;
   }
 }
 
-// 🆕 FONCTION DE RETRY
 async function executeWithRetry(endpoint, query, maxRetries = MAX_RETRIES) {
   let lastError;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    console.log(`🎯 Tentative ${attempt}/${maxRetries}...`);
+    console.log(` Tentative ${attempt}/${maxRetries}...`);
 
     try {
       const timeout = Math.min(FUSEKI_TIMEOUT * attempt, 180000); // Max 3 minutes
-      console.log(`⏱️ Timeout pour cette tentative: ${timeout / 1000}s`);
+      console.log(`⏱ Timeout pour cette tentative: ${timeout / 1000}s`);
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -85,7 +83,6 @@ function generateSparqlQuery(filters) {
 PREFIX iadas: <http://ia-das.org/onto#>
 PREFIX iadas-data: <http://ia-das.org/data#>`;
 
-  // 🆕 REQUÊTE AVEC TOUTES LES VARIABLES pour le parser
   let query = `${prefixes}
 
 SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatRelation WHERE {
@@ -665,7 +662,6 @@ http.createServer(async (req, res) => {
     return;
   }
 
-  // 🆕 NOUVELLE ROUTE: /update-analysis
   if (req.url === '/update-analysis' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => (body += chunk));
@@ -765,7 +761,6 @@ http.createServer(async (req, res) => {
     return; // Important : empêcher l'exécution du code POST existant
   }
 
-  // 📝 ANCIEN CODE POST EXISTANT (requêtes SPARQL normales)
   if (req.method === 'POST') {
     let body = '';
     req.on('data', chunk => (body += chunk));
@@ -798,7 +793,6 @@ http.createServer(async (req, res) => {
           console.log("✅ Requête de compétence générée avec succès");
           console.log("📏 Longueur de la requête:", sparqlQuery.length, "caractères");
 
-          // 🚫 NE PAS APPELER generateSparqlQuery pour les compétences !
 
         } else if (requestPayload.queryType === 'raw_sparql') {
           console.log("⚡ REQUÊTE SPARQL BRUTE");
@@ -811,47 +805,45 @@ http.createServer(async (req, res) => {
 
           // Utiliser generateSparqlQuery SEULEMENT pour les requêtes normales
           sparqlQuery = generateSparqlQuery(requestPayload);
-          console.log("✅ Requête avec filtres générée");
+          console.log("Requête avec filtres générée");
         }
 
-        console.log("🎯 Type final de requête déterminé");
-        console.log("📝 Requête finale prête pour exécution");
+        console.log(" Type final de requête déterminé");
+        console.log(" Requête finale prête pour exécution");
 
-        // 🆕 ÉTAPE 1: WARMUP OBLIGATOIRE
-        console.log("🔥 WARMUP OBLIGATOIRE avant requête principale...");
+        console.log(" WARMUP OBLIGATOIRE avant requête principale...");
         const warmupSuccess = await warmupFuseki(fusekiEndpoint);
         if (!warmupSuccess) {
-          console.log("⚠️ Warmup échoué - on continue quand même...");
+          console.log(" Warmup échoué - on continue quand même...");
         } else {
-          console.log("✅ Warmup réussi - Fuseki est prêt !");
+          console.log(" Warmup réussi - Fuseki est prêt !");
         }
 
         if (!sparqlQuery || sparqlQuery.trim() === '') {
           throw new Error("Requête SPARQL vide générée");
         }
 
-        console.log("🔗 Exécution requête principale après warmup...");
+        console.log(" Exécution requête principale après warmup...");
 
         let data;
         try {
-          // 🆕 ÉTAPE 2: EXÉCUTION avec RETRY (après warmup)
           data = await executeWithRetry(fusekiEndpoint, sparqlQuery, MAX_RETRIES);
 
         } catch (mainError) {
-          console.log("🔄 TENTATIVE FALLBACK après échec principal...");
+          console.log(" TENTATIVE FALLBACK après échec principal...");
 
           try {
             // Essayer la requête fallback
             const fallbackQuery = generateFallbackQuery();
             data = await executeWithRetry(fusekiEndpoint, fallbackQuery, 2);
             usedFallback = true;
-            console.log("✅ FALLBACK RÉUSSI");
+            console.log(" FALLBACK RÉUSSI");
 
             // Ajouter un warning
             data.warning = "Requête simplifiée utilisée à cause d'un timeout";
 
           } catch (fallbackError) {
-            console.error("💥 FALLBACK AUSSI ÉCHOUÉ:", fallbackError.message);
+            console.error(" FALLBACK AUSSI ÉCHOUÉ:", fallbackError.message);
             throw mainError; // Relancer l'erreur principale
           }
         }
@@ -859,17 +851,16 @@ http.createServer(async (req, res) => {
         const queryTime = Date.now() - startTime;
         const resultCount = data.results?.bindings?.length || 0;
 
-        console.log("🎉 SUCCÈS COMPLET!");
-        console.log(`📊 Résultats trouvés: ${resultCount}`);
-        console.log(`⏱️ Temps total: ${queryTime}ms`);
+        console.log(" SUCCÈS COMPLET!");
+        console.log(` Résultats trouvés: ${resultCount}`);
+        console.log(`Temps total: ${queryTime}ms`);
 
-        // 🆕 ANALYSE DES VARIABLES pour vérifier compatibilité parser
         if (resultCount > 0) {
           const firstResult = data.results.bindings[0];
           const availableVars = Object.keys(firstResult);
           const expectedVars = ['analysis', 'vi', 'vd', 'categoryVI', 'categoryVD', 'mediator', 'moderator', 'resultatRelation'];
 
-          console.log("🔍 VÉRIFICATION COMPATIBILITÉ PARSER:");
+          console.log(" VÉRIFICATION COMPATIBILITÉ PARSER:");
           console.log(`   Variables disponibles: ${availableVars.join(', ')}`);
           console.log(`   Variables attendues: ${expectedVars.join(', ')}`);
 

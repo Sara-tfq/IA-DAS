@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         
         
-        // 🆕 Composant compétence
         const competenceComponent = document.querySelector('input-competence-component');
         if (competenceComponent) {
             console.log("✅ Composant compétence trouvé, ajout du listener !");
@@ -194,7 +193,6 @@ async function rechercherCompetence(data) {
 
    
 
-// 🆕 LOADING SIMPLIFIÉ
 function showSimpleLoading(message) {
     const resultsDiv = document.getElementById('results');
     if (resultsDiv) {
@@ -235,13 +233,12 @@ function hideSimpleLoading() {
     }
 }
 
-// 🆕 AFFICHAGE D'ERREUR SIMPLIFIÉ
 function showError(title, message, data) {
     const resultsDiv = document.getElementById('results');
     if (resultsDiv) {
         resultsDiv.innerHTML = `
             <div style="color: red; padding: 20px; background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 5px; margin: 20px 0;">
-                <h4>❌ ${title}</h4>
+                <h4> ${title}</h4>
                 <p><strong>Question:</strong> ${data.questionText}</p>
                 <p><strong>Erreur:</strong> ${message}</p>
                 <p><strong>Suggestions:</strong></p>
@@ -264,7 +261,6 @@ function showError(title, message, data) {
     }
 }
 
-// 🆕 AFFICHAGE DES RÉSULTATS DE COMPÉTENCE
 function displayCompetenceResults(data, questionContext) {
     currentData = data;
     currentQuery = questionContext;
@@ -274,7 +270,7 @@ function displayCompetenceResults(data, questionContext) {
     // Header spécifique aux compétences
     const competenceHeader = `
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-            <h3>🎯 Analyse de Compétence</h3>
+            <h3> Analyse de Compétence</h3>
             <p><strong>Question:</strong> ${questionContext.questionText}</p>
             <p><strong>Description:</strong> ${questionContext.description}</p>
             <p><strong>Résultats trouvés:</strong> ${data.results?.bindings?.length || 0}</p>
@@ -284,9 +280,9 @@ function displayCompetenceResults(data, questionContext) {
     // Créer la structure avec header compétence
     resultsDiv.innerHTML = competenceHeader + `
         <div id="result-controls" style="margin-bottom: 20px;">
-            <button id="viewTable" class="view-btn active">📊 Tableau détaillé</button>
-            <button id="viewGraph" class="view-btn">🕸️ Graphique réseau</button>
-            <button id="viewSparql" class="view-btn">⚡ SPARQL</button>
+            <button id="viewTable" class="view-btn active">Tableau détaillé</button>
+            <button id="viewGraph" class="view-btn">Graphique réseau</button>
+            <button id="viewSparql" class="view-btn">SPARQL</button>
             <button id="exportCompetence" class="view-btn" style="background: #28a745; color: white;">📥 Exporter analyse</button>
         </div>
         <div id="result-display"></div>
@@ -448,7 +444,6 @@ function displayGraphView() {
         console.log("🎨 Début génération graphique...");
         console.log("📊 Données brutes:", currentData);
         
-        // 🆕 ÉTAPE 1 : Parser les données pour créer la structure réseau
         let parsedData;
         
         if (window.SPARQLDataParser && typeof window.SPARQLDataParser.parse === 'function') {
@@ -470,7 +465,6 @@ function displayGraphView() {
             links: parsedData.networkData.links.length
         });
         
-        // 🆕 ÉTAPE 2 : Attendre un peu puis créer le graphique
         setTimeout(() => {
             const graphContainer = document.getElementById('graph-container');
             
@@ -628,7 +622,6 @@ function createSimpleD3Graph(container, data) {
     console.log("✅ Graphique D3 simple créé");
 }
 
-// 🆕 FONCTION : Export PNG (version simplifiée)
 function exportGraphToPNG() {
     console.log('📥 Export PNG demandé...');
     
@@ -706,7 +699,6 @@ function displaySparqlView() {
     displayDiv.innerHTML = sparqlHTML;
 }
 
-// 🆕 EXPORT D'ANALYSE DE COMPÉTENCE
 function exportCompetenceAnalysis(data, questionContext) {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const filename = `competence_${questionContext.questionId}_${timestamp}.json`;

@@ -2,11 +2,9 @@
     <div class="header-controls">
     </div>
     <div id="formMode">
-        <!-- COLONNE 1: ACAD -->
         <div class="acad-section">
             <h3>ACAD</h3>
 
-            <!-- NOUVEAU: Sélecteur de catégorie pour VD -->
             <div class="variable-row">
                 <label for="categoryVD">Catégorie ACAD :</label>
                 <select id="categoryVD">
@@ -23,12 +21,10 @@
             </div>
         </div>
 
-        <!-- COLONNE 2: Facteurs -->
-        <!-- COLONNE 2: Facteurs -->
+       
         <div class="factors-section">
             <h3>Variable</h3>
 
-            <!-- NOUVEAU: Sélecteur de catégorie pour VI -->
             <div class="variable-row">
                 <label for="categoryVI">Catégorie Variable :</label>
                 <select id="categoryVI">
@@ -45,7 +41,6 @@
             </div>
         </div>
 
-        <!-- COLONNE 3: Type de relations -->
         <div class="relations-section">
             <h3>Type de relations</h3>
 
@@ -70,12 +65,10 @@
             </div>
         </div>
 
-        <!-- COLONNE 4: Caractéristiques des populations -->
 <div class="demographics-section">
     <h3>Caractéristiques des populations étudiées</h3>
 
     <div class="demographics-grid">
-        <!-- Sexe - GARDÉ -->
         <select id="gender">
             <option value="">Sexe</option>
             <option value="Female">Femme</option>
@@ -83,7 +76,6 @@
             <option value="Mixed">Mixte</option>
         </select>
 
-        <!-- Âge - NOUVEAU avec catégories + mode custom -->
         <div class="age-container">
             <select id="ageCategory">
                 <option value="">Catégorie d'âge</option>
@@ -101,7 +93,6 @@
             </div>
         </div>
 
-        <!-- Sport Type - GARDÉ -->
         <div class="autocomplete-container">
             <input type="text" id="sportType" placeholder="Chargement des sports..." disabled>
             <div class="autocomplete-dropdown" id="sportType-dropdown"></div>

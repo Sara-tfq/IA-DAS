@@ -7,19 +7,16 @@ console.log("Script principal chargé !");
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("📄 Page chargée, début de l'initialisation...");
     
-    // 🆕 Désactiver tous les inputs pendant l'initialisation
     const inputs = document.querySelectorAll('input, button, select');
     inputs.forEach(input => input.disabled = true);
     
-    // 🆕 Lancer l'initialisation
     try {
         await window.pageInitializer.initializePage();
-        console.log('✅ Initialisation terminée avec succès');
+        console.log(' Initialisation terminée avec succès');
     } catch (error) {
-        console.error('❌ Échec de l\'initialisation:', error);
+        console.error(' Échec de l\'initialisation:', error);
     }
     
-    // ✅ GARDER votre logique Excel existante (après l'initialisation)
     const excelPaths = [
         './data/IA-DAS-Data1.xlsx',
         './../data/IA-DAS-Data1.xlsx'
@@ -44,15 +41,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                 continue;
             }
         } catch (error) {
-            console.log(`❌ Échec chargement ${excelPath}:`, error.message);
+            console.log(` Échec chargement ${excelPath}:`, error.message);
         }
     }
     
     if (!excelLoaded) {
-        console.error("❌ Aucun fichier Excel trouvé !");
+        console.error("Aucun fichier Excel trouvé !");
     }
     
-    // ✅ GARDER votre setup du composant
     setTimeout(() => {
         const component = document.querySelector('input-intorregation-component');
         if (component) {
@@ -68,7 +64,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Fonction pour les requêtes prédéfinies - MISE À JOUR COMPLÈTE
 async function rechercher(data) {
     try {
-        // 🆕 Vérifier que la page est prête
         const isReady = await window.pageInitializer.ensureReady();
         if (!isReady) {
             console.log('❌ Page pas prête pour la recherche');
@@ -78,7 +73,6 @@ async function rechercher(data) {
         console.log("=== RECHERCHE AVEC PAGE INITIALISÉE ===");
         console.log("Données reçues:", data);
         
-        // 🆕 Loading plus simple (pas de warmup, Fuseki est déjà chaud)
         window.loadingManager.show("Recherche en cours...");
         window.loadingManager.startQuery(1, 1); // Une seule tentative nécessaire
         
@@ -92,7 +86,6 @@ async function rechercher(data) {
         } else {
             payload = { queryType: 'generated' };
 
-            // ✅ GARDER tous vos filtres existants
             if (data.selectedVI) payload.selectedVI = data.selectedVI;
             if (data.selectedVD) payload.selectedVD = data.selectedVD;
             if (data.categoryVI) payload.categoryVI = data.categoryVI;
@@ -128,7 +121,6 @@ async function rechercher(data) {
         
         console.log("Payload complet:", payload);
         
-        // 🔧 CORRECTION : URL sans /api/query
         const response = await fetch('http://localhost:8003/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -158,11 +150,10 @@ async function rechercher(data) {
         window.loadingManager.completeAll();
         
     } catch (error) {
-        console.error('❌ Erreur lors de la recherche:', error);
+        console.error(' Erreur lors de la recherche:', error);
         
         window.loadingManager.showError('Erreur de recherche', error.message);
         
-        // ✅ GARDER votre affichage d'erreur existant
         const resultsDiv = document.getElementById('results');
         if (resultsDiv) {
             resultsDiv.innerHTML = `

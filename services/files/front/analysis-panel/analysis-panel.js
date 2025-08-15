@@ -53,12 +53,11 @@ class AnalysisPanel {
     this.templateCache.set('main', `
       <div class="analysis-panel-content">
         <div class="analysis-panel-header">
-          <h2 class="analysis-panel-title">📊 Détails de l'Analyse</h2>
+          <h2 class="analysis-panel-title"> Détails de l'Analyse</h2>
           <button id="close-analysis-panel" class="analysis-panel-close">×</button>
         </div>
         <div id="analysis-content">
           <div class="analysis-empty">
-            <div class="analysis-empty-icon">📋</div>
             <p>Double-cliquez sur un nœud du graphique pour voir les détails</p>
           </div>
         </div>
@@ -143,7 +142,6 @@ class AnalysisPanel {
     } else {
       contentDiv.innerHTML = `
         <div class="analysis-loading">
-          <div class="analysis-loading-icon">⏳</div>
           <p>Chargement de l'analyse ${analysisId}...</p>
         </div>
       `;
@@ -226,7 +224,7 @@ class AnalysisPanel {
 
   formatAPATitle(analysis) {
     const authors = analysis.rawData?.Authors || 'Auteur inconnu';
-    const year = analysis.rawData?.['Year '] || 'Année inconnue';          // ✅ Avec espace
+    const year = analysis.rawData?.['Year '] || 'Année inconnue';          
     const title = analysis.rawData?.Title || analysis.title || `Analyse ${analysis.id}`;
     
     const shortAuthors = authors.length > 50 ? authors.substring(0, 47) + '...' : authors;
@@ -243,37 +241,151 @@ class AnalysisPanel {
     }
   }
 
- async showAnalysisDetail(analysisId) {
-  console.log(`📊 Affichage détail analyse: ${analysisId}`);
+async showAnalysisDetail(analysisId) {
+  console.log(`Affichage détail analyse: ${analysisId}`);
   
+  // D'abord chercher dans les données déjà chargées
   let analysis = this.currentAnalysesData.find(a => a.id === analysisId);
   
-  // ✅ Si pas trouvé, forcer le chargement Excel
-  if (!analysis || !analysis.rawData) {
-    console.log("🔄 Rechargement des données depuis Excel...");
-    
-    try {
-      await window.excelLoader.loadExcelData('./data/IA-DAS-Data1.xlsx');
-      const csvRow = window.csvLoader.findAnalysisById(analysisId);
-      
-      if (csvRow) {
-        analysis = {
-          id: analysisId,
-          title: csvRow['Title'] || `Analyse ${analysisId}`,
-          rawData: csvRow
-        };
-      }
-    } catch (error) {
-      console.error("❌ Erreur rechargement:", error);
-    }
-  }
-  
-  if (!analysis) {
-    console.error(`❌ Analyse ${analysisId} non trouvée`);
+  if (analysis && analysis.rawData && Object.keys(analysis.rawData).length > 5) {
+    // Les données sont déjà complètes, on peut les afficher directement
+    console.log(`Données complètes trouvées en mémoire pour ${analysisId}`);
+    this.renderDetailedAnalysis(analysis);
     return;
   }
+  
+  // Les données ne sont pas complètes, on doit les recharger depuis Fuseki
+  console.log(`Rechargement des données complètes depuis Fuseki pour ${analysisId}`);
+  
+  try {
+    // Afficher un état de chargement
+    this.showAnalysisLoadingState(analysisId);
+    
+    if (!window.fusekiRetriever) {
+      throw new Error('FusekiAnalysisRetriever non disponible. Vérifiez que le module est chargé.');
+    }
+    
+    // Récupérer les données complètes depuis Fuseki
+    const completeAnalysis = await window.fusekiRetriever.getAnalysisData(analysisId);
+    
+    if (!completeAnalysis || completeAnalysis.error) {
+      throw new Error(completeAnalysis?.error || 'Données non trouvées dans Fuseki');
+    }
+    
+    console.log(` Données complètes récupérées depuis Fuseki pour ${analysisId}:`, completeAnalysis);
+    
+    // Mettre à jour les données en mémoire pour la prochaine fois
+    const indexInCurrent = this.currentAnalysesData.findIndex(a => a.id === analysisId);
+    if (indexInCurrent !== -1) {
+      this.currentAnalysesData[indexInCurrent] = completeAnalysis;
+    }
+    
+    // Afficher les données détaillées
+    this.renderDetailedAnalysis(completeAnalysis);
+    
+  } catch (error) {
+    console.error(`❌ Erreur lors du chargement détaillé de ${analysisId}:`, error);
+    this.showAnalysisError(analysisId, error.message);
+  }
+}
 
-  this.renderDetailedAnalysis(analysis);
+
+showAnalysisLoadingState(analysisId) {
+  const contentDiv = this.panelElement.querySelector('#analysis-content');
+  
+  contentDiv.innerHTML = `
+    <div style="padding: 20px; text-align: center;">
+      <div style="margin-bottom: 15px;">
+        <div style="
+          border: 3px solid #f3f3f3;
+          border-top: 3px solid #3498db;
+          border-radius: 50%;
+          width: 30px;
+          height: 30px;
+          animation: spin 1s linear infinite;
+          margin: 0 auto;
+        "></div>
+      </div>
+      <h3 style="color: #2980b9; margin-bottom: 10px;">
+        📊 Chargement détaillé de l'analyse ${analysisId}
+      </h3>
+      <p style="color: #666; margin-bottom: 5px;">
+        Récupération des données depuis Fuseki...
+      </p>
+      <p style="font-size: 12px; color: #999;">
+        ⚡ Données toujours à jour depuis l'ontologie
+      </p>
+    </div>
+    
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  `;
+}
+
+// Nouvelle méthode pour afficher les erreurs
+showAnalysisError(analysisId, errorMessage) {
+  const contentDiv = this.panelElement.querySelector('#analysis-content');
+  
+  contentDiv.innerHTML = `
+    <div style="padding: 20px;">
+      <div style="
+        background: #fff3f3; 
+        border: 1px solid #ffcdd2; 
+        border-radius: 8px; 
+        padding: 15px;
+        margin-bottom: 15px;
+      ">
+        <h3 style="color: #d32f2f; margin: 0 0 10px 0;">
+          ❌ Erreur de chargement
+        </h3>
+        <p style="margin: 0 0 10px 0;">
+          <strong>Analyse:</strong> ${analysisId}
+        </p>
+        <p style="margin: 0 0 15px 0; color: #666;">
+          <strong>Erreur:</strong> ${errorMessage}
+        </p>
+        
+        <div style="font-size: 14px; color: #888;">
+          <p><strong>Suggestions:</strong></p>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            <li>Vérifiez que le serveur SPARQL fonctionne (port 8003)</li>
+            <li>L'analyse existe peut-être dans le CSV mais pas dans Fuseki</li>
+            <li>Consultez la console pour plus de détails</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div style="text-align: center;">
+        <button onclick="window.analysisPanel.renderAnalysesList('${this.currentNodeName}', window.analysisPanel.currentAnalysesData)" 
+                style="
+                  background: #3498db; 
+                  color: white; 
+                  border: none; 
+                  padding: 10px 20px; 
+                  border-radius: 5px; 
+                  cursor: pointer; 
+                  margin-right: 10px;
+                ">
+          ← Retour à la liste
+        </button>
+        <button onclick="window.analysisPanel.close()" 
+                style="
+                  background: #95a5a6; 
+                  color: white; 
+                  border: none; 
+                  padding: 10px 20px; 
+                  border-radius: 5px; 
+                  cursor: pointer;
+                ">
+          Fermer
+        </button>
+      </div>
+    </div>
+  `;
 }
 
   renderDetailedAnalysis(analysis) {

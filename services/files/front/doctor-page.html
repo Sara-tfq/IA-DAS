@@ -8,12 +8,10 @@
     <link rel="stylesheet" href="./input-intorregation-component/input-intorregation-component.css">
     <link rel="stylesheet" href="./graph-component/graph-component.css">
     <link rel="stylesheet" href="./analysis-panel/analysis-panel.css">
-    <!-- ✅ NOUVEAU : CSS pour le loading -->
     <link rel="stylesheet" href="./components/loading-overlay.css">
 </head>
 
 <body>
-    <!-- 🆕 Overlay d'initialisation (au début de body) -->
     <div id="initialization-overlay" class="init-overlay">
         <div class="init-content">
             <div class="init-logo">
@@ -26,22 +24,18 @@
         </div>
     </div>
 
-    <!-- ✅ Overlay de chargement pour les recherches -->
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="loading-content">
             <div class="loading-spinner"></div>
             <h3 id="loading-title">Chargement des données...</h3>
             <div id="loading-steps">
                 <div class="step" id="step-warmup">
-                    <span class="step-icon">🔥</span>
                     <span class="step-text">Préparation de Fuseki...</span>
                 </div>
                 <div class="step" id="step-query">
-                    <span class="step-icon">🎯</span>
                     <span class="step-text">Exécution de la requête...</span>
                 </div>
                 <div class="step" id="step-parsing">
-                    <span class="step-icon">📊</span>
                     <span class="step-text">Traitement des résultats...</span>
                 </div>
             </div>
@@ -74,25 +68,15 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <!-- 🆕 NOUVEAU : Page initializer EN PREMIER -->
     <script src="./components/page-initializer.js"></script>
-    <!-- ✅ Loading manager -->
+    <script src="js/fuseki-analysis-retriever.js"></script>
     <script src="./components/loading-manager.js"></script>
-
-    <!-- ✅ ORDRE CORRIGÉ : Excel-loader EN PREMIER -->
     <script src="./data/excel-loader.js"></script>
-    
-    <!-- ✅ Puis D3.js (requis par graph-renderer) -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    
-    <!-- ✅ Puis les composants qui utilisent window.csvLoader -->
     <script src="./analysis-panel/analysis-panel.js"></script>
     <script src="./graph-component/graph-component.js"></script>
     <script src="./graph-component/data-parser.js"></script>
     <script src="./graph-component/graph-renderer.js"></script>
-    
-    <!-- ✅ Puis les autres composants -->
     <script src="./input-intorregation-component/input-intorregation-component.js"></script>
     <script src="./doctor-page/doctor-page.js"></script>
    

@@ -1,8 +1,6 @@
-// JavaScript pour la page de modification d'analyse - IA-DAS
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 Page de modification d\'analyse chargée');
     
-    // ================== RÉFÉRENCES DOM ==================
     const selectionStep = document.getElementById('selection-step');
     const editStep = document.getElementById('edit-step');
     const searchInput = document.getElementById('analysisIdSearch');
