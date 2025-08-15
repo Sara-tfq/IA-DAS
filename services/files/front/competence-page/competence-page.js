@@ -4,9 +4,9 @@ let currentMode = 'table';
 
 console.log("Script competence-page chargé !");
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log("📄 Page Questions de Compétences prête !");
-    
+
     const excelPaths = [
         './data/IA-DAS-Data1.xlsx',
         './../data/IA-DAS-Data1.xlsx'
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     for (const excelPath of excelPaths) {
         try {
             console.log(`🔍 Tentative chargement Excel: ${excelPath}`);
-            
+
             if (window.csvLoader && typeof window.csvLoader.loadExcelData === 'function') {
                 const excelData = await window.csvLoader.loadExcelData(excelPath);
                 if (excelData && excelData.length > 0) {
@@ -33,21 +33,21 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.log(`❌ Échec chargement ${excelPath}:`, error.message);
         }
     }
-    
+
     if (!excelLoaded) {
         console.error("❌ Aucun fichier Excel trouvé !");
     }
-    
+
     // Attendre que le composant soit initialisé
     setTimeout(() => {
         console.log("🔍 Recherche du composant compétence...");
 
-        
-        
+
+
         const competenceComponent = document.querySelector('input-competence-component');
         if (competenceComponent) {
             console.log("✅ Composant compétence trouvé, ajout du listener !");
-            
+
             competenceComponent.addEventListener('search', (event) => {
                 console.log("=== ÉVÉNEMENT COMPÉTENCE REÇU ===");
                 console.log("Données:", event.detail);
@@ -68,20 +68,20 @@ async function rechercherCompetence(data) {
     console.log("   - questionText:", data.questionText);
     console.log("   - description:", data.description);
     console.log("   - queryType:", data.queryType);
-    
+
     try {
         // Vérifications préliminaires
         if (!data.questionId) {
             console.error("❌ ERREUR: questionId manquant dans les données !");
             throw new Error("Question ID manquant");
         }
-        
+
         console.log("✅ Validation des données OK");
-        
+
         // Afficher un indicateur de chargement simple
         console.log("🎨 Affichage du loading...");
         showSimpleLoading(`Analyse de la question : ${data.questionText.substring(0, 50)}...`);
-        
+
         // Payload pour le serveur
         const payload = {
             queryType: 'predefined_competence',
@@ -89,15 +89,15 @@ async function rechercherCompetence(data) {
             questionText: data.questionText,
             description: data.description
         };
-        
+
         console.log("📤 === PRÉPARATION REQUÊTE SERVEUR ===");
         console.log("📤 Payload complet:", JSON.stringify(payload, null, 2));
         console.log("🌐 URL cible: http://localhost:8003/");
         console.log("🔧 Méthode: POST");
-        
+
         console.log("📡 Envoi de la requête...");
         const startTime = Date.now();
-        
+
         // Appel API
         const response = await fetch('http://localhost:8003/', {
             method: 'POST',
@@ -118,42 +118,42 @@ async function rechercherCompetence(data) {
 
         console.log("✅ Réponse HTTP OK, parsing JSON...");
         const responseData = await response.json();
-        
+
         console.log("📥 === ANALYSE DE LA RÉPONSE SERVEUR ===");
         console.log("📊 Type de réponse:", typeof responseData);
         console.log("📊 Clés principales:", Object.keys(responseData));
-        
+
         if (responseData.results) {
             console.log("📊 Nombre de résultats:", responseData.results.bindings?.length || 0);
             console.log("📊 Variables SPARQL:", responseData.head?.vars);
-            
+
             if (responseData.results.bindings?.length > 0) {
                 console.log("📊 Premier résultat:", responseData.results.bindings[0]);
             }
         }
-        
+
         if (responseData.performance) {
             console.log("📈 Performance serveur:", responseData.performance);
         }
-        
+
         if (responseData.warning) {
             console.warn("⚠️ Warning du serveur:", responseData.warning);
         }
-        
+
         // Parser les données si SPARQLDataParser est disponible
         console.log("🔄 === PARSING DES DONNÉES ===");
         let parsedData = responseData;
-        
+
         if (window.SPARQLDataParser && typeof window.SPARQLDataParser.parse === 'function') {
             console.log("✅ SPARQLDataParser disponible, parsing...");
             const parseStartTime = Date.now();
-            
+
             parsedData = window.SPARQLDataParser.parse(responseData);
-            
+
             const parseTime = Date.now() - parseStartTime;
             console.log(`⏱️ Temps de parsing: ${parseTime}ms`);
             console.log("📊 Données parsées - structure:", Object.keys(parsedData));
-            
+
             if (parsedData.networkData) {
                 console.log("🕸️ Réseau créé:");
                 console.log("   - Nœuds:", parsedData.networkData.nodes?.length || 0);
@@ -162,19 +162,19 @@ async function rechercherCompetence(data) {
         } else {
             console.warn("⚠️ SPARQLDataParser non disponible, données brutes utilisées");
         }
-        
+
         // Cacher le loading
         console.log("🎨 Masquage du loading...");
         hideSimpleLoading();
-        
+
         // Afficher les résultats
         console.log("🎯 === AFFICHAGE DES RÉSULTATS ===");
         displayCompetenceResults(parsedData, data);
-        
+
         console.log("✅ === RECHERCHE COMPÉTENCE TERMINÉE AVEC SUCCÈS ===");
         console.log("⏰ Timestamp fin:", new Date().toISOString());
         console.log("⏱️ Temps total:", Date.now() - startTime, "ms");
-        
+
     } catch (error) {
         const errorTime = Date.now();
         console.error('💥 === ERREUR DANS RECHERCHE COMPÉTENCE ===');
@@ -183,15 +183,15 @@ async function rechercherCompetence(data) {
         console.error('❌ Message:', error.message);
         console.error('❌ Stack:', error.stack);
         console.error('❌ Données qui ont causé l\'erreur:', data);
-        
+
         hideSimpleLoading();
         showError('Erreur de recherche compétence', error.message, data);
-        
+
         console.error('💥 === FIN GESTION ERREUR ===');
     }
 }
 
-   
+
 
 function showSimpleLoading(message) {
     const resultsDiv = document.getElementById('results');
@@ -264,9 +264,9 @@ function showError(title, message, data) {
 function displayCompetenceResults(data, questionContext) {
     currentData = data;
     currentQuery = questionContext;
-    
+
     const resultsDiv = document.getElementById('results');
-    
+
     // Header spécifique aux compétences
     const competenceHeader = `
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -276,7 +276,7 @@ function displayCompetenceResults(data, questionContext) {
             <p><strong>Résultats trouvés:</strong> ${data.results?.bindings?.length || 0}</p>
         </div>
     `;
-    
+
     // Créer la structure avec header compétence
     resultsDiv.innerHTML = competenceHeader + `
         <div id="result-controls" style="margin-bottom: 20px;">
@@ -287,17 +287,17 @@ function displayCompetenceResults(data, questionContext) {
         </div>
         <div id="result-display"></div>
     `;
-    
+
     // Afficher les contrôles
     const controlsDiv = document.getElementById('result-controls');
     controlsDiv.style.display = 'block';
-    
+
     // Configurer les événements
     setupViewButtons();
-    
+
     // Événement export spécifique compétence
     document.getElementById('exportCompetence').onclick = () => exportCompetenceAnalysis(data, questionContext);
-    
+
     // Afficher en mode tableau par défaut
     displayTableView();
 }
@@ -311,13 +311,13 @@ function setupViewButtons() {
 
 function switchView(mode) {
     currentMode = mode;
-    
+
     // Mettre à jour les boutons actifs
     document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`view${mode.charAt(0).toUpperCase() + mode.slice(1)}`).classList.add('active');
-    
+
     // Afficher le bon mode
-    switch(mode) {
+    switch (mode) {
         case 'table':
             displayTableView();
             break;
@@ -332,7 +332,7 @@ function switchView(mode) {
 
 function displayTableView() {
     const displayDiv = document.getElementById('result-display');
-    
+
     if (!currentData || !currentData.results || !currentData.results.bindings) {
         displayDiv.innerHTML = `
             <div style="padding: 20px; text-align: center; background: #f8f9fa; border-radius: 5px;">
@@ -342,10 +342,10 @@ function displayTableView() {
         `;
         return;
     }
-    
+
     const bindings = currentData.results.bindings;
     const variables = currentData.head.vars;
-    
+
     let tableHTML = `
         <div style="overflow-x: auto;">
             <div style="margin-bottom: 15px; padding: 10px; background: #e8f4fd; border-radius: 5px;">
@@ -360,20 +360,20 @@ function displayTableView() {
                 </thead>
                 <tbody>
     `;
-    
+
     bindings.forEach((binding, index) => {
         const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
         tableHTML += `<tr style="background-color: ${bgColor};">`;
-        
+
         variables.forEach(variable => {
             const value = binding[variable];
             const displayValue = value ? (value.value || value) : '';
             tableHTML += `<td style="border: 1px solid #ddd; padding: 12px;">${displayValue}</td>`;
         });
-        
+
         tableHTML += '</tr>';
     });
-    
+
     tableHTML += `
                 </tbody>
             </table>
@@ -382,12 +382,12 @@ function displayTableView() {
             ${bindings.length} résultat(s) trouvé(s)
         </p>
     `;
-    
+
     displayDiv.innerHTML = tableHTML;
 }
 function displayGraphView() {
     const displayDiv = document.getElementById('result-display');
-    
+
     if (!currentData || !currentData.results || !currentData.results.bindings) {
         displayDiv.innerHTML = `
             <div style="padding: 20px; text-align: center; background: #f8f9fa; border-radius: 5px;">
@@ -397,7 +397,7 @@ function displayGraphView() {
         `;
         return;
     }
-    
+
     // Bouton d'export
     const exportButton = `
         <div style="margin-bottom: 15px;">
@@ -419,7 +419,7 @@ function displayGraphView() {
             </span>
         </div>
     `;
-    
+
     try {
         // Afficher le loading pendant le parsing
         displayDiv.innerHTML = exportButton + `
@@ -440,56 +440,66 @@ function displayGraphView() {
                 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
             </style>
         `;
-        
+
         console.log("🎨 Début génération graphique...");
         console.log("📊 Données brutes:", currentData);
-        
+
         let parsedData;
-        
-        if (window.SPARQLDataParser && typeof window.SPARQLDataParser.parse === 'function') {
-            console.log("✅ SPARQLDataParser trouvé, parsing...");
-            parsedData = window.SPARQLDataParser.parse(currentData);
-            console.log("📊 Données parsées:", parsedData);
+
+        if (typeof SPARQLDataParser !== 'undefined' && typeof SPARQLDataParser.parse === 'function') {
+            console.log("✅ SPARQLDataParser disponible, parsing...");
+            const parseStartTime = Date.now();
+
+            parsedData = SPARQLDataParser.parse(currentData);
+
+            const parseTime = Date.now() - parseStartTime;
+            console.log(`⏱️ Temps de parsing: ${parseTime}ms`);
+            console.log("📊 Données parsées - structure:", Object.keys(parsedData));
+
+            if (parsedData.networkData) {
+                console.log("🕸️ Réseau créé:");
+                console.log("   - Nœuds:", parsedData.networkData.nodes?.length || 0);
+                console.log("   - Liens:", parsedData.networkData.links?.length || 0);
+            }
         } else {
-            console.log("⚠️ SPARQLDataParser non trouvé, création manuelle...");
-            parsedData = createManualNetworkData(currentData);
+            console.warn("⚠️ SPARQLDataParser non disponible, données brutes utilisées");
         }
-        
+
         // Vérifier que les données parsées ont la bonne structure
         if (!parsedData.networkData || !parsedData.networkData.nodes) {
             throw new Error("Les données parsées n'ont pas la structure réseau attendue");
         }
-        
+
         console.log("📈 Réseau créé:", {
             nodes: parsedData.networkData.nodes.length,
             links: parsedData.networkData.links.length
         });
-        
+
         setTimeout(() => {
             const graphContainer = document.getElementById('graph-container');
-            
+
             // Nettoyer le loading
             graphContainer.innerHTML = '';
-            
+
             // Créer le graphique avec les bonnes données
             if (typeof GraphRenderer !== 'undefined') {
                 console.log("✅ GraphRenderer trouvé, rendu...");
                 const renderer = new GraphRenderer(graphContainer, parsedData);
                 renderer.render();
-                
+
             } else if (typeof OntologyGraphComponent !== 'undefined') {
                 console.log("✅ OntologyGraphComponent trouvé, rendu...");
                 const graphComponent = new OntologyGraphComponent(graphContainer, parsedData);
                 graphComponent.render();
-                
+
             } else {
                 console.log("⚠️ Composants graphiques non trouvés, graphique D3 simple...");
                 createAdvancedD3Graph(graphContainer, parsedData);
             }
-            
+
             console.log("✅ Graphique rendu avec succès !");
         }, 100);
-        
+
         // Événement d'export
         setTimeout(() => {
             const exportBtn = document.getElementById('exportGraph');
@@ -497,7 +507,7 @@ function displayGraphView() {
                 exportBtn.onclick = () => exportGraphToPNG();
             }
         }, 200);
-        
+
     } catch (error) {
         console.error('❌ Erreur graphique:', error);
         displayDiv.innerHTML = `
@@ -528,16 +538,16 @@ Variables SPARQL: ${JSON.stringify(currentData.head?.vars, null, 2)}
 
 function createManualNetworkData(rawData) {
     console.log("🔧 Création manuelle des données réseau...");
-    
+
     const nodes = [];
     const links = [];
     const nodeMap = new Map();
-    
+
     rawData.results.bindings.forEach((binding, index) => {
         const vi = binding.vi?.value || `facteur_${index}`;
         const vd = binding.vd?.value || `acad_${index}`;
         const relation = binding.resultatRelation?.value || 'unknown';
-        
+
         // Créer nœud VI
         const viId = `vi_${vi}`;
         if (!nodeMap.has(viId)) {
@@ -550,7 +560,7 @@ function createManualNetworkData(rawData) {
             });
             nodeMap.set(viId, true);
         }
-        
+
         // Créer nœud VD
         const vdId = `vd_${vd}`;
         if (!nodeMap.has(vdId)) {
@@ -563,7 +573,7 @@ function createManualNetworkData(rawData) {
             });
             nodeMap.set(vdId, true);
         }
-        
+
         // Créer lien
         links.push({
             source: viId,
@@ -573,9 +583,9 @@ function createManualNetworkData(rawData) {
             color: relation === '+' ? '#E53E3E' : relation === '-' ? '#38A169' : '#718096'
         });
     });
-    
+
     console.log(`🏗️ Réseau manuel créé: ${nodes.length} nœuds, ${links.length} liens`);
-    
+
     return {
         networkData: { nodes, links },
         variables: rawData.head.vars,
@@ -585,13 +595,13 @@ function createManualNetworkData(rawData) {
 
 function createSimpleD3Graph(container, data) {
     console.log("🎨 Création graphique D3 simple...");
-    
+
     // Nettoyer le container
     d3.select(container).selectAll("*").remove();
-    
+
     const width = 800;
     const height = 600;
-    
+
     // Créer l'SVG
     const svg = d3.select(container)
         .append('svg')
@@ -599,7 +609,7 @@ function createSimpleD3Graph(container, data) {
         .attr('height', height)
         .style('border', '1px solid #ddd')
         .style('border-radius', '8px');
-    
+
     // Ajouter un message temporaire
     svg.append('text')
         .attr('x', width / 2)
@@ -608,7 +618,7 @@ function createSimpleD3Graph(container, data) {
         .style('font-size', '18px')
         .style('fill', '#666')
         .text('🎨 Graphique simple en développement...');
-    
+
     // Statistiques des données
     const resultCount = data.results?.bindings?.length || 0;
     svg.append('text')
@@ -618,44 +628,44 @@ function createSimpleD3Graph(container, data) {
         .style('font-size', '14px')
         .style('fill', '#999')
         .text(`📊 ${resultCount} relations trouvées`);
-    
+
     console.log("✅ Graphique D3 simple créé");
 }
 
 function exportGraphToPNG() {
     console.log('📥 Export PNG demandé...');
-    
+
     try {
         const graphContainer = document.getElementById('graph-container');
         const svg = graphContainer.querySelector('svg');
-        
+
         if (svg) {
             // Créer un canvas pour l'export
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            
+
             // Définir la taille
             canvas.width = svg.getAttribute('width') || 800;
             canvas.height = svg.getAttribute('height') || 600;
-            
+
             // Fond blanc
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
+
             // Convertir SVG en image
             const svgData = new XMLSerializer().serializeToString(svg);
-            const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
             const svgUrl = URL.createObjectURL(svgBlob);
-            
+
             const img = new Image();
-            img.onload = function() {
+            img.onload = function () {
                 ctx.drawImage(img, 0, 0);
-                
+
                 // Télécharger
                 const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
                 const filename = `competence_graph_${currentQuery?.questionId || 'unknown'}_${timestamp}.png`;
-                
-                canvas.toBlob(function(blob) {
+
+                canvas.toBlob(function (blob) {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -663,16 +673,16 @@ function exportGraphToPNG() {
                     a.click();
                     URL.revokeObjectURL(url);
                     URL.revokeObjectURL(svgUrl);
-                    
+
                     console.log(`✅ Graphique exporté: ${filename}`);
                 });
             };
             img.src = svgUrl;
-            
+
         } else {
             throw new Error("Aucun SVG trouvé à exporter");
         }
-        
+
     } catch (error) {
         console.error('❌ Erreur export PNG:', error);
         alert(`Erreur lors de l'export : ${error.message}`);
@@ -682,7 +692,7 @@ function exportGraphToPNG() {
 
 function displaySparqlView() {
     const displayDiv = document.getElementById('result-display');
-    
+
     const sparqlHTML = `
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 10px;">
             <div style="margin-bottom: 20px; padding: 15px; background: #e8f4fd; border-radius: 5px;">
@@ -695,14 +705,14 @@ function displaySparqlView() {
             <pre style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 400px; white-space: pre-wrap;">${JSON.stringify(currentData, null, 2)}</pre>
         </div>
     `;
-    
+
     displayDiv.innerHTML = sparqlHTML;
 }
 
 function exportCompetenceAnalysis(data, questionContext) {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const filename = `competence_${questionContext.questionId}_${timestamp}.json`;
-    
+
     const exportData = {
         metadata: {
             questionId: questionContext.questionId,
@@ -716,7 +726,7 @@ function exportCompetenceAnalysis(data, questionContext) {
             summary: `Analyse de ${data.results?.bindings?.length || 0} relations pour la question de compétence`
         }
     };
-    
+
     // Créer et télécharger le fichier
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -725,7 +735,7 @@ function exportCompetenceAnalysis(data, questionContext) {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
-    
+
     console.log(`📥 Analyse de compétence exportée: ${filename}`);
 }
 
