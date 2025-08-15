@@ -30,7 +30,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             console.log(`🔍 Tentative chargement Excel: ${excelPath}`);
             
-            if (window.csvLoader && typeof window.csvLoader.loadExcelData === 'function') {
+            if (window.csvLoader && typeof window.csvLoader.
+                Data === 'function') {
                 const excelData = await window.csvLoader.loadExcelData(excelPath);
                 if (excelData && excelData.length > 0) {
                     console.log(`✅ Excel chargé avec succès: ${excelData.length} analyses depuis ${excelPath}`);
