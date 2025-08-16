@@ -1,4 +1,4 @@
-// SPARQL Generator avec warmup, retry et variables complètes pour le parser
+// SPARQL Generator avec warmup AU DÉMARRAGE UNIQUEMENT
 const http = require('http');
 const fetch = require('node-fetch');
 
@@ -9,23 +9,270 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000; // 2 secondes entre tentatives
 const FUSEKI_UPDATE_URL = 'http://fuseki:3030/ds/update';
 
+// 🔥 ÉTAT GLOBAL DU WARMUP
+let isFusekiWarmed = false;
+let warmupInProgress = false;
+let warmupPromise = null;
 
+// 🔥 WARMUP AU DÉMARRAGE DU SERVICE
+async function performStartupWarmup() {
+  if (warmupInProgress || isFusekiWarmed) {
+    console.log('⏭️ Warmup déjà fait ou en cours - skip');
+    return true;
+  }
+
+  warmupInProgress = true;
+  console.log('\n🔥 === WARMUP AU DÉMARRAGE DU SPARQL GENERATOR ===');
+  
+  const fusekiEndpoint = 'http://fuseki:3030/ds/sparql';
+  const startTime = Date.now();
+
+  // Requêtes de warmup - LES MÊMES que ton code utilise vraiment
+  const warmupQueries = [
+    {
+      name: "Test connexion",
+      query: "SELECT (1 as ?test) WHERE { }",
+      timeout: 5000
+    },
+    {
+      name: "Fallback principal (EXACT)",
+      query: generateFallbackQuery(),
+      timeout: 20000
+    },
+    {
+      name: "Requête DEAB (la plus utilisée)",
+      query: `
+PREFIX iadas: <http://ia-das.org/onto#>
+PREFIX iadas-data: <http://ia-das.org/data#>
+
+SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatRelation WHERE {
+    # Récupérer toutes les analyses
+    ?analysis a iadas:Analysis .
+    
+    # Récupérer les relations de chaque analyse
+    ?analysis iadas:hasRelation ?relation .
+    
+    # Récupérer les VI et VD de chaque relation
+    ?relation iadas:hasIndependentVariable ?variableVI ;
+              iadas:hasDependentVariable ?variableVD .
+    
+    # Récupérer les propriétés des variables VI
+    ?variableVI iadas:VI ?vi .
+    OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
+    
+    # Récupérer les propriétés des variables VD  
+    ?variableVD iadas:VD ?vd .
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # Filtrer sur les VD de catégorie (approche optimisée)
+    ?variableVD iadas:hasCategory "DEAB" .
+    
+    # Récupérer le résultat de relation (OPTIONAL)
+    OPTIONAL { 
+      ?relation iadas:resultatRelation ?resultatRelation 
+    }
+    
+    # Médiateur et modérateur (optionnels)
+    OPTIONAL { ?analysis iadas:hasMediator ?mediator }
+    OPTIONAL { ?analysis iadas:hasModerator ?moderator }
+}
+ORDER BY ?analysis
+LIMIT 500`,
+      timeout: 30000
+    },
+    {
+      name: "Requête Male (courante)",
+      query: `
+PREFIX iadas: <http://ia-das.org/onto#>
+PREFIX iadas-data: <http://ia-das.org/data#>
+
+SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatRelation WHERE {
+    # Récupérer toutes les analyses
+    ?analysis a iadas:Analysis .
+    
+    # Récupérer les relations de chaque analyse
+    ?analysis iadas:hasRelation ?relation .
+    
+    # Récupérer les VI et VD de chaque relation
+    ?relation iadas:hasIndependentVariable ?variableVI ;
+              iadas:hasDependentVariable ?variableVD .
+    
+    # Récupérer les propriétés des variables VI
+    ?variableVI iadas:VI ?vi .
+    OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
+    
+    # Récupérer les propriétés des variables VD  
+    ?variableVD iadas:VD ?vd .
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # Filtrer sur les populations par genre
+    ?analysis iadas:hasPopulation ?population .
+    ?population iadas:gender "Male" .
+    
+    # Récupérer le résultat de relation (OPTIONAL)
+    OPTIONAL { 
+      ?relation iadas:resultatRelation ?resultatRelation 
+    }
+    
+    # Médiateur et modérateur (optionnels)
+    OPTIONAL { ?analysis iadas:hasMediator ?mediator }
+    OPTIONAL { ?analysis iadas:hasModerator ?moderator }
+}
+ORDER BY ?analysis`,
+      timeout: 30000
+    },
+    {
+      name: "Requête large (sans filtres - LIMIT 1500)",
+      query: `
+PREFIX iadas: <http://ia-das.org/onto#>
+PREFIX iadas-data: <http://ia-das.org/data#>
+
+SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatRelation WHERE {
+    # Récupérer toutes les analyses
+    ?analysis a iadas:Analysis .
+    
+    # Récupérer les relations de chaque analyse
+    ?analysis iadas:hasRelation ?relation .
+    
+    # Récupérer les VI et VD de chaque relation
+    ?relation iadas:hasIndependentVariable ?variableVI ;
+              iadas:hasDependentVariable ?variableVD .
+    
+    # Récupérer les propriétés des variables VI
+    ?variableVI iadas:VI ?vi .
+    OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
+    
+    # Récupérer les propriétés des variables VD  
+    ?variableVD iadas:VD ?vd .
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # Récupérer le résultat de relation (OPTIONAL)
+    OPTIONAL { 
+      ?relation iadas:resultatRelation ?resultatRelation 
+    }
+    
+    # Médiateur et modérateur (optionnels)
+    OPTIONAL { ?analysis iadas:hasMediator ?mediator }
+    OPTIONAL { ?analysis iadas:hasModerator ?moderator }
+}
+ORDER BY ?analysis
+LIMIT 800`,
+      timeout: 45000
+    },
+    {
+      name: "Requête Q1 compétence",
+      query: `
+PREFIX iadas: <http://ia-das.org/onto#>
+PREFIX iadas-data: <http://ia-das.org/data#>
+
+SELECT DISTINCT ?vd ?vi ?categoryVI ?categoryVD ?resultatRelation ?mediator ?moderator ?analysis 
+WHERE {
+    # Récupérer toutes les analyses
+    ?analysis a iadas:Analysis .
+    
+    # Récupérer les relations
+    ?analysis iadas:hasRelation ?relation .
+    
+    # Variables et leurs catégories
+    ?relation iadas:hasIndependentVariable ?variableVI ;
+              iadas:hasDependentVariable ?variableVD .
+    
+    ?variableVI iadas:VI ?vi .
+    OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
+    
+    ?variableVD iadas:VD ?vd .
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # Relation et médiateurs/modérateurs
+    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
+    OPTIONAL { ?analysis iadas:hasMediator ?mediator }
+    OPTIONAL { ?analysis iadas:hasModerator ?moderator }
+}
+ORDER BY ?vd ?vi
+LIMIT 500`,
+      timeout: 40000
+    }
+  ];
+
+  let successCount = 0;
+
+  for (const [index, warmupQuery] of warmupQueries.entries()) {
+    console.log(`\n🎯 [${index + 1}/${warmupQueries.length}] ${warmupQuery.name}`);
+    
+    const queryStart = Date.now();
+    
+    try {
+      const data = await executeWithRetry(fusekiEndpoint, warmupQuery.query, 2);
+      const queryTime = Date.now() - queryStart;
+      const resultCount = data.results?.bindings?.length || 0;
+      
+      console.log(`   ✅ Succès: ${resultCount} résultats en ${queryTime}ms`);
+      successCount++;
+      
+    } catch (error) {
+      const queryTime = Date.now() - queryStart;
+      console.log(`   ❌ Échec: ${error.message} (${queryTime}ms)`);
+      
+      // Si le test de connexion échoue, on attend un peu
+      if (index === 0) {
+        console.log('   ⏳ Fuseki pas encore prêt - attente 5s...');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+    }
+    
+    // Délai entre requêtes
+    if (index < warmupQueries.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+  }
+
+  const totalTime = Date.now() - startTime;
+  
+  console.log(`\n🔥 === BILAN WARMUP DÉMARRAGE ===`);
+  console.log(`   ✅ Succès: ${successCount}/${warmupQueries.length} requêtes`);
+  console.log(`   ⏱️ Temps total: ${(totalTime/1000).toFixed(1)}s`);
+  
+  if (successCount >= 4) { // Au moins 4/6 requêtes réussies
+    isFusekiWarmed = true;
+    console.log(`   🚀 FUSEKI EST MAINTENANT CHAUD !`);
+    console.log(`   🎯 Plus de warmup nécessaire pour les requêtes suivantes`);
+    console.log(`   ⚡ Performance optimale garantie`);
+  } else {
+    console.log(`   ⚠️ Warmup insuffisant (${successCount}/${warmupQueries.length}) - warmup par requête activé`);
+  }
+  
+  warmupInProgress = false;
+  return isFusekiWarmed;
+}
+
+// 🔥 WARMUP CONDITIONNEL (seulement si pas fait au démarrage)
 async function warmupFuseki(endpoint) {
-  console.log('🔥 WARMUP de Fuseki avec requête fallback...');
+  // Si déjà warm, skip
+  if (isFusekiWarmed) {
+    console.log('⚡ WARMUP SKIPPÉ - Fuseki déjà chaud depuis le démarrage !');
+    return true;
+  }
 
-  // Utiliser EXACTEMENT la même requête que le fallback
+  // Si warmup en cours, attendre qu'il finisse
+  if (warmupInProgress && warmupPromise) {
+    console.log('⏳ Warmup en cours - attente de la fin...');
+    return await warmupPromise;
+  }
+
+  console.log('🔥 WARMUP de Fuseki avec requête fallback...');
   const warmupQuery = generateFallbackQuery();
 
-
   try {
-    // Utiliser le même système de retry que pour les requêtes principales
-    const result = await executeWithRetry(endpoint, warmupQuery, 2); // 2 tentatives pour warmup
+    const result = await executeWithRetry(endpoint, warmupQuery, 2);
     const resultCount = result.results?.bindings?.length || 0;
     console.log(`✅ Fuseki est réveillé et opérationnel (${resultCount} résultats warmup)`);
+    
+    // Marquer comme warm même si ce n'était qu'un mini-warmup
+    isFusekiWarmed = true;
     return true;
 
   } catch (error) {
-    console.error(' Warmup échoué même avec retry:', error.message);
+    console.error('❌ Warmup échoué même avec retry:', error.message);
     return false;
   }
 }
@@ -34,11 +281,8 @@ async function executeWithRetry(endpoint, query, maxRetries = MAX_RETRIES) {
   let lastError;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    console.log(` Tentative ${attempt}/${maxRetries}...`);
-
     try {
       const timeout = Math.min(FUSEKI_TIMEOUT * attempt, 180000); // Max 3 minutes
-      console.log(`⏱ Timeout pour cette tentative: ${timeout / 1000}s`);
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -53,7 +297,6 @@ async function executeWithRetry(endpoint, query, maxRetries = MAX_RETRIES) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`✅ Succès à la tentative ${attempt}!`);
         return data;
       } else {
         const errorText = await response.text();
@@ -61,12 +304,10 @@ async function executeWithRetry(endpoint, query, maxRetries = MAX_RETRIES) {
       }
 
     } catch (error) {
-      console.log(`❌ Tentative ${attempt} échouée: ${error.message}`);
       lastError = error;
 
       if (attempt < maxRetries) {
         const delay = RETRY_DELAY * attempt;
-        console.log(`⏳ Attente de ${delay / 1000}s avant prochaine tentative...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -201,7 +442,7 @@ ORDER BY ?analysis`;
   if (activeFilters === 0) {
     query += `
 LIMIT 1500`;
-    console.log("⚠️ Aucun filtre actif - LIMIT 500 ajouté");
+    console.log("⚠️ Aucun filtre actif - LIMIT 1500 ajouté");
   }
 
   console.log("📝 REQUÊTE GÉNÉRÉE avec toutes les variables:");
@@ -285,7 +526,6 @@ async function executeMultipleSparqlUpdates(queries) {
     errorCount: errors.length
   };
 }
-
 
 function generateCompetenceQuery(questionId) {
   console.log("🚀 === GÉNÉRATEUR DE REQUÊTES DE COMPÉTENCE DÉMARRÉ ===");
@@ -436,64 +676,6 @@ ORDER BY ?vi ?vd
 LIMIT 500`;
       break;
 
-    case 'q3-intrapersonnels':
-      console.log("✅ CASE Q3-INTRAPERSONNELS DÉTECTÉ: Facteurs intrapersonnels → ACAD");
-      selectedCase = 'q3-intrapersonnels - Catégorie Intrapersonal factor related to DEAB';
-      expectedResults = '150-250 relations de cette catégorie';
-
-      query = `${prefixes}
-
-SELECT DISTINCT ?vi ?vd ?categoryVD ?resultatRelation ?analysis ?categoryVI
-WHERE {
-    ?analysis a iadas:Analysis .
-    ?analysis iadas:hasRelation ?relation .
-    
-    ?relation iadas:hasIndependentVariable ?variableVI ;
-              iadas:hasDependentVariable ?variableVD .
-    
-    # FILTRE SPÉCIFIQUE : Facteurs intrapersonnels uniquement
-    ?variableVI iadas:VI ?vi ;
-                iadas:hasCategory "Intrapersonal factor related to DEAB" .
-    
-    ?variableVD iadas:VD ?vd .
-    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
-    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
-    
-    BIND("Intrapersonal factor related to DEAB" AS ?categoryVI)
-}
-ORDER BY ?vi ?vd
-LIMIT 300`;
-      break;
-
-    case 'q3-interpersonnels':
-      console.log("✅ CASE Q3-INTERPERSONNELS DÉTECTÉ: Facteurs interpersonnels → ACAD");
-      selectedCase = 'q3-interpersonnels - Catégorie Interpersonal factor related to DEAB';
-      expectedResults = '100-200 relations de cette catégorie';
-
-      query = `${prefixes}
-
-SELECT DISTINCT ?vi ?vd ?categoryVD ?resultatRelation ?analysis ?categoryVI
-WHERE {
-    ?analysis a iadas:Analysis .
-    ?analysis iadas:hasRelation ?relation .
-    
-    ?relation iadas:hasIndependentVariable ?variableVI ;
-              iadas:hasDependentVariable ?variableVD .
-    
-    # FILTRE SPÉCIFIQUE : Facteurs interpersonnels uniquement
-    ?variableVI iadas:VI ?vi ;
-                iadas:hasCategory "Interpersonal factor related to DEAB" .
-    
-    ?variableVD iadas:VD ?vd .
-    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
-    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
-    
-    BIND("Interpersonal factor related to DEAB" AS ?categoryVI)
-}
-ORDER BY ?vi ?vd
-LIMIT 300`;
-      break;
-
     case 'q3-socioenvironnementaux':
       console.log("✅ CASE Q3-SOCIO DÉTECTÉ: Facteurs socio-environnementaux → ACAD");
       selectedCase = 'q3-socioenvironnementaux - Catégorie Sociocultural factor related to DEAB';
@@ -606,6 +788,7 @@ LIMIT 200`;
 
   return query;
 }
+
 function getFilterDescription(questionId) {
   const descriptions = {
     'q1': 'Toutes les relations ACAD ↔ Facteurs',
@@ -649,7 +832,7 @@ ORDER BY ?analysis
 LIMIT 100`;
 }
 
-// Serveur HTTP complet - remplace tout ton bloc http.createServer()
+// Serveur HTTP complet
 http.createServer(async (req, res) => {
   // Headers CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -758,7 +941,7 @@ http.createServer(async (req, res) => {
         }));
       }
     });
-    return; // Important : empêcher l'exécution du code POST existant
+    return;
   }
 
   if (req.method === 'POST') {
@@ -771,7 +954,7 @@ http.createServer(async (req, res) => {
 
       try {
         const requestPayload = JSON.parse(body);
-        console.log("🚀 DÉBUT DU TRAITEMENT avec WARMUP et RETRY");
+        console.log("🚀 DÉBUT DU TRAITEMENT");
         console.log("⏰ Timestamp:", new Date().toISOString());
 
         // Configuration Fuseki
@@ -793,7 +976,6 @@ http.createServer(async (req, res) => {
           console.log("✅ Requête de compétence générée avec succès");
           console.log("📏 Longueur de la requête:", sparqlQuery.length, "caractères");
 
-
         } else if (requestPayload.queryType === 'raw_sparql') {
           console.log("⚡ REQUÊTE SPARQL BRUTE");
 
@@ -805,45 +987,50 @@ http.createServer(async (req, res) => {
 
           // Utiliser generateSparqlQuery SEULEMENT pour les requêtes normales
           sparqlQuery = generateSparqlQuery(requestPayload);
-          console.log("Requête avec filtres générée");
+          console.log("✅ Requête avec filtres générée");
         }
 
-        console.log(" Type final de requête déterminé");
-        console.log(" Requête finale prête pour exécution");
+        console.log("✅ Type final de requête déterminé");
+        console.log("✅ Requête finale prête pour exécution");
 
-        console.log(" WARMUP OBLIGATOIRE avant requête principale...");
-        const warmupSuccess = await warmupFuseki(fusekiEndpoint);
-        if (!warmupSuccess) {
-          console.log(" Warmup échoué - on continue quand même...");
+        // 🔥 WARMUP CONDITIONNEL (seulement si pas fait au démarrage)
+        if (!isFusekiWarmed) {
+          console.log("🔥 WARMUP NÉCESSAIRE - Fuseki pas encore chaud...");
+          const warmupSuccess = await warmupFuseki(fusekiEndpoint);
+          if (!warmupSuccess) {
+            console.log("⚠️ Warmup échoué - on continue quand même...");
+          } else {
+            console.log("✅ Warmup réussi - Fuseki est prêt !");
+          }
         } else {
-          console.log(" Warmup réussi - Fuseki est prêt !");
+          console.log("⚡ WARMUP SKIPPÉ - Fuseki déjà chaud depuis le démarrage !");
         }
 
         if (!sparqlQuery || sparqlQuery.trim() === '') {
           throw new Error("Requête SPARQL vide générée");
         }
 
-        console.log(" Exécution requête principale après warmup...");
+        console.log("🎯 Exécution requête principale...");
 
         let data;
         try {
           data = await executeWithRetry(fusekiEndpoint, sparqlQuery, MAX_RETRIES);
 
         } catch (mainError) {
-          console.log(" TENTATIVE FALLBACK après échec principal...");
+          console.log("🚨 TENTATIVE FALLBACK après échec principal...");
 
           try {
             // Essayer la requête fallback
             const fallbackQuery = generateFallbackQuery();
             data = await executeWithRetry(fusekiEndpoint, fallbackQuery, 2);
             usedFallback = true;
-            console.log(" FALLBACK RÉUSSI");
+            console.log("✅ FALLBACK RÉUSSI");
 
             // Ajouter un warning
             data.warning = "Requête simplifiée utilisée à cause d'un timeout";
 
           } catch (fallbackError) {
-            console.error(" FALLBACK AUSSI ÉCHOUÉ:", fallbackError.message);
+            console.error("❌ FALLBACK AUSSI ÉCHOUÉ:", fallbackError.message);
             throw mainError; // Relancer l'erreur principale
           }
         }
@@ -851,16 +1038,16 @@ http.createServer(async (req, res) => {
         const queryTime = Date.now() - startTime;
         const resultCount = data.results?.bindings?.length || 0;
 
-        console.log(" SUCCÈS COMPLET!");
-        console.log(` Résultats trouvés: ${resultCount}`);
-        console.log(`Temps total: ${queryTime}ms`);
+        console.log("🎉 SUCCÈS COMPLET!");
+        console.log(`📊 Résultats trouvés: ${resultCount}`);
+        console.log(`⏱️ Temps total: ${queryTime}ms`);
 
         if (resultCount > 0) {
           const firstResult = data.results.bindings[0];
           const availableVars = Object.keys(firstResult);
           const expectedVars = ['analysis', 'vi', 'vd', 'categoryVI', 'categoryVD', 'mediator', 'moderator', 'resultatRelation'];
 
-          console.log(" VÉRIFICATION COMPATIBILITÉ PARSER:");
+          console.log("🔍 VÉRIFICATION COMPATIBILITÉ PARSER:");
           console.log(`   Variables disponibles: ${availableVars.join(', ')}`);
           console.log(`   Variables attendues: ${expectedVars.join(', ')}`);
 
@@ -895,7 +1082,8 @@ http.createServer(async (req, res) => {
           maxRetries: MAX_RETRIES,
           timestamp: new Date().toISOString(),
           parserCompatible: true,
-          availableVariables: resultCount > 0 ? Object.keys(data.results.bindings[0]) : []
+          availableVariables: resultCount > 0 ? Object.keys(data.results.bindings[0]) : [],
+          fusekiWarmed: isFusekiWarmed
         };
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -933,7 +1121,8 @@ http.createServer(async (req, res) => {
             maxRetries: MAX_RETRIES,
             queryLength: sparqlQuery?.length || 0,
             endpoint: 'fuseki:3030/ds/sparql',
-            warmupAttempted: true
+            warmupAttempted: true,
+            fusekiWarmed: isFusekiWarmed
           }
         }));
       }
@@ -943,14 +1132,18 @@ http.createServer(async (req, res) => {
     res.end('Méthode non autorisée');
   }
 }).listen(8003, () => {
-  console.log("🚀 SPARQL Generator AMÉLIORÉ démarré sur le port 8003");
+  console.log("🚀 SPARQL Generator avec WARMUP AU DÉMARRAGE - Port 8003");
   console.log("✨ Nouvelles fonctionnalités:");
-  console.log("   🔥 Warmup automatique de Fuseki");
+  console.log("   🔥 Warmup automatique AU DÉMARRAGE (une seule fois)");
   console.log("   🔄 Système de retry intelligent (3 tentatives)");
   console.log("   📊 Variables complètes pour le parser");
   console.log("   🎯 Compatibilité totale avec SPARQLDataParser");
-  console.log("   ⏱️ Timeouts adaptatifs et gestion d'erreurs");
+  console.log("   ⚡ Skip warmup si déjà fait au démarrage");
   console.log("   🛡️ Fallback automatique en cas d'échec");
   console.log("   🆕 Endpoint UPDATE pour ajouter des analyses (/update-analysis)");
   console.log("=" * 60);
+  
+  // 🔥 DÉMARRER LE WARMUP EN ARRIÈRE-PLAN
+  console.log("\n🔥 LANCEMENT DU WARMUP AU DÉMARRAGE...");
+  warmupPromise = performStartupWarmup();
 });
