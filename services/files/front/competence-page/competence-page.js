@@ -99,7 +99,10 @@ async function rechercherCompetence(data) {
         const startTime = Date.now();
 
         // Appel API
-        const response = await fetch('http://localhost:8003/', {
+        const apiUrl = window.location.hostname === 'localhost' ?
+            'http://localhost:8003' :
+            `http://${window.location.hostname}:8003`;
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
