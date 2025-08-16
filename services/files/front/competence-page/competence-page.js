@@ -60,142 +60,254 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 async function rechercherCompetence(data) {
-    console.log("🚀 === RECHERCHE COMPÉTENCE CÔTÉ CLIENT DÉMARRÉE ===");
-    console.log("⏰ Timestamp client:", new Date().toISOString());
-    console.log("📥 Données reçues du composant:", data);
-    console.log("🔍 Structure des données:");
-    console.log("   - questionId:", data.questionId);
-    console.log("   - questionText:", data.questionText);
-    console.log("   - description:", data.description);
-    console.log("   - queryType:", data.queryType);
-
+    console.log("🚀 ===============================================");
+    console.log("🚀 DÉBUT RECHERCHE COMPÉTENCE - DEBUG COMPLET");
+    console.log("🚀 ===============================================");
+    console.log("⏰ Timestamp:", new Date().toISOString());
+    
+    // ===== DEBUG ENVIRONNEMENT =====
+    console.log("🌐 === ANALYSE ENVIRONNEMENT ===");
+    console.log("   window.location.href:", window.location.href);
+    console.log("   window.location.hostname:", window.location.hostname);
+    console.log("   window.location.port:", window.location.port);
+    console.log("   window.location.protocol:", window.location.protocol);
+    
+    // ===== DÉTECTION URL API =====
+    console.log("🔧 === DÉTECTION URL API ===");
+    const hostname = window.location.hostname;
+    let apiUrl;
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        apiUrl = 'http://localhost:8003';
+        console.log("   ✅ ENVIRONNEMENT: LOCAL");
+        console.log("   📍 URL API CHOISIE:", apiUrl);
+    } else {
+        apiUrl = `http://${hostname}:8003`;
+        console.log("   ✅ ENVIRONNEMENT: DISTANT");
+        console.log("   📍 Hostname détecté:", hostname);
+        console.log("   📍 URL API CONSTRUITE:", apiUrl);
+    }
+    
+    // ===== VALIDATION DONNÉES ENTRÉE =====
+    console.log("📥 === VALIDATION DONNÉES ENTRÉE ===");
+    console.log("   Données reçues:", JSON.stringify(data, null, 2));
+    
+    if (!data.questionId) {
+        console.error("❌ ERREUR CRITIQUE: questionId manquant !");
+        throw new Error("Question ID manquant");
+    }
+    console.log("   ✅ questionId présent:", data.questionId);
+    console.log("   ✅ questionText:", data.questionText?.substring(0, 100) + "...");
+    
+    // ===== CONSTRUCTION PAYLOAD =====
+    console.log("📦 === CONSTRUCTION PAYLOAD ===");
+    const payload = {
+        queryType: 'predefined_competence',
+        questionId: data.questionId,
+        questionText: data.questionText,
+        description: data.description
+    };
+    console.log("   📤 Payload complet:");
+    console.log(JSON.stringify(payload, null, 2));
+    console.log("   📤 Taille payload:", JSON.stringify(payload).length, "caractères");
+    
+    // ===== AFFICHAGE LOADING =====
+    console.log("🎨 === AFFICHAGE LOADING ===");
+    showSimpleLoading(`Analyse: ${data.questionText.substring(0, 50)}...`);
+    console.log("   ✅ Loading affiché");
+    
     try {
-        // Vérifications préliminaires
-        if (!data.questionId) {
-            console.error("❌ ERREUR: questionId manquant dans les données !");
-            throw new Error("Question ID manquant");
-        }
-
-        console.log("✅ Validation des données OK");
-
-        // Afficher un indicateur de chargement simple
-        console.log("🎨 Affichage du loading...");
-        showSimpleLoading(`Analyse de la question : ${data.questionText.substring(0, 50)}...`);
-
-        // Payload pour le serveur
-        const payload = {
-            queryType: 'predefined_competence',
-            questionId: data.questionId,
-            questionText: data.questionText,
-            description: data.description
-        };
-
-        console.log("📤 === PRÉPARATION REQUÊTE SERVEUR ===");
-        console.log("📤 Payload complet:", JSON.stringify(payload, null, 2));
-        console.log(window.location.hostname);
-        console.log("🔧 Méthode: POST");
-
-        console.log("📡 Envoi de la requête...");
+        // ===== TEST CONNECTIVITÉ RÉSEAU =====
+        console.log("🌐 === TEST CONNECTIVITÉ ===");
+        console.log("   📡 URL cible:", apiUrl);
+        console.log("   📡 Tentative de connexion...");
+        
         const startTime = Date.now();
-
-        // Appel API
-        const apiUrl = window.location.hostname === 'localhost' ?
-            'http://localhost:8003' :
-            `http://${window.location.hostname}:8003`;
-        const response = await fetch(
-            window.location.hostname === 'localhost'
-                ? 'http://localhost:8003'
-                : 'http://51.44.188.162:8003',
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }
-        );
-
+        
+        // ===== REQUÊTE FETCH AVEC DEBUG =====
+        console.log("📡 === ENVOI REQUÊTE FETCH ===");
+        console.log("   Method: POST");
+        console.log("   URL:", apiUrl);
+        console.log("   Headers: { 'Content-Type': 'application/json' }");
+        console.log("   Body:", JSON.stringify(payload));
+        console.log("   🕐 Heure envoi:", new Date().toLocaleTimeString());
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
         const requestTime = Date.now() - startTime;
-        console.log(`⏱️ Temps de requête: ${requestTime}ms`);
-        console.log("📡 Statut de réponse:", response.status, response.statusText);
-
+        console.log("📡 === RÉPONSE REÇUE ===");
+        console.log("   ⏱️ Temps requête:", requestTime, "ms");
+        console.log("   📊 Status:", response.status);
+        console.log("   📊 Status Text:", response.statusText);
+        console.log("   📊 OK:", response.ok);
+        console.log("   📊 Headers:", [...response.headers.entries()]);
+        console.log("   🕐 Heure réception:", new Date().toLocaleTimeString());
+        
+        // ===== ANALYSE STATUS HTTP =====
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error("❌ Erreur HTTP:", response.status);
-            console.error("❌ Texte d'erreur:", errorText);
-            throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+            console.error("❌ === ERREUR HTTP ===");
+            console.error("   Status:", response.status);
+            console.error("   Status Text:", response.statusText);
+            
+            let errorText;
+            try {
+                errorText = await response.text();
+                console.error("   Réponse serveur:", errorText);
+            } catch (e) {
+                console.error("   Impossible de lire réponse serveur:", e);
+                errorText = "Erreur inconnue";
+            }
+            
+            // Diagnostics spécifiques selon le code d'erreur
+            switch (response.status) {
+                case 404:
+                    console.error("🔍 DIAGNOSTIC: Endpoint non trouvé - Vérifiez que l'API tourne sur", apiUrl);
+                    break;
+                case 500:
+                    console.error("🔍 DIAGNOSTIC: Erreur serveur - Vérifiez les logs du serveur SPARQL");
+                    break;
+                case 502:
+                    console.error("🔍 DIAGNOSTIC: Bad Gateway - Le serveur est peut-être arrêté");
+                    break;
+                case 503:
+                    console.error("🔍 DIAGNOSTIC: Service indisponible - Le serveur est surchargé");
+                    break;
+                default:
+                    console.error("🔍 DIAGNOSTIC: Erreur inconnue - Vérifiez la connectivité réseau");
+            }
+            
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
-
-        console.log("✅ Réponse HTTP OK, parsing JSON...");
-        const responseData = await response.json();
-
-        console.log("📥 === ANALYSE DE LA RÉPONSE SERVEUR ===");
-        console.log("📊 Type de réponse:", typeof responseData);
-        console.log("📊 Clés principales:", Object.keys(responseData));
-
+        
+        // ===== PARSING RÉPONSE =====
+        console.log("📥 === PARSING RÉPONSE JSON ===");
+        console.log("   🔄 Début parsing JSON...");
+        
+        let responseData;
+        try {
+            const responseText = await response.text();
+            console.log("   📄 Taille réponse:", responseText.length, "caractères");
+            console.log("   📄 Début réponse:", responseText.substring(0, 200) + "...");
+            
+            responseData = JSON.parse(responseText);
+            console.log("   ✅ JSON parsé avec succès");
+        } catch (parseError) {
+            console.error("❌ ERREUR PARSING JSON:", parseError);
+            console.error("   Contenu reçu:", await response.text());
+            throw new Error(`Erreur parsing JSON: ${parseError.message}`);
+        }
+        
+        // ===== ANALYSE RÉPONSE =====
+        console.log("📊 === ANALYSE RÉPONSE SERVEUR ===");
+        console.log("   📊 Type réponse:", typeof responseData);
+        console.log("   📊 Clés principales:", Object.keys(responseData));
+        
         if (responseData.results) {
-            console.log("📊 Nombre de résultats:", responseData.results.bindings?.length || 0);
-            console.log("📊 Variables SPARQL:", responseData.head?.vars);
-
+            console.log("   📊 Structure results:", Object.keys(responseData.results));
+            console.log("   📊 Nombre résultats:", responseData.results.bindings?.length || 0);
+            
             if (responseData.results.bindings?.length > 0) {
-                console.log("📊 Premier résultat:", responseData.results.bindings[0]);
+                console.log("   📊 Premier résultat:", responseData.results.bindings[0]);
+                console.log("   📊 Variables disponibles:", responseData.head?.vars);
             }
         }
-
+        
+        if (responseData.error) {
+            console.error("   ❌ Erreur dans réponse:", responseData.error);
+        }
+        
         if (responseData.performance) {
-            console.log("📈 Performance serveur:", responseData.performance);
+            console.log("   📈 Performance:", responseData.performance);
         }
-
-        if (responseData.warning) {
-            console.warn("⚠️ Warning du serveur:", responseData.warning);
-        }
-
-        // Parser les données si SPARQLDataParser est disponible
-        console.log("🔄 === PARSING DES DONNÉES ===");
+        
+        // ===== PARSING DONNÉES RÉSEAU =====
+        console.log("🔄 === PARSING DONNÉES RÉSEAU ===");
         let parsedData = responseData;
-
+        
         if (window.SPARQLDataParser && typeof window.SPARQLDataParser.parse === 'function') {
-            console.log("✅ SPARQLDataParser disponible, parsing...");
-            const parseStartTime = Date.now();
-
-            parsedData = window.SPARQLDataParser.parse(responseData);
-
-            const parseTime = Date.now() - parseStartTime;
-            console.log(`⏱️ Temps de parsing: ${parseTime}ms`);
-            console.log("📊 Données parsées - structure:", Object.keys(parsedData));
-
-            if (parsedData.networkData) {
-                console.log("🕸️ Réseau créé:");
-                console.log("   - Nœuds:", parsedData.networkData.nodes?.length || 0);
-                console.log("   - Liens:", parsedData.networkData.links?.length || 0);
+            console.log("   ✅ SPARQLDataParser disponible");
+            try {
+                const parseStartTime = Date.now();
+                parsedData = window.SPARQLDataParser.parse(responseData);
+                const parseTime = Date.now() - parseStartTime;
+                
+                console.log("   ✅ Parsing réussi en", parseTime, "ms");
+                console.log("   📊 Structure parsée:", Object.keys(parsedData));
+                
+                if (parsedData.networkData) {
+                    console.log("   🕸️ Réseau créé:");
+                    console.log("      - Nœuds:", parsedData.networkData.nodes?.length || 0);
+                    console.log("      - Liens:", parsedData.networkData.links?.length || 0);
+                }
+            } catch (parseError) {
+                console.error("   ❌ Erreur parsing réseau:", parseError);
+                console.log("   ⚠️ Utilisation données brutes");
             }
         } else {
-            console.warn("⚠️ SPARQLDataParser non disponible, données brutes utilisées");
+            console.warn("   ⚠️ SPARQLDataParser non disponible");
         }
-
-        // Cacher le loading
-        console.log("🎨 Masquage du loading...");
+        
+        // ===== AFFICHAGE RÉSULTATS =====
+        console.log("🎯 === AFFICHAGE RÉSULTATS ===");
         hideSimpleLoading();
-
-        // Afficher les résultats
-        console.log("🎯 === AFFICHAGE DES RÉSULTATS ===");
+        console.log("   ✅ Loading masqué");
+        
         displayCompetenceResults(parsedData, data);
-
-        console.log("✅ === RECHERCHE COMPÉTENCE TERMINÉE AVEC SUCCÈS ===");
-        console.log("⏰ Timestamp fin:", new Date().toISOString());
-        console.log("⏱️ Temps total:", Date.now() - startTime, "ms");
-
+        console.log("   ✅ Résultats affichés");
+        
+        // ===== SUCCÈS FINAL =====
+        const totalTime = Date.now() - startTime;
+        console.log("✅ ===============================================");
+        console.log("✅ RECHERCHE COMPÉTENCE RÉUSSIE !");
+        console.log("✅ ===============================================");
+        console.log("   ⏱️ Temps total:", totalTime, "ms");
+        console.log("   📊 Résultats:", responseData.results?.bindings?.length || 0);
+        console.log("   🕐 Fin:", new Date().toLocaleTimeString());
+        
     } catch (error) {
-        const errorTime = Date.now();
-        console.error('💥 === ERREUR DANS RECHERCHE COMPÉTENCE ===');
-        console.error('⏰ Timestamp erreur:', new Date().toISOString());
-        console.error('❌ Type d\'erreur:', error.constructor.name);
-        console.error('❌ Message:', error.message);
-        console.error('❌ Stack:', error.stack);
-        console.error('❌ Données qui ont causé l\'erreur:', data);
-
+        // ===== GESTION ERREUR COMPLÈTE =====
+        console.error("💥 ===============================================");
+        console.error("💥 ERREUR DANS RECHERCHE COMPÉTENCE");
+        console.error("💥 ===============================================");
+        console.error("   ⏰ Timestamp:", new Date().toISOString());
+        console.error("   🏷️ Type erreur:", error.constructor.name);
+        console.error("   📝 Message:", error.message);
+        console.error("   📍 Stack:", error.stack);
+        console.error("   🌐 URL utilisée:", apiUrl);
+        console.error("   📦 Payload envoyé:", JSON.stringify(payload, null, 2));
+        console.error("   🖥️ Navigateur:", navigator.userAgent);
+        console.error("   🌐 Connectivité:", navigator.onLine ? "EN LIGNE" : "HORS LIGNE");
+        
+        // ===== DIAGNOSTICS AUTOMATIQUES =====
+        console.error("🔍 === DIAGNOSTICS AUTOMATIQUES ===");
+        
+        if (error.message.includes("Failed to fetch")) {
+            console.error("   🔍 DIAGNOSTIC: Problème de connectivité réseau");
+            console.error("   💡 SOLUTIONS POSSIBLES:");
+            console.error("      - Vérifiez que le serveur tourne sur", apiUrl);
+            console.error("      - Vérifiez que le port 8003 est ouvert");
+            console.error("      - Vérifiez les règles firewall/sécurité AWS");
+            console.error("      - Testez manuellement:", apiUrl);
+        } else if (error.message.includes("JSON")) {
+            console.error("   🔍 DIAGNOSTIC: Problème de format de réponse");
+            console.error("   💡 Le serveur ne renvoie pas du JSON valide");
+        } else if (error.message.includes("HTTP")) {
+            console.error("   🔍 DIAGNOSTIC: Erreur serveur HTTP");
+            console.error("   💡 Vérifiez les logs du serveur");
+        }
+        
         hideSimpleLoading();
         showError('Erreur de recherche compétence', error.message, data);
-
-        console.error('💥 === FIN GESTION ERREUR ===');
+        
+        console.error("💥 === FIN GESTION ERREUR ===");
+        throw error; // Re-lancer pour debugging
     }
 }
 
