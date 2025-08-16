@@ -92,7 +92,7 @@ async function rechercherCompetence(data) {
 
         console.log("📤 === PRÉPARATION REQUÊTE SERVEUR ===");
         console.log("📤 Payload complet:", JSON.stringify(payload, null, 2));
-        console.log("🌐 URL cible: http://localhost:8003/");
+        console.log(window.location.hostname);
         console.log("🔧 Méthode: POST");
 
         console.log("📡 Envoi de la requête...");
