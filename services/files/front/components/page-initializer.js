@@ -80,7 +80,7 @@ class PageInitializer {
             categoryVD: 'DEAB'
         };
         
-        const response = await fetch('http://localhost:8003/', {
+        const response = await fetch(window.apiConfig.getSparqlEndpoint(), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(warmupQuery),
@@ -106,7 +106,7 @@ class PageInitializer {
             gender: 'Male'
         };
         
-        const response = await fetch('http://localhost:8003/', {
+        const response = await fetch(window.apiConfig.getSparqlEndpoint(), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(testQuery),

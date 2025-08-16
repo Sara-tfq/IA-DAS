@@ -19,7 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let isLoading = false;
     
     // Configuration
-    const SERVER_URL = 'http://localhost:8003';
+    const SERVER_URL = window.location.hostname === 'localhost' ? 
+    'http://localhost:8003' : 
+    `http://${window.location.hostname}:8003`;
     
     // ================== UTILITAIRES ==================
     

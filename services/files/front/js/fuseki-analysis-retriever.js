@@ -2,12 +2,24 @@
 // Extrait et adapté depuis la page de modification d'analyses
 
 class FusekiAnalysisRetriever {
-    constructor() {
+  constructor() {
+    // 🔥 URL dynamique simple basée sur l'hostname
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (isLocal) {
         this.serverURL = 'http://localhost:8003';
-        this.cache = new Map();
-        this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
-        console.log('📡 FusekiAnalysisRetriever initialisé');
+    } else {
+        // Adaptez cette URL selon votre configuration de production
+        this.serverURL = 'http://51.44.188.162:8003';
+        // OU si votre API est sur le même serveur :
+        // this.serverURL = `${window.location.protocol}//${window.location.hostname}:8003`;
     }
+    
+    this.cache = new Map();
+    this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
+    console.log('📡 FusekiAnalysisRetriever initialisé');
+    console.log('🌍 URL serveur:', this.serverURL);
+}
 
     // ================== MÉTHODE PUBLIQUE PRINCIPALE ==================
     

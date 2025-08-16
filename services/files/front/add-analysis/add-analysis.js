@@ -1,49 +1,49 @@
 // JavaScript pour le formulaire d'ajout d'analyse
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('Page d\'ajout d\'analyse chargée');
-    
+
     const form = document.getElementById('addAnalysisForm');
     const submitBtn = document.getElementById('submitBtn');
     const previewBtn = document.getElementById('previewBtn');
-    
+
     // Fonction pour remplacer les champs vides par "N.A."
     function replaceEmptyFields() {
         const allInputs = form.querySelectorAll('input, textarea, select');
-        
+
         allInputs.forEach(input => {
             if (!input.value || input.value.trim() === '') {
                 input.value = 'N.A.';
             }
         });
     }
-    
+
     // Fonction pour collecter toutes les données du formulaire
     function collectFormData() {
         const formData = new FormData(form);
         const data = {};
-        
+
         // Convertir FormData en objet simple
         for (let [key, value] of formData.entries()) {
             data[key] = value.trim() || 'N.A.';
         }
-        
+
         console.log('Données collectées:', data);
         return data;
     }
-    
+
     // Fonction de prévisualisation
     function showPreview() {
         console.log('Prévisualisation demandée');
-        
+
         // Remplacer les champs vides par "N.A."
         replaceEmptyFields();
-        
+
         // Collecter les données
         const data = collectFormData();
-        
+
         // Créer la fenêtre de prévisualisation
         const previewWindow = window.open('', 'preview', 'width=800,height=600,scrollbars=yes');
-        
+
         const previewHTML = `
         <!DOCTYPE html>
         <html>
@@ -116,28 +116,31 @@ document.addEventListener('DOMContentLoaded', function() {
             <button onclick="window.close()" style="padding: 10px 20px; background: #2980b9; color: white; border: none; border-radius: 5px; margin-top: 20px;">Fermer</button>
         </body>
         </html>`;
-        
+
         previewWindow.document.write(previewHTML);
         previewWindow.document.close();
     }
-    
+
     // Fonction pour envoyer les requêtes SPARQL au serveur
     async function sendToServer(formData, sparqlQueries) {
         console.log('🚀 Envoi au serveur...');
-        
-        const serverURL = 'http://localhost:8003/update-analysis';
-        
+
+        const serverURL = window.location.hostname === 'localhost' ?
+            'http://localhost:8003' :
+            `http://${window.location.hostname}:8003`;
+
+
         const payload = {
             formData: formData,
             sparqlQueries: sparqlQueries
         };
-        
+
         console.log('📤 Payload à envoyer:', {
             formDataKeys: Object.keys(formData),
             queryCount: Object.keys(sparqlQueries).length,
             queryNames: Object.keys(sparqlQueries)
         });
-        
+
         try {
             const response = await fetch(serverURL, {
                 method: 'POST',
@@ -146,15 +149,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(payload)
             });
-            
+
             const responseData = await response.json();
-            
+
             console.log('📨 Réponse serveur:', {
                 status: response.status,
                 success: responseData.success,
                 message: responseData.message
             });
-            
+
             if (response.ok) {
                 // Succès complet (200)
                 return {
@@ -178,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     status: response.status
                 };
             }
-            
+
         } catch (error) {
             console.error('💥 Erreur réseau:', error);
             throw new Error(`Erreur de connexion au serveur: ${error.message}`);
@@ -189,36 +192,36 @@ document.addEventListener('DOMContentLoaded', function() {
     function submitForm(event) {
         event.preventDefault();
         console.log('Soumission du formulaire');
-        
+
         // Remplacer les champs vides par "N.A."
         replaceEmptyFields();
-        
+
         // Collecter les données
         const data = collectFormData();
-        
+
         // Afficher un loading
         submitBtn.textContent = 'Génération SPARQL...';
         submitBtn.disabled = true;
         submitBtn.classList.add('loading');
-        
+
         // Générer les requêtes SPARQL
         try {
             console.log('=== GÉNÉRATION DES REQUÊTES SPARQL ===');
             const generator = new SPARQLGenerator();
             const sparqlQueries = generator.generateAllInserts(data);
-            
+
             console.log('Requêtes SPARQL générées avec succès:');
             Object.keys(sparqlQueries).forEach(name => {
                 console.log(`✅ ${name}`);
             });
-            
+
             // Envoyer au serveur
             submitBtn.textContent = 'Envoi au serveur...';
-            
+
             sendToServer(data, sparqlQueries)
                 .then(result => {
                     console.log('🎉 Réponse finale du serveur:', result);
-                    
+
                     if (result.success) {
                         // Succès complet
                         const successMsg = `✅ Analyse ajoutée avec succès !
@@ -229,14 +232,14 @@ document.addEventListener('DOMContentLoaded', function() {
 • ID d'analyse: ${result.data.analysisId}
 
 Tous les objets ont été créés dans Fuseki.`;
-                        
+
                         alert(successMsg);
-                        
+
                         // Optionnel : réinitialiser le formulaire
                         if (confirm('Voulez-vous réinitialiser le formulaire pour ajouter une nouvelle analyse ?')) {
                             form.reset();
                         }
-                        
+
                     } else if (result.partial) {
                         // Succès partiel
                         const partialMsg = `⚠️ Analyse partiellement ajoutée
@@ -247,9 +250,9 @@ Tous les objets ont été créés dans Fuseki.`;
 • Temps d'exécution: ${result.data.executionTime}ms
 
 Vérifiez la console pour les détails des erreurs.`;
-                        
+
                         alert(partialMsg);
-                        
+
                     } else {
                         // Échec complet
                         const errorMsg = `❌ Échec de l'ajout de l'analyse
@@ -258,7 +261,7 @@ Erreur: ${result.data.message}
 Temps d'exécution: ${result.data.executionTime}ms
 
 Vérifiez la console pour plus de détails.`;
-                        
+
                         alert(errorMsg);
                     }
                 })
@@ -276,59 +279,59 @@ Vérifiez que le serveur SPARQL est démarré sur le port 8003.`);
                     submitBtn.disabled = false;
                     submitBtn.classList.remove('loading');
                 });
-                
+
         } catch (error) {
             console.error('Erreur lors de la génération SPARQL:', error);
             alert('Erreur lors de la génération des requêtes SPARQL. Vérifiez la console.');
-            
+
             // Réinitialiser le bouton
             submitBtn.textContent = 'Ajouter l\'analyse';
             submitBtn.disabled = false;
             submitBtn.classList.remove('loading');
         }
     }
-    
+
     // Événements
     if (previewBtn) {
         previewBtn.addEventListener('click', showPreview);
         console.log('Gestionnaire prévisualisation attaché');
     }
-    
+
     if (submitBtn && form) {
         form.addEventListener('submit', submitForm);
         console.log('Gestionnaire soumission attaché');
     }
-    
+
     // Fonction utilitaire pour débugger et tester SPARQL
-    window.debugForm = function() {
+    window.debugForm = function () {
         console.log('=== DEBUG FORMULAIRE ET SPARQL ===');
         replaceEmptyFields();
         const data = collectFormData();
         console.table(data);
-        
+
         // Tester la génération SPARQL
         if (typeof SPARQLGenerator !== 'undefined') {
             console.log('\n=== TEST GÉNÉRATION SPARQL ===');
             const generator = new SPARQLGenerator();
             const queries = generator.generateAllInserts(data);
-            
+
             Object.entries(queries).forEach(([name, query]) => {
                 console.log(`\n--- ${name.toUpperCase()} ---`);
                 console.log(query);
             });
-            
+
             return { formData: data, sparqlQueries: queries };
         } else {
             console.error('SPARQLGenerator non disponible !');
             return { formData: data };
         }
     };
-    
+
     // Fonction pour tester une requête SPARQL spécifique
-    window.testSingleQuery = function(queryType) {
+    window.testSingleQuery = function (queryType) {
         const data = collectFormData();
         const generator = new SPARQLGenerator();
-        
+
         const methodMap = {
             'article': 'generateArticleInsert',
             'analysis': 'generateAnalysisInsert',
@@ -337,7 +340,7 @@ Vérifiez que le serveur SPARQL est démarré sur le port 8003.`);
             'variables': 'generateVDInsert',
             'relations': 'generateRelationsInsert'
         };
-        
+
         if (methodMap[queryType]) {
             const query = generator[methodMap[queryType]](data);
             console.log(`=== REQUÊTE ${queryType.toUpperCase()} ===`);
@@ -347,7 +350,7 @@ Vérifiez que le serveur SPARQL est démarré sur le port 8003.`);
             console.error('Type de requête invalide. Types disponibles:', Object.keys(methodMap));
         }
     };
-    
+
     console.log('JavaScript d\'ajout d\'analyse initialisé');
     console.log('Utilise debugForm() dans la console pour voir les données');
 });

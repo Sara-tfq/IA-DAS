@@ -121,7 +121,7 @@ async function rechercher(data) {
         
         console.log("Payload complet:", payload);
         
-        const response = await fetch('http://localhost:8003/', {
+        const response = await fetch(window.apiConfig.getSparqlEndpoint(), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -138,7 +138,6 @@ async function rechercher(data) {
         window.loadingManager.completeQuery(responseData.results?.bindings?.length);
         window.loadingManager.startParsing();
         
-        // Parser les données si nécessaire
         let parsedData = responseData;
         if (window.SPARQLDataParser && typeof window.SPARQLDataParser.parse === 'function') {
             parsedData = window.SPARQLDataParser.parse(responseData);
