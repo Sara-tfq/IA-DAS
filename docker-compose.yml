@@ -10,7 +10,7 @@ services:
     networks:
       - webnet
   sparql-generator:
-    build: ./services/sparql-generator
+    build: ./services/SPARQL-Generator
     container_name: sparql-generator
     ports:
       - "8003:8003"  
