@@ -102,11 +102,16 @@ async function rechercherCompetence(data) {
         const apiUrl = window.location.hostname === 'localhost' ?
             'http://localhost:8003' :
             `http://${window.location.hostname}:8003`;
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        const response = await fetch(
+            window.location.hostname === 'localhost'
+                ? 'http://localhost:8003'
+                : 'http://51.44.188.162:8003',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }
+        );
 
         const requestTime = Date.now() - startTime;
         console.log(`⏱️ Temps de requête: ${requestTime}ms`);

@@ -75,16 +75,23 @@ class PageInitializer {
     async wakeupFuseki() {
         console.log('🔥 Réveil de Fuseki...');
         
+        // Détection de l'environnement
+        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:8003/' 
+            : 'http://51.44.188.162:8003/';
+        
+        console.log(`🌐 Utilisation de l'URL: ${apiUrl}`);
+        
         const warmupQuery = {
             queryType: 'generated',
             categoryVD: 'DEAB'
         };
         
-        const response = await fetch(window.apiConfig.getSparqlEndpoint(), {
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(warmupQuery),
-            timeout: 60000 // 1 minute
+            timeout: 60000 
         });
         
         if (!response.ok) {
@@ -100,13 +107,18 @@ class PageInitializer {
     async testFusekiStability() {
         console.log('🧪 Test de stabilité...');
         
+        // Détection de l'environnement
+        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:8003/' 
+            : 'http://51.44.188.162:8003/';
+        
         // Requête différente pour s'assurer de la stabilité
         const testQuery = {
             queryType: 'generated',
             gender: 'Male'
         };
         
-        const response = await fetch(window.apiConfig.getSparqlEndpoint(), {
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(testQuery),

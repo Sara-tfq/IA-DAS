@@ -1,6 +1,6 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('🔧 Page de modification d\'analyse chargée');
-    
+
     const selectionStep = document.getElementById('selection-step');
     const editStep = document.getElementById('edit-step');
     const searchInput = document.getElementById('analysisIdSearch');
@@ -13,18 +13,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const modifyForm = document.getElementById('modifyAnalysisForm');
     const previewBtn = document.getElementById('previewChanges');
     const saveBtn = document.getElementById('saveChanges');
-    
+
     // Variables globales
     let currentAnalysisData = null;
     let isLoading = false;
-    
+
     // Configuration
-    const SERVER_URL = window.location.hostname === 'localhost' ? 
-    'http://localhost:8003' : 
-    `http://${window.location.hostname}:8003`;
-    
+    const SERVER_URL = window.location.hostname === 'localhost' ?
+        'http://localhost:8003' :
+        `http://${window.location.hostname}:8003`;
+
     // ================== UTILITAIRES ==================
-    
+
     // Afficher un message de statut
     function showMessage(type, message) {
         // Créer ou mettre à jour un élément de message
@@ -35,11 +35,11 @@ document.addEventListener('DOMContentLoaded', function() {
             messageEl.className = `message message-${type}`;
             document.querySelector('.modify-container').insertBefore(messageEl, document.querySelector('.modify-container').firstChild);
         }
-        
+
         messageEl.className = `message message-${type}`;
         messageEl.textContent = message;
         messageEl.style.display = 'block';
-        
+
         // Auto-hide après 5 secondes pour les succès
         if (type === 'success') {
             setTimeout(() => {
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 5000);
         }
     }
-    
+
     // Nettoyer les messages
     function clearMessages() {
         const messageEl = document.getElementById('status-message');
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
             messageEl.style.display = 'none';
         }
     }
-    
+
     // Basculer entre les étapes
     function showStep(stepName) {
         if (stepName === 'selection') {
@@ -66,46 +66,52 @@ document.addEventListener('DOMContentLoaded', function() {
             editStep.style.display = 'block';
         }
     }
-    
+
     // ================== REQUÊTES SPARQL ==================
-    
+
     // Exécuter une requête SPARQL
     async function executeQuery(sparqlQuery) {
         try {
             console.log('📤 Envoi requête SPARQL...');
-            
-            const response = await fetch(SERVER_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    queryType: 'raw_sparql',
-                    rawSparqlQuery: sparqlQuery
-                })
-            });
-            
+
+            const response = await fetch(
+                window.location.hostname === 'localhost'
+                    ? 'http://localhost:8003'
+                    : 'http://51.44.188.162:8003',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        queryType: 'raw_sparql',
+                        rawSparqlQuery: sparqlQuery
+                    })
+                }
+            );
+
+
             if (!response.ok) {
                 throw new Error(`Erreur serveur: ${response.status} ${response.statusText}`);
             }
-            
+
             const data = await response.json();
             console.log('📥 Réponse reçue:', data.performance || 'pas de performance');
-            
+
             return data.results?.bindings || [];
-            
+
         } catch (error) {
             console.error('💥 Erreur lors de l\'exécution de la requête:', error);
             throw new Error(`Impossible de contacter le serveur: ${error.message}`);
         }
     }
-    
+
     // ================== RECHERCHE D'ANALYSES ==================
-    
+
     // Rechercher des analyses par ID (partiel)
     async function searchAnalysesByIds(searchTerm) {
         console.log('🔍 Recherche analyses avec terme:', searchTerm);
-        
+
         const query = `
 PREFIX iadas: <http://ia-das.org/onto#>
 PREFIX iadas-data: <http://ia-das.org/data#>
@@ -117,14 +123,14 @@ SELECT ?analysis ?analysisId WHERE {
 }
 ORDER BY ?analysisId
 LIMIT 50`;
-        
+
         return await executeQuery(query);
     }
-    
+
     // Récupérer toutes les analyses (limitées)
     async function getAllAnalyses() {
         console.log('📋 Récupération de toutes les analyses...');
-        
+
         const query = `
 PREFIX iadas: <http://ia-das.org/onto#>
 PREFIX iadas-data: <http://ia-das.org/data#>
@@ -135,26 +141,26 @@ SELECT ?analysis ?analysisId WHERE {
 }
 ORDER BY ?analysisId
 LIMIT 10000`;
-        
+
         return await executeQuery(query);
     }
-    
+
     // Afficher les résultats de recherche
     function displaySearchResults(analyses) {
         analysesList.innerHTML = '';
-        
+
         if (analyses.length === 0) {
             analysesList.innerHTML = '<div class="no-results">❌ Aucune analyse trouvée</div>';
             searchResults.style.display = 'block';
             return;
         }
-        
+
         console.log(`📊 Affichage de ${analyses.length} analyses`);
-        
+
         analyses.forEach(analysis => {
             const analysisId = analysis.analysisId?.value || 'ID inconnu';
             const analysisURI = analysis.analysis?.value || '';
-            
+
             const item = document.createElement('div');
             item.className = 'analysis-item';
             item.innerHTML = `
@@ -166,19 +172,19 @@ LIMIT 10000`;
                     ✏️ Modifier cette analyse
                 </button>
             `;
-            
+
             analysesList.appendChild(item);
         });
-        
+
         searchResults.style.display = 'block';
     }
-    
+
     // ================== CHARGEMENT DES DONNÉES ==================
-    
+
     // Charger toutes les données d'une analyse
     async function loadCompleteAnalysisData(analysisId) {
         console.log('📥 Chargement complet des données pour l\'analyse:', analysisId);
-        
+
         // Requête complexe pour récupérer TOUTES les données
         const query = `
 PREFIX iadas: <http://ia-das.org/onto#>
@@ -253,24 +259,24 @@ SELECT ?property ?value ?entity WHERE {
         BIND("bmiStats" AS ?entity)
     }
 }`;
-        
+
         const results = await executeQuery(query);
         return parseAnalysisResults(results);
     }
-    
+
     // Parser les résultats SPARQL en objet structuré
     function parseAnalysisResults(results) {
         console.log('🔄 Parsing des résultats SPARQL...');
-        
+
         const data = {};
-        
+
         results.forEach(result => {
             const property = result.property?.value;
             const value = result.value?.value;
             const entity = result.entity?.value;
-            
+
             if (!property || !value) return;
-            
+
             // Extraire le nom de la propriété (après le # ou après le dernier /)
             let propName = property.split('#')[1];
             if (!propName) {
@@ -278,7 +284,7 @@ SELECT ?property ?value ?entity WHERE {
                 const parts = property.split('/');
                 propName = parts[parts.length - 1];
             }
-            
+
             // Mapper selon l'entité
             switch (entity) {
                 case 'analysis':
@@ -310,11 +316,11 @@ SELECT ?property ?value ?entity WHERE {
                     break;
             }
         });
-        
+
         console.log('✅ Données parsées:', data);
         return data;
     }
-    
+
     // Fonctions de mapping des propriétés (CORRIGÉES selon l'ontologie)
     function mapAnalysisProperty(data, propName, value) {
         const mapping = {
@@ -332,13 +338,13 @@ SELECT ?property ?value ?entity WHERE {
             'moderatorMeasure': 'moderatorMeasure',
             'mediatorMeasure': 'mediatorMeasure'
         };
-        
+
         if (mapping[propName]) {
             data[mapping[propName]] = value;
             console.log(`🔬 Analysis - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
-    
+
     function mapArticleProperty(data, propName, value) {
         const mapping = {
             'doi': 'doi',
@@ -349,7 +355,7 @@ SELECT ?property ?value ?entity WHERE {
             'country': 'country',
             'studyType': 'studyType'
         };
-        
+
         if (mapping[propName]) {
             data[mapping[propName]] = value;
             console.log(`📄 Article - ${propName} → ${mapping[propName]}: ${value}`);
@@ -358,7 +364,7 @@ SELECT ?property ?value ?entity WHERE {
             console.log(`🔍 Article propriété non mappée: ${propName} = ${value}`);
         }
     }
-    
+
     function mapPopulationProperty(data, propName, value) {
         const mapping = {
             'sampleSize': 'sampleSize',
@@ -370,13 +376,13 @@ SELECT ?property ?value ?entity WHERE {
             'sousGroupeAnalyse1': 'sousGroupeAnalyse1',
             'sousGroupeAnalyse2': 'sousGroupeAnalyse2'
         };
-        
+
         if (mapping[propName]) {
             data[mapping[propName]] = value;
             console.log(`👥 Population - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
-    
+
     function mapSportProperty(data, propName, value) {
         const mapping = {
             'sportName': 'sportName',
@@ -384,13 +390,13 @@ SELECT ?property ?value ?entity WHERE {
             'sportPracticeType': 'sportPracticeType',
             'sportSubcategory': 'sportSubcategory'
         };
-        
+
         if (mapping[propName]) {
             data[mapping[propName]] = value;
             console.log(`🏃 Sport - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
-    
+
     function mapRelationProperty(data, propName, value) {
         const mapping = {
             'degreR': 'degreR',
@@ -403,16 +409,16 @@ SELECT ?property ?value ?entity WHERE {
             'sousGroupeAnalyse2': 'sousGroupeAnalyse2',
             'relationDegreeSecondary': 'relationDegreeSecondary'
         };
-        
+
         if (mapping[propName]) {
             data[mapping[propName]] = value;
             console.log(`📊 Relations - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
-    
+
     function mapVariableProperty(data, propName, value, type) {
         const prefix = type === 'vd' ? 'vd' : 'vi';
-        
+
         // CORRECTION IMPORTANTE : VD et VI sont les noms des propriétés !
         const mapping = {
             'VD': `${prefix}Name`,           // iadas:VD → vdName
@@ -426,13 +432,13 @@ SELECT ?property ?value ?entity WHERE {
             'finalClass': `${prefix}FinalClass`,
             'variableType': `${prefix}Type`
         };
-        
+
         if (mapping[propName]) {
             data[mapping[propName]] = value;
             console.log(`🔢 Variable ${type.toUpperCase()} - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
-    
+
     function mapAgeStatsProperty(data, propName, value) {
         const mapping = {
             'ageDescription': 'ageDescription',
@@ -441,13 +447,13 @@ SELECT ?property ?value ?entity WHERE {
             'minAge': 'minAge',
             'maxAge': 'maxAge'
         };
-        
+
         if (mapping[propName]) {
             data[mapping[propName]] = value;
             console.log(`👴 Age Stats - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
-    
+
     function mapBmiStatsProperty(data, propName, value) {
         const mapping = {
             'bmiDescription': 'bmiDescription',
@@ -456,19 +462,19 @@ SELECT ?property ?value ?entity WHERE {
             'minBMI': 'minBMI',
             'maxBMI': 'maxBMI'
         };
-        
+
         if (mapping[propName]) {
             data[mapping[propName]] = value;
             console.log(`⚖️ BMI Stats - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
-    
+
     // ================== GESTION DU FORMULAIRE ==================
-    
+
     // Pré-remplir le formulaire avec les données
     function populateForm(data) {
         console.log('📝 Pré-remplissage du formulaire...');
-        
+
         // Parcourir tous les champs et les remplir
         Object.keys(data).forEach(key => {
             const field = document.getElementById(key);
@@ -477,29 +483,29 @@ SELECT ?property ?value ?entity WHERE {
                 console.log(`✓ ${key}: ${data[key]}`);
             }
         });
-        
+
         // S'assurer que l'ID d'analyse est affiché et non modifiable
         const analysisIdField = document.getElementById('analysisId');
         if (analysisIdField && data.analysisId) {
             analysisIdField.value = data.analysisId;
-            
+
         }
     }
-    
+
     // Collecter les données du formulaire
     function collectFormData() {
         const formData = new FormData(modifyForm);
         const data = {};
-        
+
         for (let [key, value] of formData.entries()) {
             data[key] = value.trim() || 'N.A.';
         }
-        
+
         return data;
     }
-    
+
     // ================== GÉNÉRATION DES REQUÊTES UPDATE ==================
-    
+
     // Générateur de requêtes UPDATE (adapté de SPARQLGenerator)
     class UpdateSPARQLGenerator {
         constructor() {
@@ -510,21 +516,21 @@ PREFIX bibo: <http://purl.org/ontology/bibo/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>`;
         }
-        
+
         // Nettoyer les valeurs
         cleanValue(value) {
             if (!value || value === 'N.A.') return 'N.A.';
             return value.toString().replace(/"/g, '\\"').replace(/\n/g, '\\n');
         }
-        
+
         // Générer un literal SPARQL
         literal(value, type = 'string') {
             const cleanedValue = this.cleanValue(value);
-            
+
             if (cleanedValue === 'N.A.') {
                 return '"N.A."';
             }
-            
+
             switch (type) {
                 case 'integer':
                     return `"${cleanedValue}"^^xsd:integer`;
@@ -534,11 +540,11 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>`;
                     return `"${cleanedValue}"`;
             }
         }
-        
+
         // Générer requête UPDATE pour l'analyse
         generateAnalysisUpdate(data, originalData) {
             const analysisId = this.cleanValue(data.analysisId);
-            
+
             return `${this.prefixes}
 
 DELETE {
@@ -579,7 +585,7 @@ WHERE {
     OPTIONAL { iadas-data:Analysis_${analysisId} iadas:hasModerator ?oldModerator }
 }`;
         }
-        
+
         // Générer toutes les requêtes UPDATE
         generateAllUpdates(data, originalData) {
             return {
@@ -588,36 +594,36 @@ WHERE {
             };
         }
     }
-    
+
     // ================== GESTION DES ÉVÉNEMENTS ==================
-    
+
     // Fonction globale pour sélectionner une analyse (appelée depuis le HTML)
-    window.selectAnalysisForEditing = async function(analysisId) {
+    window.selectAnalysisForEditing = async function (analysisId) {
         console.log('✏️ Sélection de l\'analyse pour modification:', analysisId);
-        
+
         if (isLoading) return;
         isLoading = true;
-        
+
         try {
             clearMessages();
             showMessage('info', `Chargement des données de l'analyse ${analysisId}...`);
-            
+
             // Charger les données complètes
             const data = await loadCompleteAnalysisData(analysisId);
             currentAnalysisData = data;
-            
+
             // Mettre à jour l'affichage
             currentAnalysisId.textContent = analysisId;
-            
+
             // Pré-remplir le formulaire
             populateForm(data);
-            
+
             // Basculer vers l'étape de modification
             showStep('edit');
-            
+
             clearMessages();
             showMessage('success', `Données chargées avec succès pour l'analyse ${analysisId}`);
-            
+
         } catch (error) {
             console.error('💥 Erreur lors du chargement:', error);
             showMessage('error', `Erreur lors du chargement: ${error.message}`);
@@ -625,29 +631,29 @@ WHERE {
             isLoading = false;
         }
     };
-    
+
     // Gestionnaire de recherche
-    searchBtn.addEventListener('click', async function() {
+    searchBtn.addEventListener('click', async function () {
         const searchTerm = searchInput.value.trim();
-        
+
         if (!searchTerm) {
             showMessage('error', 'Veuillez saisir un ID d\'analyse à rechercher');
             return;
         }
-        
+
         if (isLoading) return;
         isLoading = true;
-        
+
         try {
             clearMessages();
             showMessage('info', 'Recherche en cours...');
-            
+
             const results = await searchAnalysesByIds(searchTerm);
             displaySearchResults(results);
-            
+
             clearMessages();
             showMessage('success', `${results.length} analyse(s) trouvée(s)`);
-            
+
         } catch (error) {
             console.error('💥 Erreur lors de la recherche:', error);
             showMessage('error', `Erreur lors de la recherche: ${error.message}`);
@@ -655,22 +661,22 @@ WHERE {
             isLoading = false;
         }
     });
-    
+
     // Gestionnaire "Voir toutes les analyses"
-    loadAllBtn.addEventListener('click', async function() {
+    loadAllBtn.addEventListener('click', async function () {
         if (isLoading) return;
         isLoading = true;
-        
+
         try {
             clearMessages();
             showMessage('info', 'Chargement de toutes les analyses...');
-            
+
             const results = await getAllAnalyses();
             displaySearchResults(results);
-            
+
             clearMessages();
             showMessage('success', `${results.length} analyse(s) trouvée(s)`);
-            
+
         } catch (error) {
             console.error('💥 Erreur lors du chargement:', error);
             showMessage('error', `Erreur lors du chargement: ${error.message}`);
@@ -678,22 +684,22 @@ WHERE {
             isLoading = false;
         }
     });
-    
+
     // Gestionnaire "Retour à la recherche"
-    backToSearchBtn.addEventListener('click', function() {
+    backToSearchBtn.addEventListener('click', function () {
         showStep('selection');
         currentAnalysisData = null;
         modifyForm.reset();
         clearMessages();
     });
-    
+
     // Gestionnaire "Prévisualiser les modifications"
-    previewBtn.addEventListener('click', function() {
+    previewBtn.addEventListener('click', function () {
         const data = collectFormData();
-        
+
         // Créer une fenêtre de prévisualisation
         const previewWindow = window.open('', 'preview', 'width=900,height=700,scrollbars=yes');
-        
+
         const previewHTML = `
         <!DOCTYPE html>
         <html>
@@ -772,62 +778,68 @@ WHERE {
             <button onclick="window.close()" style="padding: 10px 20px; background: #2980b9; color: white; border: none; border-radius: 5px; margin-top: 20px;">Fermer la prévisualisation</button>
         </body>
         </html>`;
-        
+
         previewWindow.document.write(previewHTML);
         previewWindow.document.close();
     });
-    
+
     // Gestionnaire "Sauvegarder les modifications"
-    modifyForm.addEventListener('submit', async function(event) {
+    modifyForm.addEventListener('submit', async function (event) {
         event.preventDefault();
-        
+
         if (isLoading) return;
         isLoading = true;
-        
+
         try {
             clearMessages();
             showMessage('info', 'Génération des requêtes de modification...');
-            
+
             const formData = collectFormData();
-            
+
             // Générer les requêtes UPDATE
             const generator = new ExtendedUpdateSPARQLGenerator();
             const updateQueries = generator.generateAllUpdates(formData, currentAnalysisData);
-            
+
             console.log('📝 Requêtes UPDATE générées:', Object.keys(updateQueries));
-            
+
             // Envoyer au serveur
             showMessage('info', 'Envoi des modifications au serveur...');
-            
-            const response = await fetch(`${SERVER_URL}/update-analysis`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    formData: formData,
-                    sparqlQueries: updateQueries,
-                    operation: 'update',
-                    originalAnalysisId: currentAnalysisData.analysisId
-                })
-            });
-            
+
+            const response = await fetch(
+                window.location.hostname === 'localhost'
+                    ? 'http://localhost:8003/update-analysis'
+                    : 'http://51.44.188.162:8003/update-analysis',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        formData: formData,
+                        sparqlQueries: updateQueries,
+                        operation: 'update',
+                        originalAnalysisId: currentAnalysisData.analysisId
+                    })
+                }
+            );
+
+
             const result = await response.json();
-            
+
             if (response.ok || response.status === 207) {
                 // Succès complet ou partiel
                 const successCount = result.results?.successCount || 0;
                 const totalCount = result.results?.totalQueries || 0;
-                
+
                 if (response.status === 200) {
                     showMessage('success', `✅ Analyse modifiée avec succès ! ${successCount} objets mis à jour.`);
                 } else {
                     showMessage('warning', `⚠️ Modification partielle : ${successCount}/${totalCount} objets mis à jour.`);
                 }
-                
+
                 // Mettre à jour les données actuelles
                 currentAnalysisData = formData;
-                
+
                 // Proposer de retourner à la recherche
                 setTimeout(() => {
                     if (confirm('Modification terminée ! Voulez-vous retourner à la recherche pour modifier une autre analyse ?')) {
@@ -836,13 +848,13 @@ WHERE {
                         clearMessages();
                     }
                 }, 2000);
-                
+
             } else {
                 // Erreur
                 showMessage('error', `❌ Erreur lors de la modification: ${result.message || 'Erreur inconnue'}`);
                 console.error('Détails de l\'erreur:', result);
             }
-            
+
         } catch (error) {
             console.error('💥 Erreur lors de la sauvegarde:', error);
             showMessage('error', `Erreur de connexion: ${error.message}`);
@@ -850,22 +862,22 @@ WHERE {
             isLoading = false;
         }
     });
-    
+
     // Gestionnaire pour la recherche avec Enter
-    searchInput.addEventListener('keypress', function(event) {
+    searchInput.addEventListener('keypress', function (event) {
         if (event.key === 'Enter') {
             searchBtn.click();
         }
     });
-    
+
     // ================== INITIALISATION ==================
-    
+
     // Fonctions utilitaires globales pour debug
-    window.debugModifyAnalysis = function() {
+    window.debugModifyAnalysis = function () {
         console.log('=== DEBUG MODIFY ANALYSIS ===');
         console.log('Current analysis data:', currentAnalysisData);
         console.log('Form data:', collectFormData());
-        
+
         if (currentAnalysisData) {
             const generator = new ExtendedUpdateSPARQLGenerator();
             const queries = generator.generateAllUpdates(collectFormData(), currentAnalysisData);
@@ -873,33 +885,33 @@ WHERE {
             return queries;
         }
     };
-    
+
     // Test de connexion serveur au chargement
     async function testServerConnection() {
         try {
             console.log('🔗 Test de connexion au serveur...');
-            
+
             const testQuery = `
 PREFIX iadas: <http://ia-das.org/onto#>
 SELECT (COUNT(*) as ?count) WHERE {
     ?s a iadas:Analysis .
 }
 LIMIT 1`;
-            
+
             await executeQuery(testQuery);
             console.log('✅ Connexion serveur OK');
-            
+
         } catch (error) {
             console.error('❌ Erreur de connexion serveur:', error);
             showMessage('error', 'Impossible de se connecter au serveur SPARQL. Vérifiez que le serveur est démarré sur le port 8003.');
         }
     }
-    
+
     // Initialisation
     console.log('🚀 Initialisation de la page de modification');
     showStep('selection'); // Afficher l'étape de sélection au démarrage
     testServerConnection();
-    
+
     console.log('✅ Page de modification prête');
 });
 
@@ -915,19 +927,19 @@ PREFIX bibo: <http://purl.org/ontology/bibo/>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>`;
     }
-    
+
     cleanValue(value) {
         if (!value || value === 'N.A.') return 'N.A.';
         return value.toString().replace(/"/g, '\\"').replace(/\n/g, '\\n');
     }
-    
+
     literal(value, type = 'string') {
         const cleanedValue = this.cleanValue(value);
-        
+
         if (cleanedValue === 'N.A.') {
             return '"N.A."';
         }
-        
+
         switch (type) {
             case 'integer':
                 return `"${cleanedValue}"^^xsd:integer`;
@@ -937,12 +949,12 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>`;
                 return `"${cleanedValue}"`;
         }
     }
-    
+
     // UPDATE pour l'article (CORRIGÉ pour utiliser l'URI existant)
     generateArticleUpdate(data) {
         // Utiliser l'URI existant de l'article plutôt que de le recréer
         const analysisId = this.cleanValue(data.analysisId);
-        
+
         return `${this.prefixes}
 
 DELETE {
@@ -974,11 +986,11 @@ WHERE {
     OPTIONAL { ?article iadas:studyType ?oldStudyType }
 }`;
     }
-    
+
     // UPDATE pour la population
     generatePopulationUpdate(data) {
         const analysisId = this.cleanValue(data.analysisId);
-        
+
         return `${this.prefixes}
 
 DELETE {
@@ -1001,11 +1013,11 @@ WHERE {
     OPTIONAL { iadas-data:Population_${analysisId} iadas:inclusionCriteria ?oldCriteria }
 }`;
     }
-    
+
     // UPDATE pour le sport
     generateSportUpdate(data) {
         const analysisId = this.cleanValue(data.analysisId);
-        
+
         return `${this.prefixes}
 
 DELETE {
@@ -1022,11 +1034,11 @@ WHERE {
     OPTIONAL { iadas-data:Sport_${analysisId} iadas:sportLevel ?oldSportLevel }
 }`;
     }
-    
+
     // UPDATE pour les variables
     generateVariablesUpdate(data) {
         const analysisId = this.cleanValue(data.analysisId);
-        
+
         return `${this.prefixes}
 
 DELETE {
@@ -1056,11 +1068,11 @@ WHERE {
     OPTIONAL { iadas-data:Variable_VI_${analysisId} iadas:measure ?oldVIMeasure }
 }`;
     }
-    
+
     // UPDATE pour les relations
     generateRelationsUpdate(data) {
         const analysisId = this.cleanValue(data.analysisId);
-        
+
         return `${this.prefixes}
 
 DELETE {
@@ -1083,11 +1095,11 @@ WHERE {
     OPTIONAL { iadas-data:Relations_${analysisId} iadas:resultatRelation ?oldResult }
 }`;
     }
-    
+
     // Générer toutes les requêtes UPDATE
     generateAllUpdates(data, originalData) {
         console.log('🔄 Génération de toutes les requêtes UPDATE...');
-        
+
         const queries = {
             analysis: this.generateAnalysisUpdate(data),
             article: this.generateArticleUpdate(data),
@@ -1096,15 +1108,15 @@ WHERE {
             variables: this.generateVariablesUpdate(data),
             relations: this.generateRelationsUpdate(data)
         };
-        
+
         console.log('✅ Requêtes UPDATE générées:', Object.keys(queries));
         return queries;
     }
-    
+
     // UPDATE pour l'analyse (version complète)
     generateAnalysisUpdate(data) {
         const analysisId = this.cleanValue(data.analysisId);
-        
+
         return `${this.prefixes}
 
 DELETE {

@@ -4,29 +4,29 @@ let currentMode = 'table';
 
 console.log("Script principal chargé !");
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log("📄 Page chargée, début de l'initialisation...");
-    
+
     const inputs = document.querySelectorAll('input, button, select');
     inputs.forEach(input => input.disabled = true);
-    
+
     try {
         await window.pageInitializer.initializePage();
         console.log(' Initialisation terminée avec succès');
     } catch (error) {
         console.error(' Échec de l\'initialisation:', error);
     }
-    
+
     const excelPaths = [
         './data/IA-DAS-Data1.xlsx',
         './../data/IA-DAS-Data1.xlsx'
     ];
-    
+
     let excelLoaded = false;
     for (const excelPath of excelPaths) {
         try {
             console.log(`🔍 Tentative chargement Excel: ${excelPath}`);
-            
+
             if (window.csvLoader && typeof window.csvLoader.
                 Data === 'function') {
                 const excelData = await window.csvLoader.loadExcelData(excelPath);
@@ -44,11 +44,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.log(` Échec chargement ${excelPath}:`, error.message);
         }
     }
-    
+
     if (!excelLoaded) {
         console.error("Aucun fichier Excel trouvé !");
     }
-    
+
     setTimeout(() => {
         const component = document.querySelector('input-intorregation-component');
         if (component) {
@@ -69,15 +69,15 @@ async function rechercher(data) {
             console.log('❌ Page pas prête pour la recherche');
             return;
         }
-        
+
         console.log("=== RECHERCHE AVEC PAGE INITIALISÉE ===");
         console.log("Données reçues:", data);
-        
+
         window.loadingManager.show("Recherche en cours...");
         window.loadingManager.startQuery(1, 1); // Une seule tentative nécessaire
-        
+
         let payload;
-        
+
         if (data.queryType === 'raw_sparql') {
             payload = {
                 queryType: 'raw_sparql',
@@ -118,14 +118,20 @@ async function rechercher(data) {
                 if (data.experienceMax) payload.experienceMax = parseInt(data.experienceMax);
             }
         }
-        
+
         console.log("Payload complet:", payload);
-        
-        const response = await fetch(window.apiConfig.getSparqlEndpoint(), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+
+        const response = await fetch(
+            window.location.hostname === 'localhost'
+                ? 'http://localhost:8003'
+                : 'http://51.44.188.162:8003',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }
+        );
+
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -134,25 +140,25 @@ async function rechercher(data) {
 
         const responseData = await response.json();
         console.log("Réponse API:", responseData);
-        
+
         window.loadingManager.completeQuery(responseData.results?.bindings?.length);
         window.loadingManager.startParsing();
-        
+
         let parsedData = responseData;
         if (window.SPARQLDataParser && typeof window.SPARQLDataParser.parse === 'function') {
             parsedData = window.SPARQLDataParser.parse(responseData);
         }
-        
+
         window.loadingManager.completeParsing();
-        
+
         displayResults(parsedData);
         window.loadingManager.completeAll();
-        
+
     } catch (error) {
         console.error(' Erreur lors de la recherche:', error);
-        
+
         window.loadingManager.showError('Erreur de recherche', error.message);
-        
+
         const resultsDiv = document.getElementById('results');
         if (resultsDiv) {
             resultsDiv.innerHTML = `
@@ -174,9 +180,9 @@ async function rechercher(data) {
 function displayResults(data, query = null) {
     currentData = data;
     currentQuery = query;
-    
+
     const resultsDiv = document.getElementById('results');
-    
+
     // Créer la structure si elle n'existe pas
     if (!resultsDiv.querySelector('#result-controls')) {
         resultsDiv.innerHTML = `
@@ -188,17 +194,17 @@ function displayResults(data, query = null) {
             <div id="result-display"></div>
         `;
     }
-    
+
     // Maintenant on peut accéder aux éléments en sécurité
     const controlsDiv = document.getElementById('result-controls');
     const displayDiv = document.getElementById('result-display');
-    
+
     // Afficher les contrôles
     controlsDiv.style.display = 'block';
-    
+
     // Configurer les événements des boutons
     setupViewButtons();
-    
+
     // Afficher en mode tableau par défaut
     displayTableView();
 }
@@ -211,13 +217,13 @@ function setupViewButtons() {
 
 function switchView(mode) {
     currentMode = mode;
-    
+
     // Mettre à jour les boutons actifs
     document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`view${mode.charAt(0).toUpperCase() + mode.slice(1)}`).classList.add('active');
-    
+
     // Afficher le bon mode
-    switch(mode) {
+    switch (mode) {
         case 'table':
             displayTableView();
             break;
@@ -232,15 +238,15 @@ function switchView(mode) {
 
 function displayTableView() {
     const displayDiv = document.getElementById('result-display');
-    
+
     if (!currentData || !currentData.results || !currentData.results.bindings) {
         displayDiv.innerHTML = '<p>Aucun résultat à afficher</p>';
         return;
     }
-    
+
     const bindings = currentData.results.bindings;
     const variables = currentData.head.vars;
-    
+
     let tableHTML = `
         <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
@@ -251,20 +257,20 @@ function displayTableView() {
                 </thead>
                 <tbody>
     `;
-    
+
     bindings.forEach((binding, index) => {
         const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
         tableHTML += `<tr style="background-color: ${bgColor};">`;
-        
+
         variables.forEach(variable => {
             const value = binding[variable];
             const displayValue = value ? (value.value || value) : '';
             tableHTML += `<td style="border: 1px solid #ddd; padding: 12px;">${displayValue}</td>`;
         });
-        
+
         tableHTML += '</tr>';
     });
-    
+
     tableHTML += `
                 </tbody>
             </table>
@@ -273,13 +279,13 @@ function displayTableView() {
             ${bindings.length} résultat(s) trouvé(s)
         </p>
     `;
-    
+
     displayDiv.innerHTML = tableHTML;
 }
 
 function displayGraphView() {
     const displayDiv = document.getElementById('result-display');
-    
+
     const exportButton = `
         <div style="margin-bottom: 15px;">
             <button id="exportGraph" style="
@@ -296,13 +302,13 @@ function displayGraphView() {
             </button>
         </div>
     `;
-    
+
     try {
         displayDiv.innerHTML = exportButton + '<div id="graph-container"></div>';
         const graphContainer = document.getElementById('graph-container');
         const graphComponent = new OntologyGraphComponent(graphContainer, currentData);
         graphComponent.render();
-        
+
         // Événement d'export
         document.getElementById('exportGraph').onclick = () => exportGraphToPNG();
     } catch (error) {
@@ -313,7 +319,7 @@ function displayGraphView() {
 
 function displaySparqlView() {
     const displayDiv = document.getElementById('result-display');
-    
+
     const sparqlHTML = `
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 10px;">
             <h4>Requête SPARQL générée :</h4>
@@ -323,6 +329,6 @@ function displaySparqlView() {
             <pre style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 400px; white-space: pre-wrap;">${JSON.stringify(currentData, null, 2)}</pre>
         </div>
     `;
-    
+
     displayDiv.innerHTML = sparqlHTML;
 }
