@@ -9,7 +9,14 @@ services:
     restart: unless-stopped
     networks:
       - webnet
-
+  sparql-generator:
+    build: ./services/sparql-generator
+    container_name: sparql-generator
+    ports:
+      - "8003:8003"  
+    restart: unless-stopped
+    networks:
+      - webnet
   gateway:
     build: ./services/gateway
     container_name: gateway
@@ -20,19 +27,6 @@ services:
       - frontend
     networks:
       - webnet
-
-  sparql-generator:
-    build: ./services/SPARQL-Generator
-    container_name: sparql-generator
-    ports:
-      - "8003:8003"  
-    restart: unless-stopped
-    depends_on:
-      - frontend
-      - gateway
-    networks:
-      - webnet
-
   fuseki:
     image: stain/jena-fuseki
     container_name: fuseki
@@ -44,12 +38,8 @@ services:
       - FUSEKI_DATASET=ds
       - ADMIN_PASSWORD=admin
     command: ["/jena-fuseki/fuseki-server", "--config=/fuseki/config.ttl"]
-    depends_on:
-      - frontend
-      - gateway
     networks:
       - webnet
-
   fuseki-init:
     build: ./services/fuseki-service
     container_name: fuseki-init
@@ -59,6 +49,9 @@ services:
       - ./fuseki/data.ttl:/init/data.ttl
     networks:
       - webnet
+
+
+ 
 
 networks:
   webnet:

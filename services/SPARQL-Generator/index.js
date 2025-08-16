@@ -1131,7 +1131,7 @@ http.createServer(async (req, res) => {
     res.writeHead(405, { 'Content-Type': 'text/plain' });
     res.end('Méthode non autorisée');
   }
-}).listen(8003, () => {
+}).listen(8003, '0.0.0.0', () => {
   console.log("🚀 SPARQL Generator avec WARMUP AU DÉMARRAGE - Port 8003");
   console.log("✨ Nouvelles fonctionnalités:");
   console.log("   🔥 Warmup automatique AU DÉMARRAGE (une seule fois)");
@@ -1143,7 +1143,6 @@ http.createServer(async (req, res) => {
   console.log("   🆕 Endpoint UPDATE pour ajouter des analyses (/update-analysis)");
   console.log("=" * 60);
   
-  // 🔥 DÉMARRER LE WARMUP EN ARRIÈRE-PLAN
   console.log("\n🔥 LANCEMENT DU WARMUP AU DÉMARRAGE...");
   warmupPromise = performStartupWarmup();
 });
