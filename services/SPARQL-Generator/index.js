@@ -315,11 +315,11 @@ async function executeWithRetry(endpoint, query, maxRetries = MAX_RETRIES) {
 
   throw new Error(`Échec après ${maxRetries} tentatives: ${lastError.message}`);
 }
+
 function generateSparqlQuery(filters) {
-  console.log("=== SPARQL GENERATOR avec STATISTIQUES D'ONTOLOGIE ===");
+  console.log("=== SPARQL GENERATOR avec FILTRES MIN/MAX CORRIGÉS ===");
   console.log("📥 Filtres reçus:", JSON.stringify(filters, null, 2));
 
-  // ✅ PRÉFIXES CORRECTS (comme votre exemple qui marche)
   const prefixes = `
 PREFIX iadas: <http://ia-das.org/onto#>
 PREFIX iadas-data: <http://ia-das.org/data#>
@@ -346,8 +346,9 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     ?variableVD iadas:VD ?vd .
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }`;
 
-  // === FILTRES STATISTIQUES D'ÂGE - EXACTEMENT COMME VOTRE EXEMPLE ===
+  // === FILTRES D'ÂGE - NOUVEAU SYSTÈME ===
   if (filters.meanAge !== undefined) {
+    // Cas spécial : âge moyen → recherche ± 1
     const moyenne = parseFloat(filters.meanAge);
     const minAge = moyenne - 1;
     const maxAge = moyenne + 1;
@@ -357,14 +358,179 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     # Filtrer sur l'âge moyen ± 1
     ?analysis iadas:hasPopulation ?population .
     ?population iadas:ageStats ?ageStats .
-    ?ageStats iadas:meanAge ?meanAge .
-    BIND(xsd:decimal(?meanAge) AS ?meanAgeDecimal)
-    FILTER(?meanAgeDecimal >= ${minAge} && ?meanAgeDecimal <= ${maxAge})`;
+    ?ageStats iadas:meanAge ?meanAgeStr .
+    BIND(xsd:decimal(?meanAgeStr) AS ?meanAge)
+    FILTER(?meanAge >= ${minAge} && ?meanAge <= ${maxAge})`;
     
     console.log(`✅ Filtre âge moyen: ${moyenne} ± 1 = [${minAge}, ${maxAge}]`);
+    
+  } else if (filters.minAge !== undefined || filters.maxAge !== undefined) {
+    // Cas normal : filtrer sur les VRAIES propriétés minAge/maxAge
+    query += `
+    
+    # Filtrer sur les vraies propriétés minAge et maxAge
+    ?analysis iadas:hasPopulation ?population .
+    ?population iadas:ageStats ?ageStats .`;
+    
+    if (filters.minAge !== undefined && filters.maxAge !== undefined) {
+      // Les deux : minAge ET maxAge
+      query += `
+    ?ageStats iadas:minAge ?minAgeStr .
+    ?ageStats iadas:maxAge ?maxAgeStr .
+    BIND(xsd:decimal(?minAgeStr) AS ?minAge)
+    BIND(xsd:decimal(?maxAgeStr) AS ?maxAge)
+    FILTER(?minAge >= ${filters.minAge} && ?maxAge <= ${filters.maxAge})`;
+      
+      console.log(`✅ Filtre plage d'âge: population dans [${filters.minAge}, ${filters.maxAge}] ans`);
+      
+    } else if (filters.minAge !== undefined) {
+      // Seulement minAge
+      query += `
+    ?ageStats iadas:minAge ?minAgeStr .
+    BIND(xsd:decimal(?minAgeStr) AS ?minAge)
+    FILTER(?minAge >= ${filters.minAge})`;
+      
+      console.log(`✅ Filtre âge minimum: minAge >= ${filters.minAge}`);
+      
+    } else if (filters.maxAge !== undefined) {
+      // Seulement maxAge
+      query += `
+    ?ageStats iadas:maxAge ?maxAgeStr .
+    BIND(xsd:decimal(?maxAgeStr) AS ?maxAge)
+    FILTER(?maxAge <= ${filters.maxAge})`;
+      
+      console.log(`✅ Filtre âge maximum: maxAge <= ${filters.maxAge}`);
+    }
   }
 
-  // === AUTRES FILTRES EXISTANTS (genre, catégories, etc.) ===
+  // === FILTRES DE FRÉQUENCE D'EXERCICE ===
+  if (filters.meanExFR !== undefined) {
+    // Cas spécial : moyenne de fréquence → recherche ± 1
+    const moyenne = parseFloat(filters.meanExFR);
+    const minFreq = moyenne - 1;
+    const maxFreq = moyenne + 1;
+    
+    // Si on n'a pas déjà ajouté ?population, l'ajouter
+    if (!query.includes('?analysis iadas:hasPopulation ?population')) {
+      query += `
+    
+    # Filtrer sur la fréquence moyenne ± 1
+    ?analysis iadas:hasPopulation ?population .`;
+    }
+    query += `
+    ?population iadas:exerciseFreqStats ?freqStats .
+    ?freqStats iadas:meanExFR ?meanExFRStr .
+    BIND(xsd:decimal(?meanExFRStr) AS ?meanExFR)
+    FILTER(?meanExFR >= ${minFreq} && ?meanExFR <= ${maxFreq})`;
+    
+    console.log(`✅ Filtre fréquence moyenne: ${moyenne} ± 1 = [${minFreq}, ${maxFreq}]`);
+    
+  } else if (filters.minExFR !== undefined || filters.maxExFR !== undefined) {
+    // Cas normal : filtrer sur les VRAIES propriétés minExFR/maxExFR
+    if (!query.includes('?analysis iadas:hasPopulation ?population')) {
+      query += `
+    
+    # Filtrer sur les vraies propriétés minExFR et maxExFR
+    ?analysis iadas:hasPopulation ?population .`;
+    }
+    query += `
+    ?population iadas:exerciseFreqStats ?freqStats .`;
+    
+    if (filters.minExFR !== undefined && filters.maxExFR !== undefined) {
+      // Les deux : minExFR ET maxExFR
+      query += `
+    ?freqStats iadas:minExFR ?minExFRStr .
+    ?freqStats iadas:maxExFR ?maxExFRStr .
+    BIND(xsd:decimal(?minExFRStr) AS ?minExFR)
+    BIND(xsd:decimal(?maxExFRStr) AS ?maxExFR)
+    FILTER(?minExFR >= ${filters.minExFR} && ?maxExFR <= ${filters.maxExFR})`;
+      
+      console.log(`✅ Filtre plage fréquence: population dans [${filters.minExFR}, ${filters.maxExFR}] h/sem`);
+      
+    } else if (filters.minExFR !== undefined) {
+      // Seulement minExFR
+      query += `
+    ?freqStats iadas:minExFR ?minExFRStr .
+    BIND(xsd:decimal(?minExFRStr) AS ?minExFR)
+    FILTER(?minExFR >= ${filters.minExFR})`;
+      
+      console.log(`✅ Filtre fréquence minimum: minExFR >= ${filters.minExFR}`);
+      
+    } else if (filters.maxExFR !== undefined) {
+      // Seulement maxExFR
+      query += `
+    ?freqStats iadas:maxExFR ?maxExFRStr .
+    BIND(xsd:decimal(?maxExFRStr) AS ?maxExFR)
+    FILTER(?maxExFR <= ${filters.maxExFR})`;
+      
+      console.log(`✅ Filtre fréquence maximum: maxExFR <= ${filters.maxExFR}`);
+    }
+  }
+
+  // === FILTRES D'EXPÉRIENCE ===
+  if (filters.meanYOE !== undefined) {
+    // Cas spécial : moyenne d'expérience → recherche ± 1
+    const moyenne = parseFloat(filters.meanYOE);
+    const minExp = moyenne - 1;
+    const maxExp = moyenne + 1;
+    
+    if (!query.includes('?analysis iadas:hasPopulation ?population')) {
+      query += `
+    
+    # Filtrer sur l'expérience moyenne ± 1
+    ?analysis iadas:hasPopulation ?population .`;
+    }
+    query += `
+    ?population iadas:experienceStats ?expStats .
+    ?expStats iadas:meanYOE ?meanYOEStr .
+    BIND(xsd:decimal(?meanYOEStr) AS ?meanYOE)
+    FILTER(?meanYOE >= ${minExp} && ?meanYOE <= ${maxExp})`;
+    
+    console.log(`✅ Filtre expérience moyenne: ${moyenne} ± 1 = [${minExp}, ${maxExp}]`);
+    
+  } else if (filters.minYOE !== undefined || filters.maxYOE !== undefined) {
+    // Cas normal : filtrer sur les VRAIES propriétés minYOE/maxYOE
+    if (!query.includes('?analysis iadas:hasPopulation ?population')) {
+      query += `
+    
+    # Filtrer sur les vraies propriétés minYOE et maxYOE
+    ?analysis iadas:hasPopulation ?population .`;
+    }
+    query += `
+    ?population iadas:experienceStats ?expStats .`;
+    
+    if (filters.minYOE !== undefined && filters.maxYOE !== undefined) {
+      // Les deux : minYOE ET maxYOE
+      query += `
+    ?expStats iadas:minYOE ?minYOEStr .
+    ?expStats iadas:maxYOE ?maxYOEStr .
+    BIND(xsd:decimal(?minYOEStr) AS ?minYOE)
+    BIND(xsd:decimal(?maxYOEStr) AS ?maxYOE)
+    FILTER(?minYOE >= ${filters.minYOE} && ?maxYOE <= ${filters.maxYOE})`;
+      
+      console.log(`✅ Filtre plage expérience: population dans [${filters.minYOE}, ${filters.maxYOE}] ans`);
+      
+    } else if (filters.minYOE !== undefined) {
+      // Seulement minYOE
+      query += `
+    ?expStats iadas:minYOE ?minYOEStr .
+    BIND(xsd:decimal(?minYOEStr) AS ?minYOE)
+    FILTER(?minYOE >= ${filters.minYOE})`;
+      
+      console.log(`✅ Filtre expérience minimum: minYOE >= ${filters.minYOE}`);
+      
+    } else if (filters.maxYOE !== undefined) {
+      // Seulement maxYOE
+      query += `
+    ?expStats iadas:maxYOE ?maxYOEStr .
+    BIND(xsd:decimal(?maxYOEStr) AS ?maxYOE)
+    FILTER(?maxYOE <= ${filters.maxYOE})`;
+      
+      console.log(`✅ Filtre expérience maximum: maxYOE <= ${filters.maxYOE}`);
+    }
+  }
+
+  // === AUTRES FILTRES EXISTANTS ===
   
   // Filtre genre
   if (filters.gender && filters.gender !== '') {
@@ -466,6 +632,8 @@ ORDER BY ?analysis`;
     query += `
 LIMIT 1500`;
     console.log("⚠️ Aucun filtre actif - LIMIT 1500 ajouté");
+  } else {
+    console.log(`✅ ${activeFilters} filtres actifs détectés - pas de LIMIT ajouté`);
   }
 
   console.log("📝 REQUÊTE GÉNÉRÉE :");

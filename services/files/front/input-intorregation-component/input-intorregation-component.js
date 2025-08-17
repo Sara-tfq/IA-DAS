@@ -423,55 +423,55 @@ class InputInterrogationComponent extends HTMLElement {
     }
 
     handleAgeCategoryChange() {
-    const ageCategory = this.querySelector('#ageCategory');
-    const ageCustom = this.querySelector('#ageCustom');
-    
-    if (!ageCategory || !ageCustom) return;
-    
-    if (ageCategory.value === 'custom') {
-        ageCustom.classList.remove('hidden');
-        const minAge = this.querySelector('#minAge');
-        if (minAge) minAge.focus();
-    } else {
-        ageCustom.classList.add('hidden');
-        // Reset avec les nouveaux IDs
-        this.resetCustomFields(['minAge', 'maxAge', 'meanAge']);
+        const ageCategory = this.querySelector('#ageCategory');
+        const ageCustom = this.querySelector('#ageCustom');
+
+        if (!ageCategory || !ageCustom) return;
+
+        if (ageCategory.value === 'custom') {
+            ageCustom.classList.remove('hidden');
+            const minAge = this.querySelector('#minAge');
+            if (minAge) minAge.focus();
+        } else {
+            ageCustom.classList.add('hidden');
+            // Reset avec les nouveaux IDs
+            this.resetCustomFields(['minAge', 'maxAge', 'meanAge']);
+        }
     }
-}
 
     handleFrequencyCategoryChange() {
-    const exerciseFrequency = this.querySelector('#exerciseFrequency');
-    const frequencyCustom = this.querySelector('#frequencyCustom');
-    
-    if (!exerciseFrequency || !frequencyCustom) return;
-    
-    if (exerciseFrequency.value === 'custom') {
-        frequencyCustom.classList.remove('hidden');
-        const minExFR = this.querySelector('#minExFR');
-        if (minExFR) minExFR.focus();
-    } else {
-        frequencyCustom.classList.add('hidden');
-        // Reset avec les nouveaux IDs
-        this.resetCustomFields(['minExFR', 'maxExFR', 'meanExFR']);
+        const exerciseFrequency = this.querySelector('#exerciseFrequency');
+        const frequencyCustom = this.querySelector('#frequencyCustom');
+
+        if (!exerciseFrequency || !frequencyCustom) return;
+
+        if (exerciseFrequency.value === 'custom') {
+            frequencyCustom.classList.remove('hidden');
+            const minExFR = this.querySelector('#minExFR');
+            if (minExFR) minExFR.focus();
+        } else {
+            frequencyCustom.classList.add('hidden');
+            // Reset avec les nouveaux IDs
+            this.resetCustomFields(['minExFR', 'maxExFR', 'meanExFR']);
+        }
     }
-}
 
     handleExperienceCategoryChange() {
-    const experienceCategory = this.querySelector('#experienceCategory');
-    const experienceCustom = this.querySelector('#experienceCustom');
-    
-    if (!experienceCategory || !experienceCustom) return;
-    
-    if (experienceCategory.value === 'custom') {
-        experienceCustom.classList.remove('hidden');
-        const minYOE = this.querySelector('#minYOE');
-        if (minYOE) minYOE.focus();
-    } else {
-        experienceCustom.classList.add('hidden');
-        // Reset avec les nouveaux IDs
-        this.resetCustomFields(['minYOE', 'maxYOE', 'meanYOE']);
+        const experienceCategory = this.querySelector('#experienceCategory');
+        const experienceCustom = this.querySelector('#experienceCustom');
+
+        if (!experienceCategory || !experienceCustom) return;
+
+        if (experienceCategory.value === 'custom') {
+            experienceCustom.classList.remove('hidden');
+            const minYOE = this.querySelector('#minYOE');
+            if (minYOE) minYOE.focus();
+        } else {
+            experienceCustom.classList.add('hidden');
+            // Reset avec les nouveaux IDs
+            this.resetCustomFields(['minYOE', 'maxYOE', 'meanYOE']);
+        }
     }
-}
 
     // 4. MÉTHODE UTILITAIRE pour reset les champs
     resetCustomFields(fieldIds) {
@@ -569,129 +569,129 @@ class InputInterrogationComponent extends HTMLElement {
         searchBtn.disabled = false;
     }
 
-   async handleSearch() {
-    try {
-        if (window.loadingManager) {
-            window.loadingManager.show("Recherche dans la base IA-DAS...");
-        }
-
-        // Récupérer les valeurs des champs existants avec vérifications
-        const variableVI = this.querySelector('#variableVI');
-        const variableVD = this.querySelector('#variableVD');
-        const categoryVI = this.querySelector('#categoryVI');
-        const categoryVD = this.querySelector('#categoryVD');
-        const gender = this.querySelector('#gender');
-        const relationDirection = this.querySelector('input[name="relationDirection"]:checked');
-        const sportType = this.querySelector('#sportType');
-
-        const searchData = {
-            selectedVI: variableVI ? variableVI.value : '',
-            selectedVD: variableVD ? variableVD.value : '',
-            categoryVI: categoryVI ? categoryVI.value : '',
-            categoryVD: categoryVD ? categoryVD.value : '',
-            gender: gender ? gender.value : '',
-            relationDirection: relationDirection ? relationDirection.value : '',
-            sportType: sportType ? sportType.value : '',
-            queryType: 'variable_relation'
-        };
-
-        // === GESTION ÂGE - VERSION CORRIGÉE ===
-        const ageCategory = this.querySelector('#ageCategory');
-        if (ageCategory && ageCategory.value) {
-            if (ageCategory.value === 'custom') {
-                const minAgeEl = this.querySelector('#minAge');
-                const maxAgeEl = this.querySelector('#maxAge');
-                const meanAgeEl = this.querySelector('#meanAge');
-                
-                const minAge = minAgeEl ? minAgeEl.value : '';
-                const maxAge = maxAgeEl ? maxAgeEl.value : '';
-                const meanAge = meanAgeEl ? meanAgeEl.value : '';
-                
-                // Envoyer directement les valeurs sans calculs
-                if (meanAge) {
-                    searchData.meanAge = parseFloat(meanAge);
-                    console.log(`🎯 Âge moyen saisi: ${meanAge} (SPARQL fera ± 1)`);
-                } else {
-                    // Min/Max seulement si pas de moyenne
-                    if (minAge) searchData.minAge = parseInt(minAge);
-                    if (maxAge) searchData.maxAge = parseInt(maxAge);
-                    console.log(`🎯 Plage d'âge: [${minAge || 'min'}, ${maxAge || 'max'}]`);
-                }
-            } else {
-                searchData.ageCategory = ageCategory.value;
+    async handleSearch() {
+        try {
+            if (window.loadingManager) {
+                window.loadingManager.show("Recherche dans la base IA-DAS...");
             }
-        }
 
-        // === GESTION FRÉQUENCE - VERSION CORRIGÉE ===
-        const exerciseFrequency = this.querySelector('#exerciseFrequency');
-        if (exerciseFrequency && exerciseFrequency.value) {
-            if (exerciseFrequency.value === 'custom') {
-                const minExFREl = this.querySelector('#minExFR');
-                const maxExFREl = this.querySelector('#maxExFR');
-                const meanExFREl = this.querySelector('#meanExFR');
-                
-                const minExFR = minExFREl ? minExFREl.value : '';
-                const maxExFR = maxExFREl ? maxExFREl.value : '';
-                const meanExFR = meanExFREl ? meanExFREl.value : '';
-                
-                // Envoyer directement les valeurs sans calculs
-                if (meanExFR) {
-                    searchData.meanExFR = parseFloat(meanExFR);
-                    console.log(`🎯 Fréquence moyenne saisie: ${meanExFR} (SPARQL fera ± 1)`);
+            // Récupérer les valeurs des champs existants avec vérifications
+            const variableVI = this.querySelector('#variableVI');
+            const variableVD = this.querySelector('#variableVD');
+            const categoryVI = this.querySelector('#categoryVI');
+            const categoryVD = this.querySelector('#categoryVD');
+            const gender = this.querySelector('#gender');
+            const relationDirection = this.querySelector('input[name="relationDirection"]:checked');
+            const sportType = this.querySelector('#sportType');
+
+            const searchData = {
+                selectedVI: variableVI ? variableVI.value : '',
+                selectedVD: variableVD ? variableVD.value : '',
+                categoryVI: categoryVI ? categoryVI.value : '',
+                categoryVD: categoryVD ? categoryVD.value : '',
+                gender: gender ? gender.value : '',
+                relationDirection: relationDirection ? relationDirection.value : '',
+                sportType: sportType ? sportType.value : '',
+                queryType: 'variable_relation'
+            };
+
+            // === GESTION ÂGE - VERSION CORRIGÉE AVEC BONNES CONDITIONS ===
+            const ageCategory = this.querySelector('#ageCategory');
+            if (ageCategory && ageCategory.value) {
+                if (ageCategory.value === 'custom') {
+                    const minAgeEl = this.querySelector('#minAge');
+                    const maxAgeEl = this.querySelector('#maxAge');
+                    const meanAgeEl = this.querySelector('#meanAge');
+
+                    const minAge = minAgeEl ? minAgeEl.value : '';
+                    const maxAge = maxAgeEl ? maxAgeEl.value : '';
+                    const meanAge = meanAgeEl ? meanAgeEl.value : '';
+
+                    // Envoyer directement les valeurs sans calculs
+                    if (meanAge && meanAge.trim() !== '') {
+                        searchData.meanAge = parseFloat(meanAge);
+                        console.log(`🎯 Âge moyen saisi: ${meanAge} (SPARQL fera ± 1)`);
+                    } else {
+                        // Min/Max seulement si pas de moyenne
+                        if (minAge && minAge.trim() !== '') searchData.minAge = parseInt(minAge);
+                        if (maxAge && maxAge.trim() !== '') searchData.maxAge = parseInt(maxAge);
+                        console.log(`🎯 Plage d'âge: [${minAge || 'min'}, ${maxAge || 'max'}]`);
+                    }
                 } else {
-                    // Min/Max seulement si pas de moyenne
-                    if (minExFR) searchData.minExFR = parseInt(minExFR);
-                    if (maxExFR) searchData.maxExFR = parseInt(maxExFR);
-                    console.log(`🎯 Plage de fréquence: [${minExFR || 'min'}, ${maxExFR || 'max'}]`);
+                    searchData.ageCategory = ageCategory.value;
                 }
-            } else {
-                searchData.exerciseFrequency = exerciseFrequency.value;
             }
-        }
 
-        // === GESTION EXPÉRIENCE - VERSION CORRIGÉE ===
-        const experienceCategory = this.querySelector('#experienceCategory');
-        if (experienceCategory && experienceCategory.value) {
-            if (experienceCategory.value === 'custom') {
-                const minYOEEl = this.querySelector('#minYOE');
-                const maxYOEEl = this.querySelector('#maxYOE');
-                const meanYOEEl = this.querySelector('#meanYOE');
-                
-                const minYOE = minYOEEl ? minYOEEl.value : '';
-                const maxYOE = maxYOEEl ? maxYOEEl.value : '';
-                const meanYOE = meanYOEEl ? meanYOEEl.value : '';
-                
-                // Envoyer directement les valeurs sans calculs
-                if (meanYOE) {
-                    searchData.meanYOE = parseFloat(meanYOE);
-                    console.log(`🎯 Expérience moyenne saisie: ${meanYOE} (SPARQL fera ± 1)`);
+            // === GESTION FRÉQUENCE - VERSION CORRIGÉE AVEC BONNES CONDITIONS ===
+            const exerciseFrequency = this.querySelector('#exerciseFrequency');
+            if (exerciseFrequency && exerciseFrequency.value) {
+                if (exerciseFrequency.value === 'custom') {
+                    const minExFREl = this.querySelector('#minExFR');
+                    const maxExFREl = this.querySelector('#maxExFR');
+                    const meanExFREl = this.querySelector('#meanExFR');
+
+                    const minExFR = minExFREl ? minExFREl.value : '';
+                    const maxExFR = maxExFREl ? maxExFREl.value : '';
+                    const meanExFR = meanExFREl ? meanExFREl.value : '';
+
+                    // Envoyer directement les valeurs sans calculs
+                    if (meanExFR && meanExFR.trim() !== '') {
+                        searchData.meanExFR = parseFloat(meanExFR);
+                        console.log(`🎯 Fréquence moyenne saisie: ${meanExFR} (SPARQL fera ± 1)`);
+                    } else {
+                        // Min/Max seulement si pas de moyenne
+                        if (minExFR && minExFR.trim() !== '') searchData.minExFR = parseInt(minExFR);
+                        if (maxExFR && maxExFR.trim() !== '') searchData.maxExFR = parseInt(maxExFR);
+                        console.log(`🎯 Plage de fréquence: [${minExFR || 'min'}, ${maxExFR || 'max'}]`);
+                    }
                 } else {
-                    // Min/Max seulement si pas de moyenne
-                    if (minYOE) searchData.minYOE = parseInt(minYOE);
-                    if (maxYOE) searchData.maxYOE = parseInt(maxYOE);
-                    console.log(`🎯 Plage d'expérience: [${minYOE || 'min'}, ${maxYOE || 'max'}]`);
+                    searchData.exerciseFrequency = exerciseFrequency.value;
                 }
-            } else {
-                searchData.experienceCategory = experienceCategory.value;
             }
-        }
 
-        console.log("🚀 Recherche avec données finales:", searchData);
+            // === GESTION EXPÉRIENCE - VERSION CORRIGÉE AVEC BONNES CONDITIONS ===
+            const experienceCategory = this.querySelector('#experienceCategory');
+            if (experienceCategory && experienceCategory.value) {
+                if (experienceCategory.value === 'custom') {
+                    const minYOEEl = this.querySelector('#minYOE');
+                    const maxYOEEl = this.querySelector('#maxYOE');
+                    const meanYOEEl = this.querySelector('#meanYOE');
 
-        // Dispatcher l'événement
-        this.dispatchEvent(new CustomEvent('search', {
-            detail: searchData
-        }));
+                    const minYOE = minYOEEl ? minYOEEl.value : '';
+                    const maxYOE = maxYOEEl ? maxYOEEl.value : '';
+                    const meanYOE = meanYOEEl ? meanYOEEl.value : '';
 
-    } catch (error) {
-        console.error('💥 Erreur détaillée dans handleSearch:', error);
-        console.error('💥 Stack trace:', error.stack);
-        
-        if (window.loadingManager) {
-            window.loadingManager.showError('Erreur de recherche', error.message);
+                    // Envoyer directement les valeurs sans calculs
+                    if (meanYOE && meanYOE.trim() !== '') {
+                        searchData.meanYOE = parseFloat(meanYOE);
+                        console.log(`🎯 Expérience moyenne saisie: ${meanYOE} (SPARQL fera ± 1)`);
+                    } else {
+                        // Min/Max seulement si pas de moyenne
+                        if (minYOE && minYOE.trim() !== '') searchData.minYOE = parseInt(minYOE);
+                        if (maxYOE && maxYOE.trim() !== '') searchData.maxYOE = parseInt(maxYOE);
+                        console.log(`🎯 Plage d'expérience: [${minYOE || 'min'}, ${maxYOE || 'max'}]`);
+                    }
+                } else {
+                    searchData.experienceCategory = experienceCategory.value;
+                }
+            }
+
+            console.log("🚀 Recherche avec données finales:", searchData);
+
+            // Dispatcher l'événement
+            this.dispatchEvent(new CustomEvent('search', {
+                detail: searchData
+            }));
+
+        } catch (error) {
+            console.error('💥 Erreur détaillée dans handleSearch:', error);
+            console.error('💥 Stack trace:', error.stack);
+
+            if (window.loadingManager) {
+                window.loadingManager.showError('Erreur de recherche', error.message);
+            }
         }
     }
-}
 
     // 6. OPTIONNEL : Méthode pour valider les champs custom
     validateCustomFields() {

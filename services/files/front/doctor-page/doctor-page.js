@@ -93,31 +93,28 @@ async function rechercher(data) {
             if (data.sportType) payload.sportType = data.sportType;
             if (data.gender) payload.gender = data.gender;
 
-            // === CORRECTION POUR LES FILTRES D'ÂGE ===
             if (data.ageCategory) {
                 payload.ageCategory = data.ageCategory;
             } else {
                 if (data.meanAge) payload.meanAge = parseFloat(data.meanAge);
-                if (data.ageMin) payload.ageMin = parseInt(data.ageMin);
-                if (data.ageMax) payload.ageMax = parseInt(data.ageMax);
+                if (data.minAge) payload.minAge = parseInt(data.minAge);    
+                if (data.maxAge) payload.maxAge = parseInt(data.maxAge);    
             }
 
-            // === CORRECTION POUR LES FILTRES DE FRÉQUENCE ===
             if (data.exerciseFrequency) {
                 payload.exerciseFrequency = data.exerciseFrequency;
             } else {
                 if (data.meanExFR) payload.meanExFR = parseFloat(data.meanExFR);
-                if (data.frequencyMin) payload.frequencyMin = parseInt(data.frequencyMin);
-                if (data.frequencyMax) payload.frequencyMax = parseInt(data.frequencyMax);
+                if (data.minExFR) payload.minExFR = parseInt(data.minExFR);    
+                if (data.maxExFR) payload.maxExFR = parseInt(data.maxExFR);    
             }
 
-            // === CORRECTION POUR LES FILTRES D'EXPÉRIENCE ===
             if (data.experienceCategory) {
                 payload.experienceCategory = data.experienceCategory;
             } else {
                 if (data.meanYOE) payload.meanYOE = parseFloat(data.meanYOE);
-                if (data.experienceMin) payload.experienceMin = parseInt(data.experienceMin);
-                if (data.experienceMax) payload.experienceMax = parseInt(data.experienceMax);
+                if (data.minYOE) payload.minYOE = parseInt(data.minYOE);     
+                if (data.maxYOE) payload.maxYOE = parseInt(data.maxYOE);     
             }
         }
 

@@ -57,85 +57,78 @@
                     <input type="radio" id="non-significant" name="relationDirection" value="NS">
                     <label for="non-significant">Ambigu</label>
                 </div>
-               
-                <!-- <div class="radio-option">
-                    <input type="radio" id="none" name="relationDirection" value="" >
-                    <label for="none">None</label>
-                </div> -->
             </div>
         </div>
 
-<div class="demographics-section">
-    <h3>Caractéristiques des populations étudiées</h3>
+        <div class="demographics-section">
+            <h3>Caractéristiques des populations étudiées</h3>
 
-    <div class="demographics-grid">
-        <select id="gender">
-            <option value="">Sexe</option>
-            <option value="Female">Femme</option>
-            <option value="Male">Homme</option>
-            <option value="Mixed">Mixte</option>
-        </select>
+            <div class="demographics-grid">
+                <select id="gender">
+                    <option value="">Sexe</option>
+                    <option value="Female">Femme</option>
+                    <option value="Male">Homme</option>
+                    <option value="Mixed">Mixte</option>
+                </select>
 
-        <div class="age-container">
-            <select id="ageCategory">
-                <option value="">Catégorie d'âge</option>
-                <option value="adolescent">Adolescent (10-17)</option>
-                <option value="jeune-adulte">Jeune adulte (18-25)</option>
-                <option value="adulte">Adulte (26-40)</option>
-                <option value="adulte-mature">Adulte mature (41-65)</option>
-                <option value="senior">Senior (65+)</option>
-                <option value="custom">Personnalisé...</option>
-            </select>
-            
-            <div id="ageCustom" class="custom-fields hidden">
-                <input type="number" id="ageMin" placeholder="Âge min" min="0" max="120">
-                <input type="number" id="ageMax" placeholder="Âge max" min="0" max="120">
-                <input type="number" id="meanAge" placeholder="Âge moyen" min="0" max="120" title="Recherche ± 1 an autour de l'âge moyen (meanAge)">
+                <div class="age-container">
+                    <select id="ageCategory">
+                        <option value="">Catégorie d'âge</option>
+                        <option value="adolescent">Adolescent (10-17)</option>
+                        <option value="jeune-adulte">Jeune adulte (18-25)</option>
+                        <option value="adulte">Adulte (26-40)</option>
+                        <option value="adulte-mature">Adulte mature (41-65)</option>
+                        <option value="senior">Senior (65+)</option>
+                        <option value="custom">Personnalisé...</option>
+                    </select>
+                    
+                    <div id="ageCustom" class="custom-fields hidden">
+                        <input type="number" id="minAge" placeholder="Âge min" min="0" max="120">
+                        <input type="number" id="maxAge" placeholder="Âge max" min="0" max="120">
+                        <input type="number" id="meanAge" placeholder="Âge moyen" min="0" max="120" title="Recherche ± 1 an autour de l'âge moyen">
+                    </div>
+                </div>
 
+                <div class="autocomplete-container">
+                    <input type="text" id="sportType" placeholder="Chargement des sports..." disabled>
+                    <div class="autocomplete-dropdown" id="sportType-dropdown"></div>
+                </div>
+
+                <div class="frequency-container">
+                    <select id="exerciseFrequency">
+                        <option value="">Fréquence d'exercice</option>
+                        <option value="faible">Faible (< 5h/semaine)</option>
+                        <option value="moderee">Modérée (5-10h/semaine)</option>
+                        <option value="elevee">Élevée (10-15h/semaine)</option>
+                        <option value="intensive">Intensive (15+ h/semaine)</option>
+                        <option value="custom">Personnalisé...</option>
+                    </select>
+                    
+                    <div id="frequencyCustom" class="custom-fields hidden">
+                        <input type="number" id="minExFR" placeholder="Min h/sem" min="0">
+                        <input type="number" id="maxExFR" placeholder="Max h/sem" min="0">
+                        <input type="number" id="meanExFR" placeholder="Freq moyenne" min="0" title="Recherche ± 1 h/semaine autour de la fréquence moyenne">
+                    </div>
+                </div>
+
+                <div class="experience-container">
+                    <select id="experienceCategory">
+                        <option value="">Catégorie expérience</option>
+                        <option value="debutant">Débutant (< 2 ans)</option>
+                        <option value="intermediaire">Intermédiaire (2-7 ans)</option>
+                        <option value="experimente">Expérimenté (7-15 ans)</option>
+                        <option value="expert">Expert (15+ ans)</option>
+                        <option value="custom">Personnalisé...</option>
+                    </select>
+                    
+                    <div id="experienceCustom" class="custom-fields hidden">
+                        <input type="number" id="minYOE" placeholder="Exp min (ans)" min="0">
+                        <input type="number" id="maxYOE" placeholder="Exp max (ans)" min="0">
+                        <input type="number" id="meanYOE" placeholder="Exp moyenne" min="0" title="Recherche ± 1 an autour des années d'expérience moyennes">
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="autocomplete-container">
-            <input type="text" id="sportType" placeholder="Chargement des sports..." disabled>
-            <div class="autocomplete-dropdown" id="sportType-dropdown"></div>
-        </div>
-
-        <div class="frequency-container">
-            <select id="exerciseFrequency">
-                <option value="">Fréquence d'exercice</option>
-                <option value="faible">Faible (< 5h/semaine)</option>
-                <option value="moderee">Modérée (5-10h/semaine)</option>
-                <option value="elevee">Élevée (10-15h/semaine)</option>
-                <option value="intensive">Intensive (15+ h/semaine)</option>
-                <option value="custom">Personnalisé...</option>
-            </select>
-            
-            <div id="frequencyCustom" class="custom-fields hidden">
-                <input type="number" id="frequencyMin" placeholder="Min h/sem" min="0">
-                <input type="number" id="frequencyMax" placeholder="Max h/sem" min="0">
-                <input type="number" id="meanExFR" placeholder="Freq moyenne" min="0" title="Recherche ± 1 h/semaine autour de la fréquence moyenne (meanExFR)">
-
-            </div>
-        </div>
-
-        <div class="experience-container">
-            <select id="experienceCategory">
-                <option value="">Catégorie expérience</option>
-                <option value="debutant">Débutant (< 2 ans)</option>
-                <option value="intermediaire">Intermédiaire (2-7 ans)</option>
-                <option value="experimente">Expérimenté (7-15 ans)</option>
-                <option value="expert">Expert (15+ ans)</option>
-                <option value="custom">Personnalisé...</option>
-            </select>
-            
-            <div id="experienceCustom" class="custom-fields hidden">
-                 <input type="number" id="minYOE" placeholder="Exp min " min="0">
-                <input type="number" id="maxYOE" placeholder="Exp max " min="0">
-                <input type="number" id="meanYOE" placeholder="Exp moyenne" min="0" title=" Exp moyenne">
-            </div>
-        </div>
-    </div>
-</div>
 
         <div class="search-section">
             <button id="searchBtn" disabled>Rechercher</button>
