@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Rechercher des analyses par ID (partiel)
     async function searchAnalysesByIds(searchTerm) {
-        console.log('🔍 Recherche analyses avec terme:', searchTerm);
+        console.log(' Recherche analyses avec terme:', searchTerm);
 
         const query = `
 PREFIX iadas: <http://ia-das.org/onto#>
@@ -150,7 +150,7 @@ LIMIT 10000`;
         analysesList.innerHTML = '';
 
         if (analyses.length === 0) {
-            analysesList.innerHTML = '<div class="no-results">❌ Aucune analyse trouvée</div>';
+            analysesList.innerHTML = '<div class="no-results"> Aucune analyse trouvée</div>';
             searchResults.style.display = 'block';
             return;
         }
@@ -717,11 +717,11 @@ WHERE {
             </style>
         </head>
         <body>
-            <h1>🔍 Prévisualisation des modifications</h1>
+            <h1> Prévisualisation des modifications</h1>
             <p><strong>Analyse ID:</strong> ${data.analysisId}</p>
             
             <div class="section">
-                <h2>📄 Article</h2>
+                <h2> Article</h2>
                 <div class="field"><label>DOI:</label><span class="${data.doi === 'N.A.' ? 'na' : ''}">${data.doi}</span></div>
                 <div class="field"><label>Titre:</label><span class="${data.title === 'N.A.' ? 'na' : ''}">${data.title}</span></div>
                 <div class="field"><label>Auteurs:</label><span class="${data.authors === 'N.A.' ? 'na' : ''}">${data.authors}</span></div>
@@ -731,27 +731,27 @@ WHERE {
             </div>
             
             <div class="section">
-                <h2>🔬 Analyse</h2>
+                <h2> Analyse</h2>
                 <div class="field"><label>Type d'analyse:</label><span class="${data.typeOfAnalysis === 'N.A.' ? 'na' : ''}">${data.typeOfAnalysis}</span></div>
                 <div class="field"><label>Multiplicité:</label><span class="${data.analysisMultiplicity === 'N.A.' ? 'na' : ''}">${data.analysisMultiplicity}</span></div>
                 <div class="field"><label>Conclusions:</label><span class="${data.authorConclusion === 'N.A.' ? 'na' : ''}">${data.authorConclusion}</span></div>
             </div>
             
             <div class="section">
-                <h2>👥 Population</h2>
+                <h2> Population</h2>
                 <div class="field"><label>Taille échantillon:</label><span class="${data.sampleSize === 'N.A.' ? 'na' : ''}">${data.sampleSize}</span></div>
                 <div class="field"><label>Genre:</label><span class="${data.gender === 'N.A.' ? 'na' : ''}">${data.gender}</span></div>
                 <div class="field"><label>Description:</label><span class="${data.population === 'N.A.' ? 'na' : ''}">${data.population}</span></div>
             </div>
             
             <div class="section">
-                <h2>🏃 Sport</h2>
+                <h2> Sport</h2>
                 <div class="field"><label>Nom:</label><span class="${data.sportName === 'N.A.' ? 'na' : ''}">${data.sportName}</span></div>
                 <div class="field"><label>Niveau:</label><span class="${data.sportLevel === 'N.A.' ? 'na' : ''}">${data.sportLevel}</span></div>
             </div>
             
             <div class="section">
-                <h2>🔢 Variables</h2>
+                <h2> Variables</h2>
                 <h3>Variable Dépendante</h3>
                 <div class="field"><label>VD:</label><span class="${data.vdName === 'N.A.' ? 'na' : ''}">${data.vdName}</span></div>
                 <div class="field"><label>Catégorie VD:</label><span class="${data.vdCategory === 'N.A.' ? 'na' : ''}">${data.vdCategory}</span></div>
@@ -762,7 +762,7 @@ WHERE {
             </div>
             
             <div class="section">
-                <h2>📊 Relations statistiques</h2>
+                <h2> Relations statistiques</h2>
                 <div class="field"><label>Coefficient r:</label><span class="${data.degreR === 'N.A.' ? 'na' : ''}">${data.degreR}</span></div>
                 <div class="field"><label>Valeur p:</label><span class="${data.degreP === 'N.A.' ? 'na' : ''}">${data.degreP}</span></div>
                 <div class="field"><label>Beta:</label><span class="${data.degreBeta === 'N.A.' ? 'na' : ''}">${data.degreBeta}</span></div>
@@ -770,7 +770,7 @@ WHERE {
             </div>
             
             <div class="section">
-                <h2>🔗 Médiateurs et Modérateurs</h2>
+                <h2> Médiateurs et Modérateurs</h2>
                 <div class="field"><label>Médiateur:</label><span class="${data.mediator === 'N.A.' ? 'na' : ''}">${data.mediator}</span></div>
                 <div class="field"><label>Modérateur:</label><span class="${data.moderator === 'N.A.' ? 'na' : ''}">${data.moderator}</span></div>
             </div>

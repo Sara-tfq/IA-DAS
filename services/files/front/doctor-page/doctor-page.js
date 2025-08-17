@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 Data === 'function') {
                 const excelData = await window.csvLoader.loadExcelData(excelPath);
                 if (excelData && excelData.length > 0) {
-                    console.log(`✅ Excel chargé avec succès: ${excelData.length} analyses depuis ${excelPath}`);
+                    console.log(`Excel chargé avec succès: ${excelData.length} analyses depuis ${excelPath}`);
                     excelLoaded = true;
                     break;
                 }
@@ -60,8 +60,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }, 100);
 });
-// Fonction pour les requêtes prédéfinies
-// Fonction pour les requêtes prédéfinies - MISE À JOUR COMPLÈTE
+
 async function rechercher(data) {
     try {
         const isReady = await window.pageInitializer.ensureReady();
