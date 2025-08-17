@@ -315,14 +315,15 @@ async function executeWithRetry(endpoint, query, maxRetries = MAX_RETRIES) {
 
   throw new Error(`Échec après ${maxRetries} tentatives: ${lastError.message}`);
 }
-
 function generateSparqlQuery(filters) {
-  console.log("=== SPARQL GENERATOR avec VARIABLES COMPLÈTES ===");
+  console.log("=== SPARQL GENERATOR avec STATISTIQUES D'ONTOLOGIE ===");
   console.log("📥 Filtres reçus:", JSON.stringify(filters, null, 2));
 
+  // ✅ PRÉFIXES CORRECTS (comme votre exemple qui marche)
   const prefixes = `
 PREFIX iadas: <http://ia-das.org/onto#>
-PREFIX iadas-data: <http://ia-das.org/data#>`;
+PREFIX iadas-data: <http://ia-das.org/data#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>`;
 
   let query = `${prefixes}
 
@@ -345,25 +346,47 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     ?variableVD iadas:VD ?vd .
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }`;
 
-  // Ajouter les filtres conditionnellement
-
-  // Filtre genre
-  if (filters.gender && filters.gender !== '') {
+  // === FILTRES STATISTIQUES D'ÂGE - EXACTEMENT COMME VOTRE EXEMPLE ===
+  if (filters.meanAge !== undefined) {
+    const moyenne = parseFloat(filters.meanAge);
+    const minAge = moyenne - 1;
+    const maxAge = moyenne + 1;
+    
     query += `
     
-    # Filtrer sur les populations par genre
+    # Filtrer sur l'âge moyen ± 1
     ?analysis iadas:hasPopulation ?population .
+    ?population iadas:ageStats ?ageStats .
+    ?ageStats iadas:meanAge ?meanAge .
+    BIND(xsd:decimal(?meanAge) AS ?meanAgeDecimal)
+    FILTER(?meanAgeDecimal >= ${minAge} && ?meanAgeDecimal <= ${maxAge})`;
+    
+    console.log(`✅ Filtre âge moyen: ${moyenne} ± 1 = [${minAge}, ${maxAge}]`);
+  }
+
+  // === AUTRES FILTRES EXISTANTS (genre, catégories, etc.) ===
+  
+  // Filtre genre
+  if (filters.gender && filters.gender !== '') {
+    // Si on n'a pas déjà ajouté ?population, l'ajouter
+    if (!query.includes('?analysis iadas:hasPopulation ?population')) {
+      query += `
+    
+    # Filtrer sur les populations par genre
+    ?analysis iadas:hasPopulation ?population .`;
+    }
+    query += `
     ?population iadas:gender "${filters.gender}" .`;
     console.log("✅ Filtre genre ajouté:", filters.gender);
   }
 
-  // Filtre catégorie VD - APPROCHE OPTIMISÉE
+  // Filtre catégorie VD
   if (filters.categoryVD && filters.categoryVD !== '') {
     query += `
     
-    # Filtrer sur les VD de catégorie (approche optimisée)
+    # Filtrer sur les VD de catégorie
     ?variableVD iadas:hasCategory "${filters.categoryVD}" .`;
-    console.log("✅ Filtre catégorie VD ajouté (optimisé):", filters.categoryVD);
+    console.log("✅ Filtre catégorie VD ajouté:", filters.categoryVD);
   }
 
   // Filtre catégorie VI 
@@ -445,10 +468,9 @@ LIMIT 1500`;
     console.log("⚠️ Aucun filtre actif - LIMIT 1500 ajouté");
   }
 
-  console.log("📝 REQUÊTE GÉNÉRÉE avec toutes les variables:");
+  console.log("📝 REQUÊTE GÉNÉRÉE :");
   console.log(query);
-  console.log("=" * 60);
-
+  
   return query;
 }
 

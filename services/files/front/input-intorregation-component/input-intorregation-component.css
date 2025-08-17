@@ -106,21 +106,23 @@
     text-align: center;
 }
 
-/* COLONNE 4: Démographie */
 .demographics-section {
     background-color: rgba(255, 255, 255, 0.15);
     padding: 8px;
-    height: 120px;
     border-radius: 6px;
     border-left: 4px solid #27ae60;
+    height: 120px;             /* Retour à la hauteur fixe */
+    overflow-y: auto;          /* Scroll vertical si nécessaire */
+    overflow-x: hidden;        /* Pas de scroll horizontal */
 }
-
 .demographics-section h3 {
     margin: 0 0 6px 0;
     font-size: 0.6em;
     font-weight: 600;
     color: #2c3e50;
     text-align: center;
+    top: 0;
+    padding: 2px 0;
 }
 
 /* Variables rows */
@@ -169,12 +171,19 @@
     color: #2c3e50;
 }
 
-/* Grille démographique */
 .demographics-grid {
-    align-items: start;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px;
+    grid-template-columns: minmax(100px, 1fr) minmax(100px, 1fr); /* Colonnes avec largeur minimum */
+    gap: 8px;
+    height: auto;
+    align-items: start;
+    padding-right: 4px;
+}
+
+.demographics-grid > * {
+    width: 100%;
+    overflow: hidden;          /* Empêche débordement horizontal */
+    box-sizing: border-box;
 }
 
 .demographics-grid select,
@@ -196,6 +205,24 @@
 .demographics-grid input:focus {
     border: 1px solid #2c3e50;
     outline: none;
+}
+
+.demographics-section::-webkit-scrollbar {
+    width: 6px;
+}
+
+.demographics-section::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.demographics-section::-webkit-scrollbar-thumb {
+    background: rgba(44, 62, 80, 0.3);
+    border-radius: 3px;
+}
+
+.demographics-section::-webkit-scrollbar-thumb:hover {
+    background: rgba(44, 62, 80, 0.5);
 }
 
 /* Autocomplétion */
@@ -378,62 +405,63 @@
    NOUVEAUX STYLES POUR LES CHAMPS DÉMOGRAPHIQUES
    ====================================== */
 
-/* Conteneurs pour les champs avec mode custom */
 .age-container,
 .frequency-container, 
 .experience-container {
     display: flex;
     flex-direction: column;
     width: 100%;
-    min-height: 18px;
+    min-height: 24px;
     justify-content: flex-start;
+    transition: all 0.3s ease;
+    max-width: 100%;           /* Empêche débordement */
+    box-sizing: border-box;
 }
 
-/* Champs custom cachés par défaut */
 .custom-fields {
-    margin-top: 2px;
+    margin-top: 4px;
     display: flex;
-    gap: 2px;
+    gap: 3px;                    /* Gap réduit pour 3 champs */
     align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: wrap;            /* Permet le passage à la ligne si nécessaire */
 }
 
 .custom-fields.hidden {
     display: none;
 }
 
-/* Inputs dans les champs custom */
+/* Inputs dans custom-fields - Optimisé pour 3 champs */
 .custom-fields input {
     flex: 1;
-    padding: 2px 4px;
+    min-width: 45px;           /* Largeur minimum réduite pour 3 champs */
+    max-width: 65px;           /* Largeur maximum ajustée */
+    padding: 4px 3px;          /* Padding réduit pour économiser l'espace */
     border: none;
     border-radius: 3px;
     background-color: #f8f9fa;
     color: #333;
-    font-size: 0.6em;
-    height: 16px;
+    font-size: 0.6em;          /* Taille de police réduite */
+    height: 22px;              /* Hauteur légèrement réduite */
     box-sizing: border-box;
     border: 1px solid #e0e0e0;
+    text-align: center;        /* Centrer le texte dans les petits champs */
 }
 
 .custom-fields input:focus {
     border: 1px solid #2c3e50;
     outline: none;
     background-color: white;
+    box-shadow: 0 0 3px rgba(44, 62, 80, 0.2);
 }
 
 .custom-fields input::placeholder {
     color: #888;
     font-size: 0.6em;
+    text-align: center;
 }
-
 /* Mise à jour de la grille démographique pour accommoder plus de champs */
-.demographics-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px;
-    height: calc(100% - 20px); /* Ajuster selon la hauteur du titre */
-    overflow-y: auto; /* Au cas où on a trop de champs */
-}
 
 /* Pour les conteneurs qui peuvent s'étendre sur 2 colonnes si nécessaire */
 .demographics-grid > .full-width {
@@ -487,11 +515,11 @@
 .frequency-container:has(.custom-fields:not(.hidden)),
 .experience-container:has(.custom-fields:not(.hidden)) {
     background-color: rgba(255, 255, 255, 0.05);
-    padding: 3px;
+    padding: 6px;
     border-radius: 4px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 65px;          /* Hauteur ajustée pour 3 champs */
 }
-
 
 .demographics-grid select option[value="custom"] {
     font-style: italic;

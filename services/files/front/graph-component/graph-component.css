@@ -281,3 +281,15 @@
 #exportGraph:active {
     transform: translateY(0);
 }
+
+#graph-container {
+  width: 100%;
+  height: 100%; /* ou la hauteur souhaitée */
+  min-height: 400px;
+  overflow: hidden;
+}
+
+#graph-container svg {
+    border: 1px solid black;
+    box-sizing: border-box;
+}

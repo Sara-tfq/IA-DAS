@@ -80,6 +80,56 @@
     <script src="./graph-component/graph-renderer.js"></script>
     <script src="./input-intorregation-component/input-intorregation-component.js"></script>
     <script src="./doctor-page/doctor-page.js"></script>
+
+    <template id="error-template">
+    <div style="color: red; padding: 20px; background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 5px;">
+        <h4>Erreur de recherche</h4>
+        <p><strong>Message:</strong> <span id="error-message"></span></p>
+        <p><strong>Suggestions:</strong></p>
+        <ul>
+            <li>Vérifiez que le serveur SPARQL Generator fonctionne (port 8003)</li>
+            <li>Essayez avec moins de filtres pour éviter les timeouts</li>
+            <li>Vérifiez la console pour plus de détails</li>
+        </ul>
+    </div>
+</template>
+
+<template id="result-controls-template">
+    <div id="result-controls" style="display: flex; align-items: center; gap: 10px; margin-bottom: 0px; flex-wrap: wrap;">
+        <button id="viewTable" class="view-btn active">Tableau</button>
+        <button id="viewGraph" class="view-btn">Graphique</button>
+        <button id="viewSparql" class="view-btn">SPARQL</button>
+    </div>
+    <div id="result-display"></div>
+</template>
+
+<!-- Template pour la vue graphique -->
+<template id="graph-view-template">
+    <div id="graph-container"></div>
+</template>
+
+<!-- NOUVEAU template pour le bouton d'export (sera ajouté dans les contrôles) -->
+<template id="export-button-template">
+    <button id="exportGraph" class="view-btn" style="background: #28a745; margin-left: auto;">
+        Exporter PNG
+    </button>
+</template>
+
+<!-- Template pour la vue SPARQL -->
+<template id="sparql-view-template">
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 10px;">
+        <h4>Requête SPARQL générée :</h4>
+        <pre id="sparql-query" style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap;"></pre>
+        
+        <h4 style="margin-top: 20px;">Résultats JSON :</h4>
+        <pre id="sparql-results" style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 400px; white-space: pre-wrap;"></pre>
+    </div>
+</template>
+
+<!-- Template pour l'erreur graphique -->
+<template id="graph-error-template">
+    <p>Erreur lors de l'affichage du graphique</p>
+</template>
    
 </body>
 

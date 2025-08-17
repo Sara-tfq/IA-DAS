@@ -58,10 +58,10 @@
                     <label for="non-significant">Ambigu</label>
                 </div>
                
-                <div class="radio-option">
-                    <input type="radio" id="none" name="relationDirection" >
+                <!-- <div class="radio-option">
+                    <input type="radio" id="none" name="relationDirection" value="" >
                     <label for="none">None</label>
-                </div>
+                </div> -->
             </div>
         </div>
 
@@ -90,6 +90,8 @@
             <div id="ageCustom" class="custom-fields hidden">
                 <input type="number" id="ageMin" placeholder="Âge min" min="0" max="120">
                 <input type="number" id="ageMax" placeholder="Âge max" min="0" max="120">
+                <input type="number" id="meanAge" placeholder="Âge moyen" min="0" max="120" title="Recherche ± 1 an autour de l'âge moyen (meanAge)">
+
             </div>
         </div>
 
@@ -111,6 +113,8 @@
             <div id="frequencyCustom" class="custom-fields hidden">
                 <input type="number" id="frequencyMin" placeholder="Min h/sem" min="0">
                 <input type="number" id="frequencyMax" placeholder="Max h/sem" min="0">
+                <input type="number" id="meanExFR" placeholder="Freq moyenne" min="0" title="Recherche ± 1 h/semaine autour de la fréquence moyenne (meanExFR)">
+
             </div>
         </div>
 
@@ -125,8 +129,9 @@
             </select>
             
             <div id="experienceCustom" class="custom-fields hidden">
-                <input type="number" id="experienceMin" placeholder="Exp min (ans)" min="0">
-                <input type="number" id="experienceMax" placeholder="Exp max (ans)" min="0">
+                 <input type="number" id="minYOE" placeholder="Exp min " min="0">
+                <input type="number" id="maxYOE" placeholder="Exp max " min="0">
+                <input type="number" id="meanYOE" placeholder="Exp moyenne" min="0" title=" Exp moyenne">
             </div>
         </div>
     </div>

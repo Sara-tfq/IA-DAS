@@ -2,21 +2,41 @@
 // Modifié pour utiliser les couleurs du parser + panneau latéral + liens courbés + chargement forcé Excel
 
 class GraphRenderer {
-
   constructor(container, parsedData) {
-    this.container = container;
-    this.parsedData = parsedData;
-    this.margin = { top: 20, right: 30, bottom: 40, left: 50 };
-    this.width = 900 - this.margin.left - this.margin.right;
-    this.height = 600 - this.margin.top - this.margin.bottom;
-    this.simulation = null;
+  this.container = container;
+  this.parsedData = parsedData;
+  this.margin = { top: 20, right: 30, bottom: 40, left: 50 };
+  this.updateDimensions(); 
+  this.simulation = null;
+}
+
+  updateDimensions() {
+    const containerRect = this.container.getBoundingClientRect();
+    this.width = Math.max(containerRect.width - this.margin.left - this.margin.right, 600);
+    this.height = Math.max(containerRect.height - this.margin.top - this.margin.bottom, 400);
+  }
+
+  handleResize() {
+    this.updateDimensions();
+    // Redessiner le graphique si nécessaire
+    if (this.svg) {
+      this.svg.attr('width', this.width + this.margin.left + this.margin.right)
+               .attr('height', this.height + this.margin.top + this.margin.bottom);
+    }
   }
 
   render() {
     // FORCER le graphe réseau pour toutes les données ontologiques
     this.createSVG();
     this.renderNetworkGraph();
-    this.addControls();
+    // this.addControls();
+  }
+
+    render() {
+    // FORCER le graphe réseau pour toutes les données ontologiques
+    this.createSVG();
+    this.renderNetworkGraph();
+    // this.addControls();
   }
 
   createSVG() {
@@ -40,6 +60,154 @@ class GraphRenderer {
     this.g = this.svg.append('g')
       .attr('transform', `translate(${this.margin.left},${this.margin.top})`);
   }
+
+  renderNetworkGraph() {
+    const networkData = this.parsedData.networkData;
+    const nodes = [...networkData.nodes]; // Copie pour D3
+    const links = [...networkData.links]; // Copie pour D3
+
+    console.log('🎨 Rendu du graphe avec liens courbés:', { nodes: nodes.length, links: links.length });
+    
+    // Debug : Afficher les nœuds avec leur taille
+    nodes.forEach(node => {
+      console.log(`🎨 Nœud "${node.label}" (${node.type}) -> Couleur: ${node.color}, Taille: ${node.size}, Analyses: ${node.analyses ? node.analyses.length : 'N/A'}`);
+    });
+
+    // Debug : Afficher les couleurs des liens
+    links.forEach(link => {
+      console.log(`🔗 Lien "${link.label}" -> Couleur: ${link.color}`);
+    });
+
+    const processedLinks = this.calculateLinkCurves(links);
+
+    // Créer la simulation de force
+    this.simulation = d3.forceSimulation(nodes)
+      .force('link', d3.forceLink(processedLinks).id(d => d.id).distance(120))
+      .force('charge', d3.forceManyBody().strength(-400))
+      .force('center', d3.forceCenter(this.width / 2, this.height / 2))
+      .force('collision', d3.forceCollide().radius(d => d.size + 10));
+
+    const link = this.g.append('g')
+      .attr('class', 'links')
+      .selectAll('path') // ← CHANGEMENT : path au lieu de line
+      .data(processedLinks)
+      .enter().append('path')
+      .attr('class', 'link')
+      .style('fill', 'none')
+      .style('stroke', d => {
+        console.log(`🔗 Application couleur lien: ${d.color}`);
+        return d.color || '#aaa'; // Utiliser la couleur du parser ou gris par défaut
+      })
+      .style('stroke-width', 3) // Plus épais pour mieux voir les couleurs
+      .style('opacity', 0.8);
+
+    // Labels des liens (repositionnés pour les courbes)
+    const linkLabels = this.g.append('g')
+      .attr('class', 'link-labels')
+      .selectAll('text')
+      .data(processedLinks)
+      .enter().append('text')
+      .attr('class', 'link-label')
+      .style('font-size', '10px')
+      .style('fill', '#666')
+      .style('text-anchor', 'middle')
+      .style('pointer-events', 'none')
+      .text(d => d.label);
+
+    // Dessiner les nœuds AVEC les couleurs du parser
+    const node = this.g.append('g')
+      .attr('class', 'nodes')
+      .selectAll('g')
+      .data(nodes)
+      .enter().append('g')
+      .attr('class', 'node-group')
+      .call(d3.drag()
+        .on('start', (event, d) => this.dragstarted(event, d))
+        .on('drag', (event, d) => this.dragged(event, d))
+        .on('end', (event, d) => this.dragended(event, d)));
+
+    // Cercles des nœuds avec couleurs du parser
+    node.append('circle')
+      .attr('r', d => d.size)
+      .style('fill', d => {
+        console.log(`🎨 Application couleur nœud "${d.label}": ${d.color}`);
+        return d.color || '#808080'; // Utiliser la couleur du parser ou gris par défaut
+      })
+      .style('stroke', '#fff')
+      .style('stroke-width', d => d.type === 'entity' ? 3 : 2)
+      .style('cursor', 'pointer'); // ← NOUVEAU : Indique que c'est cliquable
+
+    // Labels des nœuds
+    const nodeLabels = this.g.append('g')
+      .attr('class', 'node-labels')
+      .selectAll('text')
+      .data(nodes)
+      .enter().append('text')
+      .attr('class', 'node-label')
+      .style('font-size', '12px')
+      .style('font-weight', d => d.type === 'entity' ? 'bold' : 'normal')
+      .style('fill', '#333')
+      .style('text-anchor', 'middle')
+      .style('pointer-events', 'none')
+      .text(d => this.truncateLabel(d.label, 40));
+
+    // Tooltip amélioré avec catégories et instruction
+    node.on('mouseover', (event, d) => this.showTooltip(event, d))
+      .on('mouseout', () => this.hideTooltip());
+
+    node.on('dblclick', (event, d) => {
+      console.log(`📋 Double-clic sur nœud: ${d.label}`);
+      
+      // Empêcher les autres comportements
+      event.stopPropagation();
+      event.preventDefault();
+      
+      // Ouvrir le panneau avec les données
+      this.openAnalysisPanel(d);
+    });
+
+    node.on('click', (event, d) => {
+      // Délai pour distinguer simple clic du double-clic
+      setTimeout(() => {
+        if (event.detail === 1) { // Simple clic seulement
+          d.fx = d.fx ? null : d.x;
+          d.fy = d.fy ? null : d.y;
+          this.simulation.alpha(0.3).restart();
+          console.log(` Nœud ${d.fx ? 'fixé' : 'libéré'}: ${d.label}`);
+        }
+      }, 200);
+    });
+
+    this.simulation.on('tick', () => {
+      // Mettre à jour les chemins courbés
+      link.attr('d', d => this.createCurvedPath(d));
+
+      // Mettre à jour les labels sur les courbes
+      linkLabels
+        .attr('x', d => this.getCurveMidpoint(d).x)
+        .attr('y', d => this.getCurveMidpoint(d).y);
+
+      // Mettre à jour les nœuds
+      node.attr('transform', d => `translate(${d.x},${d.y})`);
+      nodeLabels.attr('transform', d => `translate(${d.x},${d.y + d.size + 15})`);
+    });
+  }
+
+  updateDimensions() {
+  const containerRect = this.container.getBoundingClientRect();
+  
+  // Utiliser la taille du conteneur ou une taille par défaut
+  this.width = Math.max(containerRect.width - this.margin.left - this.margin.right, 600);
+  this.height = Math.max(containerRect.height - this.margin.top - this.margin.bottom, 400);
+  
+  // Si le conteneur n'a pas de taille, utiliser la fenêtre
+  if (containerRect.width <= 0) {
+    this.width = window.innerWidth - this.margin.left - this.margin.right - 100;
+  }
+  if (containerRect.height <= 0) {
+    this.height = window.innerHeight - this.margin.top - this.margin.bottom - 200;
+  }
+}
 
   renderNetworkGraph() {
     const networkData = this.parsedData.networkData;
@@ -524,23 +692,23 @@ class GraphRenderer {
       .remove();
   }
 
-  addControls() {
-    const controls = d3.select(this.container)
-      .insert('div', ':first-child')
-      .attr('class', 'graph-controls')
-      .style('margin-bottom', '10px');
+  // addControls() {
+  //   const controls = d3.select(this.container)
+  //     .insert('div', ':first-child')
+  //     .attr('class', 'graph-controls')
+  //     .style('margin-bottom', '10px');
 
-    // Légende des couleurs
-    this.addColorLegend(controls);
+  //   // Légende des couleurs
+  //   this.addColorLegend(controls);
 
-    // Instructions d'interaction
-    this.addInteractionInstructions(controls);
+  //   // Instructions d'interaction
+  //   this.addInteractionInstructions(controls);
 
-    // Informations
-    controls.append('span')
-      .style('margin-left', '20px')
-      .text(`${this.parsedData.networkData.nodes.length} nœuds, ${this.parsedData.networkData.links.length} liens`);
-  }
+  //   // Informations
+  //   controls.append('span')
+  //     .style('margin-left', '20px')
+  //     .text(`${this.parsedData.networkData.nodes.length} nœuds, ${this.parsedData.networkData.links.length} liens`);
+  // }
 
   addColorLegend(controls) {
     const legend = controls.append('div')

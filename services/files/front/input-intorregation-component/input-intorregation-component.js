@@ -12,9 +12,6 @@ class InputInterrogationComponent extends HTMLElement {
         this.allSports = [];
         this.isQueryMode = false;
     }
-    // Pour ajouter le bouton de switch en mode sparql
-    // <button id="toggleMode" class="mode-toggle-btn" display="none">Mode SPARQL</button>
-
 
     connectedCallback() {
         this.initializeComponent();
@@ -23,6 +20,7 @@ class InputInterrogationComponent extends HTMLElement {
     async initializeComponent() {
         await this.loadTemplate();
         this.setupEventListeners();
+        this.setupDeselectableRadios();
         this.loadCSVData();
     }
 
@@ -56,6 +54,7 @@ class InputInterrogationComponent extends HTMLElement {
             }
         });
     }
+
 
     setupAutocomplete(inputId, getDataFn) {
         const input = this.querySelector(`#${inputId}`);
@@ -152,6 +151,14 @@ class InputInterrogationComponent extends HTMLElement {
         dropdown.classList.add('show');
     }
 
+    resetCustomFields(fieldIds) {
+        fieldIds.forEach(id => {
+            const field = this.querySelector(`#${id}`);
+            if (field) field.value = '';
+        });
+    }
+
+
     selectItem(input, dropdown, value) {
         input.value = value;
         dropdown.classList.remove('show');
@@ -173,6 +180,32 @@ class InputInterrogationComponent extends HTMLElement {
     hideAllDropdowns() {
         this.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
             dropdown.classList.remove('show');
+        });
+    }
+
+    setupDeselectableRadios() {
+        const radioButtons = this.querySelectorAll('input[name="relationDirection"]');
+        let lastChecked = null;
+
+        radioButtons.forEach(radio => {
+            radio.addEventListener('click', (e) => {
+                // Si on clique sur le même bouton qui était déjà sélectionné
+                if (radio === lastChecked) {
+                    radio.checked = false;
+                    lastChecked = null;
+                    // Déclencher l'événement change pour que le formulaire se mette à jour
+                    radio.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    lastChecked = radio;
+                }
+            });
+
+            // Suivre les changements pour mettre à jour lastChecked
+            radio.addEventListener('change', () => {
+                if (radio.checked) {
+                    lastChecked = radio;
+                }
+            });
         });
     }
 
@@ -370,27 +403,26 @@ class InputInterrogationComponent extends HTMLElement {
     }
 
     setupCustomFieldHandlers() {
-    // Gestion âge custom
-    const ageCategory = this.querySelector('#ageCategory');
-    if (ageCategory) {
-        ageCategory.addEventListener('change', () => this.handleAgeCategoryChange());
-    }
-    
-    // Gestion fréquence custom
-    const exerciseFrequency = this.querySelector('#exerciseFrequency');
-    if (exerciseFrequency) {
-        exerciseFrequency.addEventListener('change', () => this.handleFrequencyCategoryChange());
-    }
-    
-    // Gestion expérience custom
-    const experienceCategory = this.querySelector('#experienceCategory');
-    if (experienceCategory) {
-        experienceCategory.addEventListener('change', () => this.handleExperienceCategoryChange());
-    }
-}
+        // Gestion âge custom
+        const ageCategory = this.querySelector('#ageCategory');
+        if (ageCategory) {
+            ageCategory.addEventListener('change', () => this.handleAgeCategoryChange());
+        }
 
-// 3. NOUVELLES MÉTHODES pour gérer les modes custom
-handleAgeCategoryChange() {
+        // Gestion fréquence custom
+        const exerciseFrequency = this.querySelector('#exerciseFrequency');
+        if (exerciseFrequency) {
+            exerciseFrequency.addEventListener('change', () => this.handleFrequencyCategoryChange());
+        }
+
+        // Gestion expérience custom
+        const experienceCategory = this.querySelector('#experienceCategory');
+        if (experienceCategory) {
+            experienceCategory.addEventListener('change', () => this.handleExperienceCategoryChange());
+        }
+    }
+
+    handleAgeCategoryChange() {
     const ageCategory = this.querySelector('#ageCategory');
     const ageCustom = this.querySelector('#ageCustom');
     
@@ -398,17 +430,16 @@ handleAgeCategoryChange() {
     
     if (ageCategory.value === 'custom') {
         ageCustom.classList.remove('hidden');
-        // Focus sur le premier champ
-        const ageMin = this.querySelector('#ageMin');
-        if (ageMin) ageMin.focus();
+        const minAge = this.querySelector('#minAge');
+        if (minAge) minAge.focus();
     } else {
         ageCustom.classList.add('hidden');
-        // Reset des valeurs custom
-        this.resetCustomFields(['ageMin', 'ageMax']);
+        // Reset avec les nouveaux IDs
+        this.resetCustomFields(['minAge', 'maxAge', 'meanAge']);
     }
 }
 
-handleFrequencyCategoryChange() {
+    handleFrequencyCategoryChange() {
     const exerciseFrequency = this.querySelector('#exerciseFrequency');
     const frequencyCustom = this.querySelector('#frequencyCustom');
     
@@ -416,17 +447,16 @@ handleFrequencyCategoryChange() {
     
     if (exerciseFrequency.value === 'custom') {
         frequencyCustom.classList.remove('hidden');
-        // Focus sur le premier champ
-        const frequencyMin = this.querySelector('#frequencyMin');
-        if (frequencyMin) frequencyMin.focus();
+        const minExFR = this.querySelector('#minExFR');
+        if (minExFR) minExFR.focus();
     } else {
         frequencyCustom.classList.add('hidden');
-        // Reset des valeurs custom
-        this.resetCustomFields(['frequencyMin', 'frequencyMax']);
+        // Reset avec les nouveaux IDs
+        this.resetCustomFields(['minExFR', 'maxExFR', 'meanExFR']);
     }
 }
 
-handleExperienceCategoryChange() {
+    handleExperienceCategoryChange() {
     const experienceCategory = this.querySelector('#experienceCategory');
     const experienceCustom = this.querySelector('#experienceCustom');
     
@@ -434,23 +464,22 @@ handleExperienceCategoryChange() {
     
     if (experienceCategory.value === 'custom') {
         experienceCustom.classList.remove('hidden');
-        // Focus sur le premier champ
-        const experienceMin = this.querySelector('#experienceMin');
-        if (experienceMin) experienceMin.focus();
+        const minYOE = this.querySelector('#minYOE');
+        if (minYOE) minYOE.focus();
     } else {
         experienceCustom.classList.add('hidden');
-        // Reset des valeurs custom
-        this.resetCustomFields(['experienceMin', 'experienceMax']);
+        // Reset avec les nouveaux IDs
+        this.resetCustomFields(['minYOE', 'maxYOE', 'meanYOE']);
     }
 }
 
-// 4. MÉTHODE UTILITAIRE pour reset les champs
-resetCustomFields(fieldIds) {
-    fieldIds.forEach(id => {
-        const field = this.querySelector(`#${id}`);
-        if (field) field.value = '';
-    });
-}
+    // 4. MÉTHODE UTILITAIRE pour reset les champs
+    resetCustomFields(fieldIds) {
+        fieldIds.forEach(id => {
+            const field = this.querySelector(`#${id}`);
+            if (field) field.value = '';
+        });
+    }
 
     extractUniqueValues() {
         console.log('🔍 DEBUG: csvData length:', this.csvData.length);
@@ -540,124 +569,173 @@ resetCustomFields(fieldIds) {
         searchBtn.disabled = false;
     }
 
-  async handleSearch() {
+   async handleSearch() {
     try {
-        // 🆕 1. AFFICHER LE LOADING
         if (window.loadingManager) {
             window.loadingManager.show("Recherche dans la base IA-DAS...");
         }
 
-        // Récupérer les valeurs des champs existants
+        // Récupérer les valeurs des champs existants avec vérifications
+        const variableVI = this.querySelector('#variableVI');
+        const variableVD = this.querySelector('#variableVD');
+        const categoryVI = this.querySelector('#categoryVI');
+        const categoryVD = this.querySelector('#categoryVD');
+        const gender = this.querySelector('#gender');
+        const relationDirection = this.querySelector('input[name="relationDirection"]:checked');
+        const sportType = this.querySelector('#sportType');
+
         const searchData = {
-            selectedVI: this.querySelector('#variableVI').value,
-            selectedVD: this.querySelector('#variableVD').value,
-            categoryVI: this.querySelector('#categoryVI').value,
-            categoryVD: this.querySelector('#categoryVD').value,
-            gender: this.querySelector('#gender').value,
-            relationDirection: this.querySelector('input[name="relationDirection"]:checked')?.value || '',
-            sportType: this.querySelector('#sportType').value,
+            selectedVI: variableVI ? variableVI.value : '',
+            selectedVD: variableVD ? variableVD.value : '',
+            categoryVI: categoryVI ? categoryVI.value : '',
+            categoryVD: categoryVD ? categoryVD.value : '',
+            gender: gender ? gender.value : '',
+            relationDirection: relationDirection ? relationDirection.value : '',
+            sportType: sportType ? sportType.value : '',
             queryType: 'variable_relation'
         };
 
-        // NOUVEAUX CHAMPS : Gestion de l'âge
-        const ageCategory = this.querySelector('#ageCategory').value;
-        if (ageCategory) {
-            if (ageCategory === 'custom') {
-                const ageMin = this.querySelector('#ageMin').value;
-                const ageMax = this.querySelector('#ageMax').value;
-                if (ageMin) searchData.ageMin = parseInt(ageMin);
-                if (ageMax) searchData.ageMax = parseInt(ageMax);
+        // === GESTION ÂGE - VERSION CORRIGÉE ===
+        const ageCategory = this.querySelector('#ageCategory');
+        if (ageCategory && ageCategory.value) {
+            if (ageCategory.value === 'custom') {
+                const minAgeEl = this.querySelector('#minAge');
+                const maxAgeEl = this.querySelector('#maxAge');
+                const meanAgeEl = this.querySelector('#meanAge');
+                
+                const minAge = minAgeEl ? minAgeEl.value : '';
+                const maxAge = maxAgeEl ? maxAgeEl.value : '';
+                const meanAge = meanAgeEl ? meanAgeEl.value : '';
+                
+                // Envoyer directement les valeurs sans calculs
+                if (meanAge) {
+                    searchData.meanAge = parseFloat(meanAge);
+                    console.log(`🎯 Âge moyen saisi: ${meanAge} (SPARQL fera ± 1)`);
+                } else {
+                    // Min/Max seulement si pas de moyenne
+                    if (minAge) searchData.minAge = parseInt(minAge);
+                    if (maxAge) searchData.maxAge = parseInt(maxAge);
+                    console.log(`🎯 Plage d'âge: [${minAge || 'min'}, ${maxAge || 'max'}]`);
+                }
             } else {
-                searchData.ageCategory = ageCategory;
+                searchData.ageCategory = ageCategory.value;
             }
         }
 
-        // NOUVEAUX CHAMPS : Gestion de la fréquence
-        const exerciseFrequency = this.querySelector('#exerciseFrequency').value;
-        if (exerciseFrequency) {
-            if (exerciseFrequency === 'custom') {
-                const frequencyMin = this.querySelector('#frequencyMin').value;
-                const frequencyMax = this.querySelector('#frequencyMax').value;
-                if (frequencyMin) searchData.frequencyMin = parseInt(frequencyMin);
-                if (frequencyMax) searchData.frequencyMax = parseInt(frequencyMax);
+        // === GESTION FRÉQUENCE - VERSION CORRIGÉE ===
+        const exerciseFrequency = this.querySelector('#exerciseFrequency');
+        if (exerciseFrequency && exerciseFrequency.value) {
+            if (exerciseFrequency.value === 'custom') {
+                const minExFREl = this.querySelector('#minExFR');
+                const maxExFREl = this.querySelector('#maxExFR');
+                const meanExFREl = this.querySelector('#meanExFR');
+                
+                const minExFR = minExFREl ? minExFREl.value : '';
+                const maxExFR = maxExFREl ? maxExFREl.value : '';
+                const meanExFR = meanExFREl ? meanExFREl.value : '';
+                
+                // Envoyer directement les valeurs sans calculs
+                if (meanExFR) {
+                    searchData.meanExFR = parseFloat(meanExFR);
+                    console.log(`🎯 Fréquence moyenne saisie: ${meanExFR} (SPARQL fera ± 1)`);
+                } else {
+                    // Min/Max seulement si pas de moyenne
+                    if (minExFR) searchData.minExFR = parseInt(minExFR);
+                    if (maxExFR) searchData.maxExFR = parseInt(maxExFR);
+                    console.log(`🎯 Plage de fréquence: [${minExFR || 'min'}, ${maxExFR || 'max'}]`);
+                }
             } else {
-                searchData.exerciseFrequency = exerciseFrequency;
+                searchData.exerciseFrequency = exerciseFrequency.value;
             }
         }
 
-        // NOUVEAUX CHAMPS : Gestion de l'expérience
-        const experienceCategory = this.querySelector('#experienceCategory').value;
-        if (experienceCategory) {
-            if (experienceCategory === 'custom') {
-                const experienceMin = this.querySelector('#experienceMin').value;
-                const experienceMax = this.querySelector('#experienceMax').value;
-                if (experienceMin) searchData.experienceMin = parseInt(experienceMin);
-                if (experienceMax) searchData.experienceMax = parseInt(experienceMax);
+        // === GESTION EXPÉRIENCE - VERSION CORRIGÉE ===
+        const experienceCategory = this.querySelector('#experienceCategory');
+        if (experienceCategory && experienceCategory.value) {
+            if (experienceCategory.value === 'custom') {
+                const minYOEEl = this.querySelector('#minYOE');
+                const maxYOEEl = this.querySelector('#maxYOE');
+                const meanYOEEl = this.querySelector('#meanYOE');
+                
+                const minYOE = minYOEEl ? minYOEEl.value : '';
+                const maxYOE = maxYOEEl ? maxYOEEl.value : '';
+                const meanYOE = meanYOEEl ? meanYOEEl.value : '';
+                
+                // Envoyer directement les valeurs sans calculs
+                if (meanYOE) {
+                    searchData.meanYOE = parseFloat(meanYOE);
+                    console.log(`🎯 Expérience moyenne saisie: ${meanYOE} (SPARQL fera ± 1)`);
+                } else {
+                    // Min/Max seulement si pas de moyenne
+                    if (minYOE) searchData.minYOE = parseInt(minYOE);
+                    if (maxYOE) searchData.maxYOE = parseInt(maxYOE);
+                    console.log(`🎯 Plage d'expérience: [${minYOE || 'min'}, ${maxYOE || 'max'}]`);
+                }
             } else {
-                searchData.experienceCategory = experienceCategory;
+                searchData.experienceCategory = experienceCategory.value;
             }
         }
 
-        console.log("Recherche avec nouveaux critères:", searchData);
+        console.log("🚀 Recherche avec données finales:", searchData);
 
-        // 🆕 2. DISPATCHER L'ÉVÉNEMENT (qui sera capturé par doctor-page.js)
+        // Dispatcher l'événement
         this.dispatchEvent(new CustomEvent('search', {
             detail: searchData
         }));
 
     } catch (error) {
-        console.error('Erreur lors de la recherche:', error);
+        console.error('💥 Erreur détaillée dans handleSearch:', error);
+        console.error('💥 Stack trace:', error.stack);
         
-        // 🆕 3. AFFICHER L'ERREUR DANS LE LOADING
         if (window.loadingManager) {
             window.loadingManager.showError('Erreur de recherche', error.message);
         }
     }
 }
 
-// 6. OPTIONNEL : Méthode pour valider les champs custom
-validateCustomFields() {
-    let isValid = true;
-    const errors = [];
+    // 6. OPTIONNEL : Méthode pour valider les champs custom
+    validateCustomFields() {
+        let isValid = true;
+        const errors = [];
 
-    // Validation âge custom
-    const ageMin = this.querySelector('#ageMin');
-    const ageMax = this.querySelector('#ageMax');
-    if (ageMin && ageMax && ageMin.value && ageMax.value) {
-        if (parseInt(ageMin.value) >= parseInt(ageMax.value)) {
-            errors.push("L'âge minimum doit être inférieur à l'âge maximum");
-            isValid = false;
+        // Validation âge custom
+        const ageMin = this.querySelector('#ageMin');
+        const ageMax = this.querySelector('#ageMax');
+        if (ageMin && ageMax && ageMin.value && ageMax.value) {
+            if (parseInt(ageMin.value) >= parseInt(ageMax.value)) {
+                errors.push("L'âge minimum doit être inférieur à l'âge maximum");
+                isValid = false;
+            }
         }
-    }
 
-    // Validation fréquence custom
-    const frequencyMin = this.querySelector('#frequencyMin');
-    const frequencyMax = this.querySelector('#frequencyMax');
-    if (frequencyMin && frequencyMax && frequencyMin.value && frequencyMax.value) {
-        if (parseInt(frequencyMin.value) >= parseInt(frequencyMax.value)) {
-            errors.push("La fréquence minimum doit être inférieure à la fréquence maximum");
-            isValid = false;
+        // Validation fréquence custom
+        const frequencyMin = this.querySelector('#frequencyMin');
+        const frequencyMax = this.querySelector('#frequencyMax');
+        if (frequencyMin && frequencyMax && frequencyMin.value && frequencyMax.value) {
+            if (parseInt(frequencyMin.value) >= parseInt(frequencyMax.value)) {
+                errors.push("La fréquence minimum doit être inférieure à la fréquence maximum");
+                isValid = false;
+            }
         }
-    }
 
-    // Validation expérience custom
-    const experienceMin = this.querySelector('#experienceMin');
-    const experienceMax = this.querySelector('#experienceMax');
-    if (experienceMin && experienceMax && experienceMin.value && experienceMax.value) {
-        if (parseInt(experienceMin.value) >= parseInt(experienceMax.value)) {
-            errors.push("L'expérience minimum doit être inférieure à l'expérience maximum");
-            isValid = false;
+        // Validation expérience custom
+        const experienceMin = this.querySelector('#experienceMin');
+        const experienceMax = this.querySelector('#experienceMax');
+        if (experienceMin && experienceMax && experienceMin.value && experienceMax.value) {
+            if (parseInt(experienceMin.value) >= parseInt(experienceMax.value)) {
+                errors.push("L'expérience minimum doit être inférieure à l'expérience maximum");
+                isValid = false;
+            }
         }
-    }
 
-    // Afficher les erreurs si nécessaire
-    if (!isValid) {
-        console.warn("Erreurs de validation:", errors);
-        // Tu peux afficher les erreurs à l'utilisateur ici
-    }
+        // Afficher les erreurs si nécessaire
+        if (!isValid) {
+            console.warn("Erreurs de validation:", errors);
+            // Tu peux afficher les erreurs à l'utilisateur ici
+        }
 
-    return { isValid, errors };
-}
+        return { isValid, errors };
+    }
 
     // SPARQL methods
     loadExampleQuery() {

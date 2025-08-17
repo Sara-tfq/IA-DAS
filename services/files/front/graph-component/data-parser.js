@@ -328,24 +328,31 @@ class SPARQLDataParser {
       }
       
       const group = relationGroups.get(pairKey);
-      group[rel.relation].push(rel);
+      
+      // ✅ CORRECTION : Gérer les relations undefined/null → mettre NS
+      const relationType = rel.relation || 'NS';
+      
+      // ✅ CORRECTION : Vérifier que le type existe dans le groupe
+      if (group[relationType]) {
+        group[relationType].push(rel);
+      } else {
+        // Si le type n'existe pas, le mettre dans 'NS'
+        group['NS'].push(rel);
+        console.warn(`⚠️ Type de relation inconnu: "${rel.relation}" → placé dans 'NS'`);
+      }
     });
     
-    // Filtrer : prendre 1 représentant par type de relation
     const filteredLinks = [];
     
     relationGroups.forEach((group, pairKey) => {
       console.log(`\n🔗 Paire ${pairKey}:`);
       
-      // Pour chaque type de relation (+, -, NS, etc.)
       Object.keys(group).forEach(relationType => {
         const relations = group[relationType];
         
         if (relations.length > 0) {
-          // Prendre le premier représentant
           const representative = relations[0];
           
-          // Enrichir avec les métadonnées de tous les liens du même type
           const enrichedLink = {
             ...representative,
             id: `${pairKey}_${relationType}`,
@@ -366,7 +373,7 @@ class SPARQLDataParser {
     
     console.log(`🎯 Filtrage terminé: ${allRelations.length} → ${filteredLinks.length} liens`);
     return filteredLinks;
-  }
+}
   
   // Méthodes utilitaires inchangées
   static translateGender(gender) {

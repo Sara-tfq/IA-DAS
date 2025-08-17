@@ -44,7 +44,7 @@ class OntologyGraphComponent {
       this.clear();
       
       // Ajouter un titre
-      this.addTitle();
+      // this.addTitle();
       
       // Rendre la visualisation
       this.renderer.render();
@@ -62,13 +62,13 @@ class OntologyGraphComponent {
     this.container.innerHTML = '';
   }
   
-  addTitle() {
-    const title = document.createElement('h3');
-    title.textContent = 'Résultats de la requête ontologique';
-    title.style.marginBottom = '20px';
-    title.style.color = '#2c3e50';
-    this.container.appendChild(title);
-  }
+  // addTitle() {
+  //   const title = document.createElement('h3');
+  //   title.textContent = 'Résultats de la requête ontologique';
+  //   title.style.marginBottom = '20px';
+  //   title.style.color = '#2c3e50';
+  //   this.container.appendChild(title);
+  // }
   
   showError(message) {
     this.container.innerHTML = `
@@ -172,76 +172,6 @@ function createOntologyGraph(containerId, sparqlData) {
   return component;
 }
 
-async function exportGraphToPNG() {
-    try {
-        const graphContainer = document.getElementById('graph-container');
-        if (!graphContainer) {
-            alert('Aucun graphique à exporter');
-            return;
-        }
-
-        // Import de html2canvas
-        if (typeof html2canvas === 'undefined') {
-            await loadHtml2Canvas();
-        }
-
-        // Capture du graphique
-        const canvas = await html2canvas(graphContainer, {
-            scale: 2, // Haute résolution
-            backgroundColor: '#ffffff',
-            useCORS: true,
-            allowTaint: true
-        });
-
-        // Ajouter le logo
-        const finalCanvas = await addLogoToCanvas(canvas);
-        
-        // Télécharger
-        downloadCanvas(finalCanvas, 'ia-das-graph.png');
-        
-    } catch (error) {
-        console.error('Erreur export:', error);
-        alert('Erreur lors de l\'export: ' + error.message);
-    }
-}
-
-async function addLogoToCanvas(originalCanvas) {
-    return new Promise((resolve, reject) => {
-        const logoPath = '/assets/ia-das-logo.png'; // À adapter selon votre structure
-        const logoImg = new Image();
-        
-        logoImg.onload = () => {
-            // Créer nouveau canvas avec marge pour le logo
-            const finalCanvas = document.createElement('canvas');
-            const ctx = finalCanvas.getContext('2d');
-            
-            // Dimensions finales (graphique + marge)
-            const margin = 20;
-            const logoSize = 80; // Taille bien visible
-            finalCanvas.width = originalCanvas.width + margin;
-            finalCanvas.height = originalCanvas.height + margin;
-            
-            // Fond blanc
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-            
-            // Dessiner le graphique
-            ctx.drawImage(originalCanvas, margin/2, margin/2);
-            
-            // Dessiner le logo en haut à droite
-            const logoX = finalCanvas.width - logoSize - margin;
-            const logoY = margin;
-            ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
-            
-            resolve(finalCanvas);
-        };
-        
-        logoImg.onerror = () => reject(new Error('Impossible de charger le logo'));
-        logoImg.src = logoPath;
-    });
-}
-
-// Charger html2canvas si nécessaire
 async function loadHtml2Canvas() {
     return new Promise((resolve, reject) => {
         if (typeof html2canvas !== 'undefined') {
@@ -257,7 +187,6 @@ async function loadHtml2Canvas() {
     });
 }
 
-// Fonction principale d'export
 async function exportGraphToPNG() {
     try {
         const graphContainer = document.getElementById('graph-container');
@@ -268,12 +197,11 @@ async function exportGraphToPNG() {
 
         console.log('Début de l\'export PNG...');
         
-        // Charger html2canvas
         await loadHtml2Canvas();
         
-        // Capture du graphique en haute résolution
+        
         const canvas = await html2canvas(graphContainer, {
-            scale: 2, // Haute résolution (2x)
+            scale: 6, 
             backgroundColor: '#ffffff',
             useCORS: true,
             allowTaint: true,
@@ -284,12 +212,10 @@ async function exportGraphToPNG() {
 
         console.log('Graphique capturé, ajout du logo...');
         
-        // Ajouter le logo IA-DAS
         const finalCanvas = await addLogoToCanvas(canvas);
         
         console.log('Logo ajouté, téléchargement...');
         
-        // Télécharger le fichier
         downloadCanvas(finalCanvas, 'ia-das-graph-export.png');
         
     } catch (error) {
@@ -298,54 +224,70 @@ async function exportGraphToPNG() {
     }
 }
 
-// Ajouter le logo en haut à droite
 async function addLogoToCanvas(originalCanvas) {
     return new Promise((resolve, reject) => {
-        const logoPath = '/assets/logo_IA-DAS-No-Background.png';
+        const logoPath = './../assets/logo_IA-DAS-No-Background.png'; 
         const logoImg = new Image();
         
         logoImg.onload = () => {
             try {
-                // Créer nouveau canvas avec espace pour le logo
+                
                 const finalCanvas = document.createElement('canvas');
                 const ctx = finalCanvas.getContext('2d');
                 
-                // Dimensions avec marge pour le logo
-                const margin = 30;
-                const logoSize = 100; // Taille bien visible
-                const padding = 15;
-                
+            
+                const margin = 40;
+                const logoSize = 400; 
+                const padding = 200;
                 finalCanvas.width = originalCanvas.width + margin;
                 finalCanvas.height = originalCanvas.height + margin;
-                
-                // Fond blanc
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
                 
-                // Dessiner le graphique (centré avec marge)
                 ctx.drawImage(originalCanvas, margin/2, margin/2);
                 
-                // Position du logo en haut à droite
+                
                 const logoX = finalCanvas.width - logoSize - padding;
                 const logoY = padding;
                 
-                // Dessiner le logo
+              
+                const logoBgPadding = 15;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(
+                    logoX - logoBgPadding, 
+                    logoY - logoBgPadding, 
+                    logoSize + (logoBgPadding * 2), 
+                    logoSize + (logoBgPadding * 2)
+                );
+                
+                
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(
+                    logoX - logoBgPadding, 
+                    logoY - logoBgPadding, 
+                    logoSize + (logoBgPadding * 2), 
+                    logoSize + (logoBgPadding * 2)
+                );
+                
                 ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
                 
-                console.log(`Logo ajouté à la position (${logoX}, ${logoY})`);
+                console.log(`Logo ajouté à la position (${logoX}, ${logoY}) avec fond protecteur`);
                 resolve(finalCanvas);
                 
             } catch (error) {
+                console.error('Erreur lors de l\'ajout du logo:', error);
                 reject(error);
             }
         };
         
         logoImg.onerror = () => {
             console.error('Impossible de charger le logo:', logoPath);
-            reject(new Error('Impossible de charger le logo IA-DAS'));
+            console.log('Export sans logo...');
+            resolve(originalCanvas);
         };
         
-        logoImg.crossOrigin = 'anonymous'; // Pour éviter les problèmes CORS
+        logoImg.crossOrigin = 'anonymous'; 
         logoImg.src = logoPath;
     });
 }
@@ -353,7 +295,8 @@ async function addLogoToCanvas(originalCanvas) {
 // Télécharger le canvas final
 function downloadCanvas(canvas, filename) {
     const link = document.createElement('a');
-    link.download = filename;
+    const timestamp = new Date().toISOString().slice(0, 16).replace(/[:-]/g, '');
+    link.download = `IA-DAS-Graph-${timestamp}.png`;
     link.href = canvas.toDataURL('image/png', 1.0); // Qualité maximale
     
     // Déclencher le téléchargement
@@ -361,5 +304,5 @@ function downloadCanvas(canvas, filename) {
     link.click();
     document.body.removeChild(link);
     
-    console.log('Export terminé:', filename);
+    console.log('Export terminé:', link.download);
 }

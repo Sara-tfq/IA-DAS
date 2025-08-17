@@ -387,18 +387,11 @@ function displayCompetenceResults(data, questionContext) {
 
     const resultsDiv = document.getElementById('results');
 
-    // Header spécifique aux compétences
-    const competenceHeader = `
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-            <h3> Analyse de Compétence</h3>
-            <p><strong>Question:</strong> ${questionContext.questionText}</p>
-            <p><strong>Description:</strong> ${questionContext.description}</p>
-            <p><strong>Résultats trouvés:</strong> ${data.results?.bindings?.length || 0}</p>
-        </div>
-    `;
+    
+   
 
     // Créer la structure avec header compétence
-    resultsDiv.innerHTML = competenceHeader + `
+    resultsDiv.innerHTML = `
         <div id="result-controls" style="margin-bottom: 20px;">
             <button id="viewTable" class="view-btn active">Tableau détaillé</button>
             <button id="viewGraph" class="view-btn">Graphique réseau</button>
@@ -449,17 +442,14 @@ function switchView(mode) {
             break;
     }
 }
-
 function displayTableView() {
     const displayDiv = document.getElementById('result-display');
 
     if (!currentData || !currentData.results || !currentData.results.bindings) {
-        displayDiv.innerHTML = `
-            <div style="padding: 20px; text-align: center; background: #f8f9fa; border-radius: 5px;">
-                <p>Aucun résultat à afficher</p>
-                <p style="color: #666;">Vérifiez que la question sélectionnée retourne des données</p>
-            </div>
-        `;
+        const template = document.getElementById('no-results-template');
+        const clone = template.content.cloneNode(true);
+        displayDiv.innerHTML = '';
+        displayDiv.appendChild(clone);
         return;
     }
 
@@ -467,15 +457,23 @@ function displayTableView() {
     const variables = currentData.head.vars;
 
     let tableHTML = `
-        <div style="overflow-x: auto;">
-            <div style="margin-bottom: 15px; padding: 10px; background: #e8f4fd; border-radius: 5px;">
-                <h4 style="margin: 0 0 5px 0; color: #2c3e50;">Question analysée :</h4>
-                <p style="margin: 0; font-style: italic;">${currentQuery?.questionText || 'Question non spécifiée'}</p>
-            </div>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <div style="overflow-x: auto; margin: 10px 0;">
+            <table style="
+                width: 100%; 
+                border-collapse: collapse; 
+                margin: 0;
+                font-size: 13px;
+                line-height: 1.2;
+            ">
                 <thead>
                     <tr style="background-color: #f8f9fa;">
-                        ${variables.map(v => `<th style="border: 1px solid #ddd; padding: 12px; text-align: left;">${v}</th>`).join('')}
+                        ${variables.map(v => `<th style="
+                            border: 1px solid #ddd; 
+                            padding: 6px 8px; 
+                            text-align: left;
+                            font-weight: 600;
+                            font-size: 12px;
+                        ">${v}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
@@ -488,7 +486,13 @@ function displayTableView() {
         variables.forEach(variable => {
             const value = binding[variable];
             const displayValue = value ? (value.value || value) : '';
-            tableHTML += `<td style="border: 1px solid #ddd; padding: 12px;">${displayValue}</td>`;
+            tableHTML += `<td style="
+                border: 1px solid #ddd; 
+                padding: 4px 8px;
+                vertical-align: top;
+                word-break: break-word;
+                max-width: 200px;
+            ">${displayValue}</td>`;
         });
 
         tableHTML += '</tr>';
@@ -498,13 +502,14 @@ function displayTableView() {
                 </tbody>
             </table>
         </div>
-        <p style="margin-top: 10px; color: #666;">
+        <p style="margin: 5px 0; color: #666; font-size: 12px;">
             ${bindings.length} résultat(s) trouvé(s)
         </p>
     `;
 
     displayDiv.innerHTML = tableHTML;
 }
+
 function displayGraphView() {
     const displayDiv = document.getElementById('result-display');
 
@@ -531,11 +536,11 @@ function displayGraphView() {
                 font-size: 14px;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             ">
-                📥 Exporter PNG
+                Exporter PNG
             </button>
             <span style="margin-left: 15px; color: #666;">
-                📊 ${currentData.results.bindings.length} relations • 
-                🎯 ${currentQuery?.questionText?.substring(0, 50)}...
+                ${currentData.results.bindings.length} relations • 
+                ${currentQuery?.questionText?.substring(0, 50)}...
             </span>
         </div>
     `;

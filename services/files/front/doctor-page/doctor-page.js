@@ -3,7 +3,6 @@ let currentQuery = null;
 let currentMode = 'table';
 
 console.log("Script principal chargé !");
-
 document.addEventListener('DOMContentLoaded', async function () {
     console.log("📄 Page chargée, début de l'initialisation...");
 
@@ -31,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 Data === 'function') {
                 const excelData = await window.csvLoader.loadExcelData(excelPath);
                 if (excelData && excelData.length > 0) {
-                    console.log(`Excel chargé avec succès: ${excelData.length} analyses depuis ${excelPath}`);
+                    console.log(`✅ Excel chargé avec succès: ${excelData.length} analyses depuis ${excelPath}`);
                     excelLoaded = true;
                     break;
                 }
@@ -60,6 +59,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }, 100);
 });
+
 
 async function rechercher(data) {
     try {
@@ -93,26 +93,29 @@ async function rechercher(data) {
             if (data.sportType) payload.sportType = data.sportType;
             if (data.gender) payload.gender = data.gender;
 
-            // Nouveaux filtres âge
+            // === CORRECTION POUR LES FILTRES D'ÂGE ===
             if (data.ageCategory) {
                 payload.ageCategory = data.ageCategory;
             } else {
+                if (data.meanAge) payload.meanAge = parseFloat(data.meanAge);
                 if (data.ageMin) payload.ageMin = parseInt(data.ageMin);
                 if (data.ageMax) payload.ageMax = parseInt(data.ageMax);
             }
 
-            // Nouveaux filtres fréquence
+            // === CORRECTION POUR LES FILTRES DE FRÉQUENCE ===
             if (data.exerciseFrequency) {
                 payload.exerciseFrequency = data.exerciseFrequency;
             } else {
+                if (data.meanExFR) payload.meanExFR = parseFloat(data.meanExFR);
                 if (data.frequencyMin) payload.frequencyMin = parseInt(data.frequencyMin);
                 if (data.frequencyMax) payload.frequencyMax = parseInt(data.frequencyMax);
             }
 
-            // Nouveaux filtres expérience
+            // === CORRECTION POUR LES FILTRES D'EXPÉRIENCE ===
             if (data.experienceCategory) {
                 payload.experienceCategory = data.experienceCategory;
             } else {
+                if (data.meanYOE) payload.meanYOE = parseFloat(data.meanYOE);
                 if (data.experienceMin) payload.experienceMin = parseInt(data.experienceMin);
                 if (data.experienceMax) payload.experienceMax = parseInt(data.experienceMax);
             }
@@ -160,18 +163,11 @@ async function rechercher(data) {
 
         const resultsDiv = document.getElementById('results');
         if (resultsDiv) {
-            resultsDiv.innerHTML = `
-                <div style="color: red; padding: 20px; background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 5px;">
-                    <h4>Erreur de recherche</h4>
-                    <p><strong>Message:</strong> ${error.message}</p>
-                    <p><strong>Suggestions:</strong></p>
-                    <ul>
-                        <li>Vérifiez que le serveur SPARQL Generator fonctionne (port 8003)</li>
-                        <li>Essayez avec moins de filtres pour éviter les timeouts</li>
-                        <li>Vérifiez la console pour plus de détails</li>
-                    </ul>
-                </div>
-            `;
+            const template = document.getElementById('error-template');
+            const clone = template.content.cloneNode(true);
+            clone.getElementById('error-message').textContent = error.message;
+            resultsDiv.innerHTML = '';
+            resultsDiv.appendChild(clone);
         }
     }
 }
@@ -179,32 +175,24 @@ async function rechercher(data) {
 function displayResults(data, query = null) {
     currentData = data;
     currentQuery = query;
-
     const resultsDiv = document.getElementById('results');
 
-    // Créer la structure si elle n'existe pas
     if (!resultsDiv.querySelector('#result-controls')) {
-        resultsDiv.innerHTML = `
-            <div id="result-controls" style="margin-bottom: 20px;">
-                <button id="viewTable" class="view-btn active">Tableau</button>
-                <button id="viewGraph" class="view-btn">Graphique</button>
-                <button id="viewSparql" class="view-btn"> SPARQL</button>
-            </div>
-            <div id="result-display"></div>
-        `;
+        const template = document.getElementById('result-controls-template');
+        const clone = template.content.cloneNode(true);
+        resultsDiv.appendChild(clone);
     }
 
-    // Maintenant on peut accéder aux éléments en sécurité
     const controlsDiv = document.getElementById('result-controls');
     const displayDiv = document.getElementById('result-display');
 
-    // Afficher les contrôles
+
     controlsDiv.style.display = 'block';
 
-    // Configurer les événements des boutons
+
     setupViewButtons();
 
-    // Afficher en mode tableau par défaut
+
     displayTableView();
 }
 
@@ -216,6 +204,12 @@ function setupViewButtons() {
 
 function switchView(mode) {
     currentMode = mode;
+
+    // Nettoyer le bouton d'export s'il existe
+    const exportBtn = document.getElementById('exportGraph');
+    if (exportBtn) {
+        exportBtn.remove();
+    }
 
     // Mettre à jour les boutons actifs
     document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
@@ -239,7 +233,10 @@ function displayTableView() {
     const displayDiv = document.getElementById('result-display');
 
     if (!currentData || !currentData.results || !currentData.results.bindings) {
-        displayDiv.innerHTML = '<p>Aucun résultat à afficher</p>';
+        const template = document.getElementById('no-results-template');
+        const clone = template.content.cloneNode(true);
+        displayDiv.innerHTML = '';
+        displayDiv.appendChild(clone);
         return;
     }
 
@@ -247,11 +244,23 @@ function displayTableView() {
     const variables = currentData.head.vars;
 
     let tableHTML = `
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <div style="overflow-x: auto; margin: 10px 0;">
+            <table style="
+                width: 100%; 
+                border-collapse: collapse; 
+                margin: 0;
+                font-size: 13px;
+                line-height: 1.2;
+            ">
                 <thead>
                     <tr style="background-color: #f8f9fa;">
-                        ${variables.map(v => `<th style="border: 1px solid #ddd; padding: 12px; text-align: left;">${v}</th>`).join('')}
+                        ${variables.map(v => `<th style="
+                            border: 1px solid #ddd; 
+                            padding: 6px 8px; 
+                            text-align: left;
+                            font-weight: 600;
+                            font-size: 12px;
+                        ">${v}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
@@ -264,7 +273,13 @@ function displayTableView() {
         variables.forEach(variable => {
             const value = binding[variable];
             const displayValue = value ? (value.value || value) : '';
-            tableHTML += `<td style="border: 1px solid #ddd; padding: 12px;">${displayValue}</td>`;
+            tableHTML += `<td style="
+                border: 1px solid #ddd; 
+                padding: 4px 8px;
+                vertical-align: top;
+                word-break: break-word;
+                max-width: 200px;
+            ">${displayValue}</td>`;
         });
 
         tableHTML += '</tr>';
@@ -274,60 +289,50 @@ function displayTableView() {
                 </tbody>
             </table>
         </div>
-        <p style="margin-top: 10px; color: #666;">
+        <p style="margin: 5px 0; color: #666; font-size: 12px;">
             ${bindings.length} résultat(s) trouvé(s)
         </p>
     `;
 
     displayDiv.innerHTML = tableHTML;
 }
-
 function displayGraphView() {
     const displayDiv = document.getElementById('result-display');
 
-    const exportButton = `
-        <div style="margin-bottom: 15px;">
-            <button id="exportGraph" style="
-                background: #007bff; 
-                color: white; 
-                border: none; 
-                padding: 10px 20px; 
-                border-radius: 5px; 
-                cursor: pointer;
-                font-size: 14px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            ">
-                📥 Exporter PNG avec logo IA-DAS
-            </button>
-        </div>
-    `;
-
     try {
-        displayDiv.innerHTML = exportButton + '<div id="graph-container"></div>';
+        const template = document.getElementById('graph-view-template');
+        const clone = template.content.cloneNode(true);
+
+        displayDiv.innerHTML = '';
+        displayDiv.appendChild(clone);
+
+        const controls = document.getElementById('result-controls');
+        if (controls && !document.getElementById('exportGraph')) {
+            const exportTemplate = document.getElementById('export-button-template');
+            const exportClone = exportTemplate.content.cloneNode(true);
+            controls.appendChild(exportClone);
+            document.getElementById('exportGraph').onclick = () => exportGraphToPNG();
+        }
+
         const graphContainer = document.getElementById('graph-container');
         const graphComponent = new OntologyGraphComponent(graphContainer, currentData);
         graphComponent.render();
 
-        // Événement d'export
-        document.getElementById('exportGraph').onclick = () => exportGraphToPNG();
     } catch (error) {
         console.error('Erreur graphique:', error);
-        displayDiv.innerHTML = '<p>Erreur lors de l\'affichage du graphique</p>';
+        const errorTemplate = document.getElementById('graph-error-template');
+        const errorClone = errorTemplate.content.cloneNode(true);
+        displayDiv.innerHTML = '';
+        displayDiv.appendChild(errorClone);
     }
 }
 
 function displaySparqlView() {
     const displayDiv = document.getElementById('result-display');
-
-    const sparqlHTML = `
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 10px;">
-            <h4>Requête SPARQL générée :</h4>
-            <pre style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap;">${currentQuery || 'Requête non disponible'}</pre>
-            
-            <h4 style="margin-top: 20px;">Résultats JSON :</h4>
-            <pre style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 400px; white-space: pre-wrap;">${JSON.stringify(currentData, null, 2)}</pre>
-        </div>
-    `;
-
-    displayDiv.innerHTML = sparqlHTML;
+    const template = document.getElementById('sparql-view-template');
+    const clone = template.content.cloneNode(true);
+    clone.getElementById('sparql-query').textContent = currentQuery || 'Requête non disponible';
+    clone.getElementById('sparql-results').textContent = JSON.stringify(currentData, null, 2);
+    displayDiv.innerHTML = '';
+    displayDiv.appendChild(clone);
 }
