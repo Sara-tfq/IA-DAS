@@ -8,7 +8,8 @@ class AnalysisPanel {
     this.panelElement = null;
     this.overlayElement = null;
     this.templateCache = new Map();
-    
+    this.pdfExportEnabled = false;
+    this.loadJsPDF();
     this.init();
   }
 
@@ -22,6 +23,26 @@ class AnalysisPanel {
       console.error("❌ Erreur lors de l'initialisation d'AnalysisPanel:", error);
     }
   }
+
+
+  async loadJsPDF() {
+  try {
+    if (!window.jsPDF) {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      script.onload = () => {
+        this.pdfExportEnabled = true;
+        console.log("✅ jsPDF chargé avec succès");
+      };
+      document.head.appendChild(script);
+    } else {
+      this.pdfExportEnabled = true;
+    }
+  } catch (error) {
+    console.error("Erreur chargement jsPDF:", error);
+  }
+}
+
 
   async loadTemplate() {
     try {
@@ -149,78 +170,349 @@ class AnalysisPanel {
   }
 
   renderAnalysesList(nodeName, analysesData) {
-    console.log("📋 Rendu liste des analyses:", analysesData);
+  console.log("📋 Rendu liste des analyses:", analysesData);
 
-    const contentDiv = this.panelElement.querySelector('#analysis-content');
-    
-    let listHTML = `
-      <div style="padding: 10px;">
-        <h3 style="color: #2980b9; margin: 0 0 15px 0;">
-          📊 Analyses liées à "${nodeName}" (${analysesData.length})
+  const contentDiv = this.panelElement.querySelector('#analysis-content');
+  
+  let listHTML = `
+    <div style="padding: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="color: #2980b9; margin: 0;">
+           Analyses liées à "${nodeName}" (${analysesData.length})
         </h3>
-        
-        <div style="max-height: 500px; overflow-y: auto;">
-    `;
-    
-    analysesData.forEach((analysis, index) => {
-      const apaTitle = this.formatAPATitle(analysis);
+        <button onclick="window.analysisPanel.exportAnalysesToPDF()" 
+                style="
+                  background: #3c7be7ff; 
+                  color: white; 
+                  border: none; 
+                  padding: 8px 15px; 
+                  border-radius: 5px; 
+                  cursor: pointer; 
+                  font-size: 12px;
+                  display: flex;
+                  align-items: center;
+                  gap: 5px;
+                "
+                ${!this.pdfExportEnabled ? 'disabled title="jsPDF en cours de chargement..."' : ''}>
+           Exporter PDF
+        </button>
+      </div>
       
-      listHTML += `
-        <div class="analysis-item" 
-             style="
-               border: 1px solid #ddd; 
-               border-radius: 8px; 
-               padding: 15px; 
-               margin-bottom: 10px; 
-               background: #fafafa;
-               cursor: pointer;
-               transition: all 0.2s ease;
-             "
-             onmouseover="this.style.background='#f0f0f0'; this.style.borderColor='#007bff';"
-             onmouseout="this.style.background='#fafafa'; this.style.borderColor='#ddd';"
-             onclick="window.analysisPanel.showAnalysisDetail('${analysis.id}')">
-          
-          <div style="font-weight: bold; color: #2c3e50; margin-bottom: 8px;">
-            ${apaTitle}
-          </div>
-          
-          <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
-            ID: ${analysis.id} • Relation: 
-            <span style="color: ${this.getRelationColor(analysis.relation)}; font-weight: bold;">
-              ${this.getRelationText(analysis.relation)}
-            </span>
-          </div>
-          
-          <div style="font-size: 11px; color: #888;">
-            VI: ${analysis.vi} → VD: ${analysis.vd}
-            ${analysis.moderator !== 'N/A' ? ` • Modérateur: ${analysis.moderator}` : ''}
-            ${analysis.mediator !== 'N/A' ? ` • Médiateur: ${analysis.mediator}` : ''}
-          </div>
-        </div>
-      `;
-    });
+      <div style="max-height: 500px; overflow-y: auto;">
+  `;
+  
+  analysesData.forEach((analysis, index) => {
+    const apaTitle = this.formatAPATitle(analysis);
     
     listHTML += `
+      <div class="analysis-item" 
+           style="
+             border: 1px solid #ddd; 
+             border-radius: 8px; 
+             padding: 15px; 
+             margin-bottom: 10px; 
+             background: #fafafa;
+             cursor: pointer;
+             transition: all 0.2s ease;
+           "
+           onmouseover="this.style.background='#f0f0f0'; this.style.borderColor='#007bff';"
+           onmouseout="this.style.background='#fafafa'; this.style.borderColor='#ddd';"
+           onclick="window.analysisPanel.showAnalysisDetail('${analysis.id}')">
+        
+        <div style="font-weight: bold; color: #2c3e50; margin-bottom: 8px;">
+          ${apaTitle}
         </div>
         
-        <div style="text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-          <button onclick="window.analysisPanel.close()" style="
-            background: #95a5a6;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-          ">
-            Fermer
-          </button>
+        <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+          ID: ${analysis.id} • Relation: 
+          <span style="color: ${this.getRelationColor(analysis.relation)}; font-weight: bold;">
+            ${this.getRelationText(analysis.relation)}
+          </span>
+        </div>
+        
+        <div style="font-size: 11px; color: #888;">
+          VI: ${analysis.vi} → VD: ${analysis.vd}
+          ${analysis.moderator !== 'N/A' ? ` • Modérateur: ${analysis.moderator}` : ''}
+          ${analysis.mediator !== 'N/A' ? ` • Médiateur: ${analysis.mediator}` : ''}
         </div>
       </div>
     `;
-    
-    contentDiv.innerHTML = listHTML;
+  });
+  
+  listHTML += `
+      </div>
+      
+      <div style="text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+        <button onclick="window.analysisPanel.close()" style="
+          background: #95a5a6;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 14px;
+        ">
+          Fermer
+        </button>
+      </div>
+    </div>
+  `;
+  
+  contentDiv.innerHTML = listHTML;
+}
+
+exportAnalysesToPDF() {
+  if (!window.jspdf) {
+    alert("PDF non disponible. Rechargez la page.");
+    return;
   }
+
+  try {
+    console.log("📄 Génération PDF pour", this.currentAnalysesData.length, "analyses");
+    const doc = new window.jspdf.jsPDF();
+    
+    // Configuration
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const lineHeight = 6;
+    let y = margin;
+    
+    // Titre principal - Plus grand et centré
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    const mainTitle = `Analyses traitant de "${this.currentNodeName}"`;
+    const titleWidth = doc.getTextWidth(mainTitle);
+    doc.text(mainTitle, (pageWidth - titleWidth) / 2, y);
+    y += lineHeight * 2;
+    
+    // Sous-titre - Centré et élégant
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'italic');
+    const subtitle = `Revue systématique des études empiriques`;
+    const subtitleWidth = doc.getTextWidth(subtitle);
+    doc.text(subtitle, (pageWidth - subtitleWidth) / 2, y);
+    y += lineHeight * 2.5;
+    
+    // Informations générales - Dans un encadré
+    doc.setDrawColor(52, 152, 219); // Bleu
+    doc.setLineWidth(0.5);
+    doc.rect(margin, y, pageWidth - 2 * margin, lineHeight * 2.5);
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Nombre d'analyses: ${this.currentAnalysesData.length}`, margin + 5, y + lineHeight);
+    doc.text(`Date d'export: ${new Date().toLocaleDateString('fr-FR')}`, margin + 5, y + lineHeight * 2);
+    y += lineHeight * 4;
+    
+    // Parcourir chaque analyse
+    this.currentAnalysesData.forEach((analysis, index) => {
+      // Vérifier si on a assez de place (estimation ~40mm par analyse)
+      if (y > pageHeight - 60) {
+        doc.addPage();
+        y = margin;
+      }
+      
+      // === RÉFÉRENCE APA DOMINANTE ===
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(44, 62, 80); // Bleu foncé
+      
+      const apaReference = this.formatAPATitle(analysis);
+      const apaLines = doc.splitTextToSize(apaReference, pageWidth - 2 * margin);
+      
+      // Encadré discret pour la référence APA
+      const apaHeight = apaLines.length * lineHeight + 8;
+      doc.setFillColor(248, 249, 250); // Gris très clair
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.3);
+      doc.rect(margin, y - 2, pageWidth - 2 * margin, apaHeight, 'FD');
+      
+      // Texte de la référence APA
+      doc.text(apaLines, margin + 5, y + lineHeight);
+      y += apaHeight + 3;
+      
+      // ID d'analyse - Plus discret
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(150, 150, 150); // Gris
+      doc.text(`[ID: ${analysis.id}]`, pageWidth - margin - doc.getTextWidth(`[ID: ${analysis.id}]`), y);
+      y += lineHeight * 1.5;
+      
+      // === VARIABLES ET RELATION - Format compact ===
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(52, 73, 94); // Bleu-gris foncé
+      doc.text("Variables et relation:", margin, y);
+      y += lineHeight * 1.2;
+      
+      // Format compact sur une ligne: VI: XXX → + Facteur de risque → VD: YYY
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      
+      // Construire la ligne compacte
+      const relationText = this.getRelationText(analysis.relation);
+      const compactLine = `VI: ${analysis.vi} → ${relationText} → VD: ${analysis.vd}`;
+      
+      // Vérifier si ça tient sur une ligne
+      const maxWidth = pageWidth - 2 * margin - 16;
+      const lineWidth = doc.getTextWidth(compactLine);
+      
+      if (lineWidth <= maxWidth) {
+        // Tout sur une ligne avec couleurs
+        doc.setTextColor(21, 101, 192); // Bleu pour VI
+        doc.text(`VI: ${analysis.vi}`, margin + 8, y);
+        
+        const viWidth = doc.getTextWidth(`VI: ${analysis.vi}`);
+        doc.setTextColor(100, 100, 100); // Gris pour flèche
+        doc.text(` → `, margin + 8 + viWidth, y);
+        
+        const arrowWidth = doc.getTextWidth(` → `);
+        const relationColor = this.getRelationColorRGB(analysis.relation);
+        doc.setTextColor(relationColor.r, relationColor.g, relationColor.b);
+        doc.text(relationText, margin + 8 + viWidth + arrowWidth, y);
+        
+        const relationWidth = doc.getTextWidth(relationText);
+        doc.setTextColor(100, 100, 100); // Gris pour flèche
+        doc.text(` → `, margin + 8 + viWidth + arrowWidth + relationWidth, y);
+        
+        const arrow2Width = doc.getTextWidth(` → `);
+        doc.setTextColor(198, 40, 40); // Rouge pour VD
+        doc.text(`VD: ${analysis.vd}`, margin + 8 + viWidth + arrowWidth + relationWidth + arrow2Width, y);
+        
+        y += lineHeight * 1.5;
+      } else {
+        // Si trop long, diviser en deux lignes
+        doc.setTextColor(21, 101, 192);
+        doc.text(`VI: ${analysis.vi}`, margin + 8, y);
+        y += lineHeight;
+        
+        const relationColor = this.getRelationColorRGB(analysis.relation);
+        doc.setTextColor(relationColor.r, relationColor.g, relationColor.b);
+        doc.text(`${relationText}`, margin + 8, y);
+        
+        doc.setTextColor(198, 40, 40);
+        const relationTextWidth = doc.getTextWidth(relationText);
+        doc.text(` → VD: ${analysis.vd}`, margin + 8 + relationTextWidth, y);
+        y += lineHeight * 1.5;
+      }
+      
+      // Modérateurs/Médiateurs - Si présents, format compact aussi
+      if ((analysis.moderator && analysis.moderator !== 'N/A') || 
+          (analysis.mediator && analysis.mediator !== 'N/A')) {
+        
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'italic');
+        doc.setTextColor(120, 120, 120);
+        
+        let modMedLine = '';
+        if (analysis.moderator && analysis.moderator !== 'N/A') {
+          modMedLine += `Moderateur: ${analysis.moderator}`;
+        }
+        if (analysis.mediator && analysis.mediator !== 'N/A') {
+          if (modMedLine) modMedLine += ' | ';
+          modMedLine += `Mediateur: ${analysis.mediator}`;
+        }
+        
+        doc.text(modMedLine, margin + 8, y);
+        y += lineHeight * 1.2;
+      }
+      
+      // Ligne de séparation entre analyses
+      if (index < this.currentAnalysesData.length - 1) {
+        doc.setDrawColor(230, 230, 230);
+        doc.setLineWidth(0.2);
+        doc.line(margin + 20, y, pageWidth - margin - 20, y);
+        y += lineHeight * 1.5;
+      } else {
+        y += lineHeight;
+      }
+    });
+    
+    // === PIED DE PAGE ÉLÉGANT ===
+    const footerY = pageHeight - 15;
+    doc.setDrawColor(52, 152, 219);
+    doc.setLineWidth(0.5);
+    doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
+    
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'italic');
+    doc.setTextColor(120, 120, 120);
+    const footerText = `Généré par IA-DAS Ontologie Analysis Panel - ${new Date().toLocaleString('fr-FR')}`;
+    const footerWidth = doc.getTextWidth(footerText);
+    doc.text(footerText, (pageWidth - footerWidth) / 2, footerY);
+    
+    // Sauvegarder le PDF
+    const fileName = `Analyses_${this.currentNodeName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+    
+    console.log("✅ PDF généré avec succès:", fileName);
+    this.showExportSuccess(fileName);
+    
+  } catch (error) {
+    console.error("❌ Erreur lors de la génération PDF:", error);
+    alert("Erreur lors de la génération du PDF. Consultez la console pour plus de détails.");
+  }
+}
+
+getRelationColorRGB(relation) {
+  switch(relation) {
+    case '+': 
+      return { r: 231, g: 76, b: 60 }; 
+    case '-': 
+      return { r: 39, g: 174, b: 96 }; 
+    case 'NS': 
+      return { r: 149, g: 165, b: 166 }; 
+    default: 
+      return { r: 160, g: 174, b: 192 }; 
+  }
+}
+
+
+showExportSuccess(fileName) {
+  // Créer une notification temporaire
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #2ecc71;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-size: 14px;
+    max-width: 300px;
+  `;
+  notification.innerHTML = `
+    <div style="font-weight: bold; margin-bottom: 5px;"> Export réussi!</div>
+    <div style="font-size: 12px;">Fichier: ${fileName}</div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, 4000);
+}
+
+formatAPATitleForPDF(analysis) {
+  const data = analysis.rawData || {};
+  const authors = data.Authors || 'Auteur inconnu';
+  const year = data['Year '] || 'Année inconnue';
+  const title = data.Title || analysis.title || `Analyse ${analysis.id}`;
+  const journal = data.Journal || '';
+  
+  let apaReference = `${authors} (${year}). ${title}`;
+  if (journal) {
+    apaReference += `. ${journal}`;
+  }
+  
+  return apaReference;
+}
 
   formatAPATitle(analysis) {
     const authors = analysis.rawData?.Authors || 'Auteur inconnu';
@@ -307,7 +599,7 @@ showAnalysisLoadingState(analysisId) {
         "></div>
       </div>
       <h3 style="color: #2980b9; margin-bottom: 10px;">
-        📊 Chargement détaillé de l'analyse ${analysisId}
+         Chargement détaillé de l'analyse ${analysisId}
       </h3>
       <p style="color: #666; margin-bottom: 5px;">
         Récupération des données depuis Fuseki...
@@ -340,7 +632,7 @@ showAnalysisError(analysisId, errorMessage) {
         margin-bottom: 15px;
       ">
         <h3 style="color: #d32f2f; margin: 0 0 10px 0;">
-          ❌ Erreur de chargement
+           Erreur de chargement
         </h3>
         <p style="margin: 0 0 10px 0;">
           <strong>Analyse:</strong> ${analysisId}
@@ -389,7 +681,7 @@ showAnalysisError(analysisId, errorMessage) {
 }
 
   renderDetailedAnalysis(analysis) {
-    console.log("📊 Rendu analyse détaillée:", analysis);
+    console.log(" Rendu analyse détaillée:", analysis);
 
     const contentDiv = this.panelElement.querySelector('#analysis-content');
     const data = analysis.rawData || {};
@@ -398,7 +690,7 @@ showAnalysisError(analysisId, errorMessage) {
       <div style="padding: 15px;">
         <div style="border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px;">
           <h2 style="color: #2980b9; margin: 0; font-size: 18px;">
-            📊 ${analysis.id} - Analyse Détaillée
+             ${analysis.id} - Analyse Détaillée
           </h2>
           <button onclick="window.analysisPanel.renderAnalysesList('${this.currentNodeName}', window.analysisPanel.currentAnalysesData)" 
                   style="float: right; background: #95a5a6; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-top: -25px;">
@@ -409,7 +701,7 @@ showAnalysisError(analysisId, errorMessage) {
         <div style="max-height: 600px; overflow-y: auto;">
     `;
 
-    detailHTML += this.createDetailSection("🆔 Identification", [
+    detailHTML += this.createDetailSection(" Identification", [
       ['DOI', data.DOI],
       ['Code', data.Code],
       ['Analysis ID', data.Analysis_ID],
@@ -420,7 +712,7 @@ showAnalysisError(analysisId, errorMessage) {
       ['Pays', data.Country]
     ]);
 
-    detailHTML += this.createDetailSection("🔬 Méthodologie", [
+    detailHTML += this.createDetailSection(" Méthodologie", [
       ['Type d\'étude', data['Types of study']],
       ['N (échantillon)', data.N],
       ['Population', data.Population],
@@ -431,7 +723,7 @@ showAnalysisError(analysisId, errorMessage) {
       ['N mobilisé analyses', data['N_mobilise_dans_les analyse']]
     ]);
 
-    detailHTML += this.createDetailSection("👥 Caractéristiques Population", [
+    detailHTML += this.createDetailSection(" Caractéristiques Population", [
       ['Âge', data.Age],
       ['Âge moyen analyse', data.AgeForAnalysis_Mean],
       ['SD âge', data.SDAnalysis],
@@ -442,7 +734,7 @@ showAnalysisError(analysisId, errorMessage) {
       ['SD IMC', data.BMI_SD]
     ]);
 
-    detailHTML += this.createDetailSection("🏃 Pratique Sportive", [
+    detailHTML += this.createDetailSection(" Pratique Sportive", [
       ['Type pratique sport', data['Type_of _sport_practice']],
       ['Sous-catégorie sport', data.Subcategory_of_sport],
       ['Nom du sport', data.Sport_name],
@@ -454,7 +746,7 @@ showAnalysisError(analysisId, errorMessage) {
       ['Expérience moyenne', data.Exp_Mean]
     ]);
 
-    detailHTML += this.createDetailSection("🔗 Variables et Relations", [
+    detailHTML += this.createDetailSection(" Variables et Relations", [
       ['ACADS (VD)', data.ACADS],
       ['VD', data.VD],
       ['Mesure VD', data.Measure_VD],
@@ -466,7 +758,7 @@ showAnalysisError(analysisId, errorMessage) {
       ['Mesure Modérateur', data.Measure_Moderator]
     ]);
 
-    detailHTML += this.createDetailSection("📊 Résultats Statistiques", [
+    detailHTML += this.createDetailSection(" Résultats Statistiques", [
       ['Degré relation', data.Degre_de_relation],
       ['Résultat relation', data.Resultat_de_relation],
       ['Degré r', data.Degre_r],
@@ -478,7 +770,7 @@ showAnalysisError(analysisId, errorMessage) {
       ['Multiplicité analyse', data.Multiplicity_analyse]
     ]);
 
-    detailHTML += this.createDetailSection("📝 Conclusions et Limites", [
+    detailHTML += this.createDetailSection(" Conclusions et Limites", [
       ['Conclusions auteurs', data.Authors_conclusions],
       ['Limites', data.Limites],
       ['Perspectives', data.Perspectives],
@@ -637,12 +929,12 @@ showAnalysisError(analysisId, errorMessage) {
   }
 
   exportAnalysis() {
-    console.log(`📤 Export analyse: ${this.currentAnalysisId}`);
+    console.log(` Export analyse: ${this.currentAnalysisId}`);
     alert(`Fonctionnalité d'export à implémenter pour l'analyse ${this.currentAnalysisId}`);
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   window.analysisPanel = new AnalysisPanel();
-  console.log("✅ AnalysisPanel disponible globalement");
+  console.log(" AnalysisPanel disponible globalement");
 });

@@ -86,6 +86,24 @@ header button:hover {
     box-shadow: 0 2px 4px rgba(142, 68, 173, 0.3);
 }
 
+#switchToHome  {
+    padding: 12px 20px;
+    font-size: 13px;
+    background-color: #2980b9;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+#switchToHome:hover {
+    background-color: #1c5980;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
 /* Zone d'affichage des résultats */
 #result-display {
     background: white;

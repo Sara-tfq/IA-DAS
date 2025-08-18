@@ -396,7 +396,7 @@ function displayCompetenceResults(data, questionContext) {
             <button id="viewTable" class="view-btn active">Tableau détaillé</button>
             <button id="viewGraph" class="view-btn">Graphique réseau</button>
             <button id="viewSparql" class="view-btn">SPARQL</button>
-            <button id="exportCompetence" class="view-btn" style="background: #28a745; color: white;">📥 Exporter analyse</button>
+            <button id="exportCompetence" class="view-btn" style="background: #28a745; color: white;">Exporter analyse</button>
         </div>
         <div id="result-display"></div>
     `;
