@@ -169,7 +169,7 @@ LIMIT 10000`;
                     <small>${analysisURI}</small>
                 </div>
                 <button class="btn-select" onclick="selectAnalysisForEditing('${analysisId}')">
-                    ✏️ Modifier cette analyse
+                     Modifier cette analyse
                 </button>
             `;
 
