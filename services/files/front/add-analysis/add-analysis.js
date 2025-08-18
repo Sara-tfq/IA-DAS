@@ -122,13 +122,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Fonction pour envoyer les requêtes SPARQL au serveur
+    // Fonction pour envoyer les requêtes SPARQL au serveur - VERSION CORRIGÉE
+    // Fonction pour envoyer les requêtes SPARQL au serveur - VERSION COMPLÈTEMENT CORRIGÉE
     async function sendToServer(formData, sparqlQueries) {
         console.log('🚀 Envoi au serveur...');
 
-        const serverURL = window.location.hostname === 'localhost' ?
-            'http://localhost:8003' :
-            `http://${window.location.hostname}:8003`;
-
+        // ✅ CORRECTION : URL cohérente avec endpoint correct
+        const serverURL = window.location.hostname === 'localhost'
+            ? 'http://localhost:8003/update-analysis'
+            : `http://${window.location.hostname}:8003/update-analysis`;
 
         const payload = {
             formData: formData,
@@ -136,27 +138,20 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         console.log('📤 Payload à envoyer:', {
+            serverURL: serverURL,
             formDataKeys: Object.keys(formData),
             queryCount: Object.keys(sparqlQueries).length,
             queryNames: Object.keys(sparqlQueries)
         });
 
         try {
-            const response = await fetch(
-                window.location.hostname === 'localhost'
-                    ? 'http://localhost:8003'
-                    : 'http://51.44.188.162:8003',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        key1: 'value1',
-                        key2: 'value2'
-                    })
-                }
-            );
+            const response = await fetch(serverURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -170,15 +165,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 message: responseData.message
             });
 
-            if (response.ok) {
-                // Succès complet (200)
+            // Retourner selon le statut
+            if (response.status === 200) {
+                // Succès complet
                 return {
                     success: true,
                     data: responseData,
                     status: response.status
                 };
             } else if (response.status === 207) {
-                // Succès partiel (207)
+                // Succès partiel (Multi-Status)
                 return {
                     success: false,
                     partial: true,
@@ -186,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     status: response.status
                 };
             } else {
-                // Erreur (500+)
+                // Erreur
                 return {
                     success: false,
                     data: responseData,
