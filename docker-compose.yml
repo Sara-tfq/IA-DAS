@@ -47,6 +47,8 @@ services:
       - fuseki
     volumes:
       - ./fuseki/data.ttl:/init/data.ttl
+      - ./fuseki/ia-das-taxonomy.ttl:/init/ia-das-taxonomy.ttl
+      
     networks:
       - webnet
 

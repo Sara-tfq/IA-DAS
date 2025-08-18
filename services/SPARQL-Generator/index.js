@@ -23,7 +23,7 @@ async function performStartupWarmup() {
 
   warmupInProgress = true;
   console.log('\n🔥 === WARMUP AU DÉMARRAGE DU SPARQL GENERATOR ===');
-  
+
   const fusekiEndpoint = 'http://fuseki:3030/ds/sparql';
   const startTime = Date.now();
 
@@ -198,28 +198,28 @@ LIMIT 500`,
 
   for (const [index, warmupQuery] of warmupQueries.entries()) {
     console.log(`\n🎯 [${index + 1}/${warmupQueries.length}] ${warmupQuery.name}`);
-    
+
     const queryStart = Date.now();
-    
+
     try {
       const data = await executeWithRetry(fusekiEndpoint, warmupQuery.query, 2);
       const queryTime = Date.now() - queryStart;
       const resultCount = data.results?.bindings?.length || 0;
-      
+
       console.log(`   ✅ Succès: ${resultCount} résultats en ${queryTime}ms`);
       successCount++;
-      
+
     } catch (error) {
       const queryTime = Date.now() - queryStart;
       console.log(`   ❌ Échec: ${error.message} (${queryTime}ms)`);
-      
+
       // Si le test de connexion échoue, on attend un peu
       if (index === 0) {
         console.log('   ⏳ Fuseki pas encore prêt - attente 5s...');
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
-    
+
     // Délai entre requêtes
     if (index < warmupQueries.length - 1) {
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -227,11 +227,11 @@ LIMIT 500`,
   }
 
   const totalTime = Date.now() - startTime;
-  
+
   console.log(`\n🔥 === BILAN WARMUP DÉMARRAGE ===`);
   console.log(`   ✅ Succès: ${successCount}/${warmupQueries.length} requêtes`);
-  console.log(`   ⏱️ Temps total: ${(totalTime/1000).toFixed(1)}s`);
-  
+  console.log(`   ⏱️ Temps total: ${(totalTime / 1000).toFixed(1)}s`);
+
   if (successCount >= 4) { // Au moins 4/6 requêtes réussies
     isFusekiWarmed = true;
     console.log(`   🚀 FUSEKI EST MAINTENANT CHAUD !`);
@@ -240,9 +240,159 @@ LIMIT 500`,
   } else {
     console.log(`   ⚠️ Warmup insuffisant (${successCount}/${warmupQueries.length}) - warmup par requête activé`);
   }
-  
+
   warmupInProgress = false;
   return isFusekiWarmed;
+}
+
+// Fonction pour générer les requêtes SPARQL de hiérarchie
+function generateHierarchyQuery(conceptLabel) {
+  console.log("🌳 === GÉNÉRATEUR DE REQUÊTES HIÉRARCHIE ===");
+  console.log("📝 Concept reçu:", conceptLabel);
+  console.log("🔍 Type:", typeof conceptLabel);
+  
+  // Vérifications de base
+  if (!conceptLabel || conceptLabel.trim() === '') {
+    console.error("❌ ERREUR: conceptLabel est vide !");
+    throw new Error("Concept label requis pour la requête hiérarchie");
+  }
+  
+  // Fonction automatique de mapping label → URI ontologique
+  console.log("🤖 Génération automatique de l'URI...");
+  
+  let conceptUri = generateAutomaticUri(conceptLabel);
+  
+  console.log(`✅ URI généré: ${conceptLabel} → ${conceptUri}`);
+  
+  // Générer la requête SPARQL complète
+  const prefixes = `
+PREFIX iadas: <http://ia-das.org/onto#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX taxonomy: <http://ia-das.org/taxonomy#>`;
+
+  const query = `${prefixes}
+
+SELECT ?concept ?conceptLabel ?relation ?related ?relatedLabel WHERE {
+  # Le concept principal
+  BIND(<http://ia-das.org/onto#${conceptUri.replace('iadas:', '')}> AS ?mainConcept)
+  
+  {
+    # PARENTS du concept
+    ?mainConcept rdfs:subClassOf+ ?concept .
+    BIND("parent" as ?relation)
+    BIND(?concept as ?related)
+    OPTIONAL { ?concept rdfs:label ?conceptLabel }
+    OPTIONAL { ?related rdfs:label ?relatedLabel }
+  }
+  UNION
+  {
+    # ENFANTS du concept  
+    ?concept rdfs:subClassOf+ ?mainConcept .
+    BIND("child" as ?relation)
+    BIND(?concept as ?related)
+    OPTIONAL { ?concept rdfs:label ?conceptLabel }
+    OPTIONAL { ?related rdfs:label ?relatedLabel }
+  }
+  UNION
+  {
+    # Le concept LUI-MÊME
+    BIND(?mainConcept as ?concept)
+    BIND("self" as ?relation)
+    BIND(?mainConcept as ?related)
+    OPTIONAL { ?concept rdfs:label ?conceptLabel }
+    OPTIONAL { ?related rdfs:label ?relatedLabel }
+  }
+  
+  # Filtrer pour éviter les concepts vides
+  FILTER(?concept != <http://www.w3.org/2002/07/owl#Thing>)
+  FILTER(?related != <http://www.w3.org/2002/07/owl#Thing>)
+}
+ORDER BY ?relation ?conceptLabel
+LIMIT 50`;
+
+  console.log("📊 === RÉSUMÉ GÉNÉRATION HIÉRARCHIE ===");
+  console.log(`🎯 Concept original: "${conceptLabel}"`);
+  console.log(`🔗 URI ontologique: ${conceptUri}`);
+  console.log(`📏 Longueur requête: ${query.length} caractères`);
+  console.log(`🔍 Recherche parents: ✅`);
+  console.log(`🔍 Recherche enfants: ✅`);
+  console.log(`🔍 Concept self: ✅`);
+  console.log(`⚡ Limite: 50 résultats`);
+  
+  console.log("📝 === REQUÊTE SPARQL HIÉRARCHIE GÉNÉRÉE ===");
+  console.log(query);
+  console.log("=" .repeat(80));
+  
+  return query;
+}
+
+// Fonction automatique pour générer les URIs ontologiques
+function generateAutomaticUri(label) {
+  console.log(`🤖 Génération automatique URI pour: "${label}"`);
+  
+  if (!label || label.trim() === '') {
+    throw new Error("Label vide pour génération URI");
+  }
+  
+  // Nettoyer et normaliser le label
+  let cleanLabel = label.trim();
+  
+  // Règles de transformation automatiques
+  
+  // 1. Supprimer les caractères spéciaux et tirets
+  cleanLabel = cleanLabel.replace(/[-_]/g, ' ');
+  
+  // 2. Gérer les cas spéciaux avec prépositions
+  cleanLabel = cleanLabel
+    .replace(/\s+in\s+/gi, 'In')     // "in" → "In"
+    .replace(/\s+of\s+/gi, 'Of')     // "of" → "Of"  
+    .replace(/\s+to\s+/gi, 'To')     // "to" → "To"
+    .replace(/\s+for\s+/gi, 'For')   // "for" → "For"
+    .replace(/\s+and\s+/gi, 'And')   // "and" → "And"
+    .replace(/\s+with\s+/gi, 'With') // "with" → "With"
+    .replace(/\s+on\s+/gi, 'On');    // "on" → "On"
+  
+  // 3. Transformer en CamelCase
+  const words = cleanLabel.split(/\s+/);
+  const camelCaseWords = words.map(word => {
+    if (word.length === 0) return '';
+    
+    // Préserver les acronymes (tout en majuscules)
+    if (word === word.toUpperCase() && word.length > 1) {
+      return word; // DEAB, BMI, etc.
+    }
+    
+    // Première lettre majuscule, reste minuscule
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  });
+  
+  const finalUri = camelCaseWords.join('');
+  
+  console.log(`   📝 Étapes: "${label}" → "${cleanLabel}" → "${finalUri}"`);
+  
+  return `iadas:${finalUri}`;
+}
+
+// Tests automatiques des patterns (pour debug)
+function testAutomaticMapping() {
+  const testCases = [
+    "Exercise Motivation",
+    "Achievement Goals", 
+    "Basic Needs Frustration in Sport",
+    "Body Dissatisfaction",
+    "Instagram Usage",
+    "Depression",
+    "DEAB",
+    "Interest in Body-improvement TV Content",
+    "Exposure to Thin Ideal TV",
+    "Hours Spent on Social Media"
+  ];
+  
+  console.log("🧪 Test automatique des mappings:");
+  testCases.forEach(label => {
+    const uri = generateAutomaticUri(label);
+    console.log(`   "${label}" → ${uri}`);
+  });
 }
 
 // 🔥 WARMUP CONDITIONNEL (seulement si pas fait au démarrage)
@@ -266,7 +416,7 @@ async function warmupFuseki(endpoint) {
     const result = await executeWithRetry(endpoint, warmupQuery, 2);
     const resultCount = result.results?.bindings?.length || 0;
     console.log(`✅ Fuseki est réveillé et opérationnel (${resultCount} résultats warmup)`);
-    
+
     // Marquer comme warm même si ce n'était qu'un mini-warmup
     isFusekiWarmed = true;
     return true;
@@ -352,7 +502,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     const moyenne = parseFloat(filters.meanAge);
     const minAge = moyenne - 1;
     const maxAge = moyenne + 1;
-    
+
     query += `
     
     # Filtrer sur l'âge moyen ± 1
@@ -361,9 +511,9 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     ?ageStats iadas:meanAge ?meanAgeStr .
     BIND(xsd:decimal(?meanAgeStr) AS ?meanAge)
     FILTER(?meanAge >= ${minAge} && ?meanAge <= ${maxAge})`;
-    
+
     console.log(`✅ Filtre âge moyen: ${moyenne} ± 1 = [${minAge}, ${maxAge}]`);
-    
+
   } else if (filters.minAge !== undefined || filters.maxAge !== undefined) {
     // Cas normal : filtrer sur les VRAIES propriétés minAge/maxAge
     query += `
@@ -371,7 +521,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     # Filtrer sur les vraies propriétés minAge et maxAge
     ?analysis iadas:hasPopulation ?population .
     ?population iadas:ageStats ?ageStats .`;
-    
+
     if (filters.minAge !== undefined && filters.maxAge !== undefined) {
       // Les deux : minAge ET maxAge
       query += `
@@ -380,25 +530,25 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?minAgeStr) AS ?minAge)
     BIND(xsd:decimal(?maxAgeStr) AS ?maxAge)
     FILTER(?minAge >= ${filters.minAge} && ?maxAge <= ${filters.maxAge})`;
-      
+
       console.log(`✅ Filtre plage d'âge: population dans [${filters.minAge}, ${filters.maxAge}] ans`);
-      
+
     } else if (filters.minAge !== undefined) {
       // Seulement minAge
       query += `
     ?ageStats iadas:minAge ?minAgeStr .
     BIND(xsd:decimal(?minAgeStr) AS ?minAge)
     FILTER(?minAge >= ${filters.minAge})`;
-      
+
       console.log(`✅ Filtre âge minimum: minAge >= ${filters.minAge}`);
-      
+
     } else if (filters.maxAge !== undefined) {
       // Seulement maxAge
       query += `
     ?ageStats iadas:maxAge ?maxAgeStr .
     BIND(xsd:decimal(?maxAgeStr) AS ?maxAge)
     FILTER(?maxAge <= ${filters.maxAge})`;
-      
+
       console.log(`✅ Filtre âge maximum: maxAge <= ${filters.maxAge}`);
     }
   }
@@ -409,7 +559,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     const moyenne = parseFloat(filters.meanExFR);
     const minFreq = moyenne - 1;
     const maxFreq = moyenne + 1;
-    
+
     // Si on n'a pas déjà ajouté ?population, l'ajouter
     if (!query.includes('?analysis iadas:hasPopulation ?population')) {
       query += `
@@ -422,9 +572,9 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     ?freqStats iadas:meanExFR ?meanExFRStr .
     BIND(xsd:decimal(?meanExFRStr) AS ?meanExFR)
     FILTER(?meanExFR >= ${minFreq} && ?meanExFR <= ${maxFreq})`;
-    
+
     console.log(`✅ Filtre fréquence moyenne: ${moyenne} ± 1 = [${minFreq}, ${maxFreq}]`);
-    
+
   } else if (filters.minExFR !== undefined || filters.maxExFR !== undefined) {
     // Cas normal : filtrer sur les VRAIES propriétés minExFR/maxExFR
     if (!query.includes('?analysis iadas:hasPopulation ?population')) {
@@ -435,7 +585,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     }
     query += `
     ?population iadas:exerciseFreqStats ?freqStats .`;
-    
+
     if (filters.minExFR !== undefined && filters.maxExFR !== undefined) {
       // Les deux : minExFR ET maxExFR
       query += `
@@ -444,25 +594,25 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?minExFRStr) AS ?minExFR)
     BIND(xsd:decimal(?maxExFRStr) AS ?maxExFR)
     FILTER(?minExFR >= ${filters.minExFR} && ?maxExFR <= ${filters.maxExFR})`;
-      
+
       console.log(`✅ Filtre plage fréquence: population dans [${filters.minExFR}, ${filters.maxExFR}] h/sem`);
-      
+
     } else if (filters.minExFR !== undefined) {
       // Seulement minExFR
       query += `
     ?freqStats iadas:minExFR ?minExFRStr .
     BIND(xsd:decimal(?minExFRStr) AS ?minExFR)
     FILTER(?minExFR >= ${filters.minExFR})`;
-      
+
       console.log(`✅ Filtre fréquence minimum: minExFR >= ${filters.minExFR}`);
-      
+
     } else if (filters.maxExFR !== undefined) {
       // Seulement maxExFR
       query += `
     ?freqStats iadas:maxExFR ?maxExFRStr .
     BIND(xsd:decimal(?maxExFRStr) AS ?maxExFR)
     FILTER(?maxExFR <= ${filters.maxExFR})`;
-      
+
       console.log(`✅ Filtre fréquence maximum: maxExFR <= ${filters.maxExFR}`);
     }
   }
@@ -473,7 +623,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     const moyenne = parseFloat(filters.meanYOE);
     const minExp = moyenne - 1;
     const maxExp = moyenne + 1;
-    
+
     if (!query.includes('?analysis iadas:hasPopulation ?population')) {
       query += `
     
@@ -485,9 +635,9 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     ?expStats iadas:meanYOE ?meanYOEStr .
     BIND(xsd:decimal(?meanYOEStr) AS ?meanYOE)
     FILTER(?meanYOE >= ${minExp} && ?meanYOE <= ${maxExp})`;
-    
+
     console.log(`✅ Filtre expérience moyenne: ${moyenne} ± 1 = [${minExp}, ${maxExp}]`);
-    
+
   } else if (filters.minYOE !== undefined || filters.maxYOE !== undefined) {
     // Cas normal : filtrer sur les VRAIES propriétés minYOE/maxYOE
     if (!query.includes('?analysis iadas:hasPopulation ?population')) {
@@ -498,7 +648,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     }
     query += `
     ?population iadas:experienceStats ?expStats .`;
-    
+
     if (filters.minYOE !== undefined && filters.maxYOE !== undefined) {
       // Les deux : minYOE ET maxYOE
       query += `
@@ -507,31 +657,31 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?minYOEStr) AS ?minYOE)
     BIND(xsd:decimal(?maxYOEStr) AS ?maxYOE)
     FILTER(?minYOE >= ${filters.minYOE} && ?maxYOE <= ${filters.maxYOE})`;
-      
+
       console.log(`✅ Filtre plage expérience: population dans [${filters.minYOE}, ${filters.maxYOE}] ans`);
-      
+
     } else if (filters.minYOE !== undefined) {
       // Seulement minYOE
       query += `
     ?expStats iadas:minYOE ?minYOEStr .
     BIND(xsd:decimal(?minYOEStr) AS ?minYOE)
     FILTER(?minYOE >= ${filters.minYOE})`;
-      
+
       console.log(`✅ Filtre expérience minimum: minYOE >= ${filters.minYOE}`);
-      
+
     } else if (filters.maxYOE !== undefined) {
       // Seulement maxYOE
       query += `
     ?expStats iadas:maxYOE ?maxYOEStr .
     BIND(xsd:decimal(?maxYOEStr) AS ?maxYOE)
     FILTER(?maxYOE <= ${filters.maxYOE})`;
-      
+
       console.log(`✅ Filtre expérience maximum: maxYOE <= ${filters.maxYOE}`);
     }
   }
 
   // === AUTRES FILTRES EXISTANTS ===
-  
+
   // Filtre genre
   if (filters.gender && filters.gender !== '') {
     // Si on n'a pas déjà ajouté ?population, l'ajouter
@@ -638,7 +788,7 @@ LIMIT 1500`;
 
   console.log("📝 REQUÊTE GÉNÉRÉE :");
   console.log(query);
-  
+
   return query;
 }
 
@@ -684,20 +834,20 @@ async function executeSparqlUpdate(sparqlQuery) {
 // Fonction pour exécuter plusieurs requêtes UPDATE en séquence
 async function executeMultipleSparqlUpdates(queries) {
   console.log(`🔄 Exécution de ${Object.keys(queries).length} requêtes UPDATE...`);
-  
+
   const results = {};
   const errors = [];
-  
+
   for (const [queryName, query] of Object.entries(queries)) {
     try {
       console.log(`\n🎯 Exécution: ${queryName}`);
       const result = await executeSparqlUpdate(query);
       results[queryName] = result;
       console.log(`✅ ${queryName}: Succès`);
-      
+
       // Petit délai entre les requêtes pour éviter la surcharge
       await new Promise(resolve => setTimeout(resolve, 200));
-      
+
     } catch (error) {
       console.error(`❌ ${queryName}: Échec -`, error.message);
       errors.push({
@@ -707,7 +857,7 @@ async function executeMultipleSparqlUpdates(queries) {
       });
     }
   }
-  
+
   return {
     results: results,
     errors: errors,
@@ -1040,43 +1190,43 @@ http.createServer(async (req, res) => {
     req.on('data', chunk => (body += chunk));
     req.on('end', async () => {
       const startTime = Date.now();
-      
+
       try {
         console.log('\n🚀 === DÉBUT UPDATE ANALYSIS ===');
         console.log('⏰ Timestamp:', new Date().toISOString());
-        
+
         const requestData = JSON.parse(body);
         console.log('📥 Données reçues:', {
           hasFormData: !!requestData.formData,
           hasSparqlQueries: !!requestData.sparqlQueries,
           queryCount: requestData.sparqlQueries ? Object.keys(requestData.sparqlQueries).length : 0
         });
-        
+
         // Vérifier les données reçues
         if (!requestData.sparqlQueries) {
           throw new Error('Aucune requête SPARQL fournie');
         }
-        
+
         const queries = requestData.sparqlQueries;
         console.log('📋 Requêtes à exécuter:', Object.keys(queries));
-        
+
         // Exécuter toutes les requêtes UPDATE
         const updateResults = await executeMultipleSparqlUpdates(queries);
-        
+
         const totalTime = Date.now() - startTime;
-        
+
         console.log('\n📊 RÉSULTATS UPDATE:');
         console.log(`   ✅ Succès: ${updateResults.successCount}/${updateResults.totalQueries}`);
         console.log(`   ❌ Erreurs: ${updateResults.errorCount}`);
         console.log(`   ⏱️ Temps total: ${totalTime}ms`);
-        
+
         if (updateResults.errors.length > 0) {
           console.log('\n❌ DÉTAIL DES ERREURS:');
           updateResults.errors.forEach(err => {
             console.log(`   - ${err.queryName}: ${err.error}`);
           });
         }
-        
+
         // Réponse selon le succès
         if (updateResults.errorCount === 0) {
           // Succès complet
@@ -1089,7 +1239,7 @@ http.createServer(async (req, res) => {
             analysisId: requestData.formData?.analysisId || 'unknown',
             timestamp: new Date().toISOString()
           }));
-          
+
         } else if (updateResults.successCount > 0) {
           // Succès partiel
           res.writeHead(207, { 'Content-Type': 'application/json' }); // 207 Multi-Status
@@ -1101,7 +1251,7 @@ http.createServer(async (req, res) => {
             analysisId: requestData.formData?.analysisId || 'unknown',
             timestamp: new Date().toISOString()
           }));
-          
+
         } else {
           // Échec complet
           res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -1114,13 +1264,13 @@ http.createServer(async (req, res) => {
             timestamp: new Date().toISOString()
           }));
         }
-        
+
       } catch (error) {
         const totalTime = Date.now() - startTime;
         console.error('\n💥 ERREUR CRITIQUE UPDATE ANALYSIS:');
         console.error(`   Message: ${error.message}`);
         console.error(`   Temps écoulé: ${totalTime}ms`);
-        
+
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: false,
@@ -1171,6 +1321,12 @@ http.createServer(async (req, res) => {
 
           sparqlQuery = requestPayload.rawSparqlQuery;
           console.log("✅ Requête SPARQL brute utilisée");
+
+        } else if (requestPayload.queryType === 'hierarchy') {
+          console.log("🌳 REQUÊTE HIÉRARCHIE");
+          console.log("📝 Concept:", requestPayload.concept);
+
+          sparqlQuery = generateHierarchyQuery(requestPayload.concept);
 
         } else {
           console.log("🔍 REQUÊTE DE RECHERCHE NORMALE (avec filtres)");
@@ -1332,7 +1488,7 @@ http.createServer(async (req, res) => {
   console.log("   🛡️ Fallback automatique en cas d'échec");
   console.log("   🆕 Endpoint UPDATE pour ajouter des analyses (/update-analysis)");
   console.log("=" * 60);
-  
+
   console.log("\n🔥 LANCEMENT DU WARMUP AU DÉMARRAGE...");
   warmupPromise = performStartupWarmup();
 });

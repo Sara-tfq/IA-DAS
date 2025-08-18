@@ -1,31 +1,27 @@
 // Lancement du service Fuseki avec barre de progression visuelle + DEBUG COMPLET
+// MODIFIÉ pour charger data.ttl ET ia-das-taxonomy.ttl dans le même dataset ds
 const fs = require('fs');
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 
-console.log('🔧 === DÉBUT DEBUG FUSEKI LOADER ===');
+console.log('🔧 === DÉBUT DEBUG FUSEKI LOADER (DUAL FILES) ===');
 
-// Lecture et analyse du fichier TTL
-const ttl = fs.readFileSync('/init/data.ttl', 'utf8');
-const fileHash = crypto.createHash('md5').update(ttl).digest('hex');
-const fileSizeKB = Math.round(ttl.length / 1024);
-const fileSizeMB = (ttl.length / (1024 * 1024)).toFixed(1);
+// Lecture et analyse des DEUX fichiers TTL
+const dataTtl = fs.readFileSync('/init/data.ttl', 'utf8');
+const taxonomyTtl = fs.readFileSync('/init/ia-das-taxonomy.ttl', 'utf8');
 
-console.log('📁 ANALYSE DU FICHIER TTL:');
-console.log(`   📏 Taille: ${ttl.length} caractères (${fileSizeKB} KB / ${fileSizeMB} MB)`);
-console.log(`   🔑 Hash MD5: ${fileHash}`);
-console.log(`   🔍 Début du fichier: ${ttl.substring(0, 200)}...`);
-console.log(`   🔍 Fin du fichier: ...${ttl.substring(ttl.length - 200)}`);
+console.log('📁 ANALYSE DES FICHIERS TTL:');
+console.log('\n📊 DATA.TTL:');
+console.log(`   📏 Taille: ${dataTtl.length} caractères (${Math.round(dataTtl.length / 1024)} KB)`);
+console.log(`   🔑 Hash MD5: ${crypto.createHash('md5').update(dataTtl).digest('hex')}`);
+console.log(`   🏷️  Préfixes: ${(dataTtl.match(/@prefix/g) || []).length}`);
+console.log(`   🔬 Mentions "Analysis": ${(dataTtl.match(/iadas:Analysis/g) || []).length}`);
 
-// Compter quelques éléments dans le TTL
-const prefixCount = (ttl.match(/@prefix/g) || []).length;
-const tripleEstimate = (ttl.match(/\.\s*$/gm) || []).length;
-const analysisCount = (ttl.match(/iadas:Analysis/g) || []).length;
-
-console.log('📊 CONTENU TTL:');
-console.log(`   🏷️  Préfixes: ${prefixCount}`);
-console.log(`   📈 Triples estimés: ${tripleEstimate}`);
-console.log(`   🔬 Mentions "Analysis": ${analysisCount}`);
+console.log('\n📊 IA-DAS-TAXONOMY.TTL:');
+console.log(`   📏 Taille: ${taxonomyTtl.length} caractères (${Math.round(taxonomyTtl.length / 1024)} KB)`);
+console.log(`   🔑 Hash MD5: ${crypto.createHash('md5').update(taxonomyTtl).digest('hex')}`);
+console.log(`   🏷️  Préfixes: ${(taxonomyTtl.match(/@prefix/g) || []).length}`);
+console.log(`   🌳 Mentions "subClassOf": ${(taxonomyTtl.match(/rdfs:subClassOf/g) || []).length}`);
 
 const FUSEKI_URL = 'http://fuseki:3030/ds';
 const DATA_URL = `${FUSEKI_URL}/data`;
@@ -35,7 +31,7 @@ const RETRY_INTERVAL = 2000;
 const MAX_RETRIES = 30;
 const auth = Buffer.from("admin:admin").toString('base64');
 
-console.log('⚙️  CONFIGURATION:');
+console.log('\n⚙️  CONFIGURATION:');
 console.log(`   🌐 FUSEKI_URL: ${FUSEKI_URL}`);
 console.log(`   📤 DATA_URL: ${DATA_URL}`);
 console.log(`   🔍 SPARQL_URL: ${SPARQL_URL}`);
@@ -90,7 +86,11 @@ async function waitForFuseki(retries = 0) {
       const elapsedTime = Math.round((Date.now() - startTime) / 1000);
       console.log(`\n✅ FUSEKI PRÊT! Temps d'attente: ${formatTime(elapsedTime)}`);
       console.log('📤 Début du chargement des données RDF...\n');
+      
+      // NOUVEAU: Charger les deux fichiers séquentiellement
       await uploadData();
+      await uploadTaxonomy();
+      
     } else {
       const errorText = await res.text();
       console.log(`   ❌ Erreur response: ${errorText}`);
@@ -125,15 +125,25 @@ async function waitForFuseki(retries = 0) {
 }
 
 async function uploadData() {
+  console.log('\n🔷 === UPLOAD DATA.TTL ===');
+  return await uploadFile(dataTtl, 'data.ttl', '📊');
+}
+
+async function uploadTaxonomy() {
+  console.log('\n🔶 === UPLOAD IA-DAS-TAXONOMY.TTL ===');
+  return await uploadFile(taxonomyTtl, 'ia-das-taxonomy.ttl', '🌳');
+}
+
+async function uploadFile(ttlContent, fileName, icon) {
   const uploadStartTime = Date.now();
   
-  console.log('📤 DÉBUT UPLOAD:');
+  console.log(`${icon} DÉBUT UPLOAD ${fileName.toUpperCase()}:`);
   console.log(`   🎯 Destination: ${DATA_URL}`);
   console.log(`   📦 Content-Type: text/turtle`);
-  console.log(`   📏 Taille body: ${ttl.length} caractères`);
+  console.log(`   📏 Taille body: ${ttlContent.length} caractères`);
   
   try {
-    process.stdout.write('📊 Upload en cours ');
+    process.stdout.write(`${icon} Upload ${fileName} en cours `);
     
     const uploadAnimation = setInterval(() => {
       process.stdout.write('.');
@@ -144,12 +154,12 @@ async function uploadData() {
       headers: {
         'Content-Type': 'text/turtle',
         'Authorization': `Basic ${auth}`,
-        'Content-Length': ttl.length.toString()
+        'Content-Length': ttlContent.length.toString()
       },
-      body: ttl
+      body: ttlContent
     };
     
-    console.log(`\n📋 OPTIONS REQUEST:`);
+    console.log(`\n📋 OPTIONS REQUEST ${fileName}:`);
     console.log(`   Method: ${requestOptions.method}`);
     console.log(`   Headers: ${JSON.stringify(requestOptions.headers)}`);
     console.log(`   Body length: ${requestOptions.body.length}`);
@@ -159,7 +169,7 @@ async function uploadData() {
     clearInterval(uploadAnimation);
     console.log('\n');
     
-    console.log(`📨 RÉPONSE UPLOAD:`);
+    console.log(`📨 RÉPONSE UPLOAD ${fileName}:`);
     console.log(`   Status: ${res.status} ${res.statusText}`);
     console.log(`   Headers: ${JSON.stringify(Object.fromEntries(res.headers))}`);
     
@@ -171,17 +181,14 @@ async function uploadData() {
     
     const responseText = await res.text();
     const uploadTime = Math.round((Date.now() - uploadStartTime) / 1000);
-    const totalTime = Math.round((Date.now() - startTime) / 1000);
     
     console.log(`   ✅ Response body: "${responseText}"`);
-    console.log(`   ⏱️  Temps upload: ${formatTime(uploadTime)}`);
-    console.log(`   ⏱️  Temps total: ${formatTime(totalTime)}`);
+    console.log(`   ⏱️  Temps upload ${fileName}: ${formatTime(uploadTime)}`);
     
-    console.log('\n🔍 VÉRIFICATION DU CHARGEMENT...');
-    await verifyDataLoaded();
+    return true;
     
   } catch (err) {
-    console.log('\n❌ ÉCHEC UPLOAD:');
+    console.log(`\n❌ ÉCHEC UPLOAD ${fileName}:`);
     console.log(`   Message: ${err.message}`);
     console.log(`   Type: ${err.name}`);
     console.log(`   Stack: ${err.stack}`);
@@ -190,6 +197,8 @@ async function uploadData() {
 }
 
 async function verifyDataLoaded() {
+  console.log('\n🔍 === VÉRIFICATION FINALE DU CHARGEMENT ===');
+  
   const queries = [
     {
       name: 'Comptage total triples',
@@ -200,19 +209,34 @@ async function verifyDataLoaded() {
       query: 'SELECT (COUNT(*) as ?count) WHERE { ?s a <http://ia-das.org/onto#Analysis> }'
     },
     {
-      name: 'Échantillon triples',
-      query: 'SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 5'
+      name: 'Comptage relations hiérarchiques',
+      query: 'SELECT (COUNT(*) as ?count) WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?o }'
     },
     {
-      name: 'Préfixes utilisés',
-      query: 'SELECT DISTINCT ?p WHERE { ?s ?p ?o } LIMIT 10'
+      name: 'Échantillon variables avec hiérarchie',
+      query: `
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        SELECT ?child ?parent WHERE { 
+          ?child rdfs:subClassOf ?parent 
+        } LIMIT 5
+      `
+    },
+    {
+      name: 'Test Depression hiérarchie',
+      query: `
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        SELECT ?concept ?label WHERE {
+          ?concept rdfs:label ?label .
+          FILTER(CONTAINS(LCASE(?label), "depression"))
+        } LIMIT 3
+      `
     }
   ];
   
   for (const {name, query} of queries) {
     try {
       console.log(`\n🔍 TEST: ${name}`);
-      console.log(`   📝 Requête: ${query}`);
+      console.log(`   📝 Requête: ${query.replace(/\s+/g, ' ').trim()}`);
       
       const startQuery = Date.now();
       const res = await fetch(SPARQL_URL, {
@@ -245,7 +269,11 @@ async function verifyDataLoaded() {
     }
   }
   
-  console.log('\n🎉 VÉRIFICATION TERMINÉE!');
+  const totalTime = Math.round((Date.now() - startTime) / 1000);
+  console.log(`\n🎉 CHARGEMENT COMPLET TERMINÉ! Temps total: ${formatTime(totalTime)}`);
+  console.log('✅ Dataset "ds" contient maintenant:');
+  console.log('   📊 Données ontologiques (data.ttl)');
+  console.log('   🌳 Hiérarchie taxonomique (ia-das-taxonomy.ttl)');
 }
 
 // Gestion des signaux
@@ -260,6 +288,14 @@ process.on('SIGTERM', () => {
 });
 
 // Démarrage
-console.log('\n🎯 DÉMARRAGE SCRIPT DEBUG');
+console.log('\n🎯 DÉMARRAGE SCRIPT DEBUG DUAL FILES');
 console.log('💡 Appuyez sur Ctrl+C pour arrêter\n');
-waitForFuseki();
+
+// MODIFIÉ: Appeler verifyDataLoaded à la fin
+waitForFuseki().then(() => {
+  // Attendre un peu puis vérifier
+  setTimeout(verifyDataLoaded, 1000);
+}).catch(err => {
+  console.error('Erreur générale:', err);
+  process.exit(1);
+});
