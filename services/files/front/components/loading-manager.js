@@ -26,12 +26,12 @@ class LoadingManager {
         this.progressFill = document.getElementById('progress-fill');
         this.timerElement = document.getElementById('timer-value');
         
-        console.log('✅ LoadingManager initialisé');
+        console.log(' LoadingManager initialisé');
     }
 
     show(title = "Chargement des données...") {
         if (!this.overlay) {
-            console.error('❌ LoadingManager pas encore initialisé');
+            console.error(' LoadingManager pas encore initialisé');
             return;
         }
         
@@ -49,7 +49,7 @@ class LoadingManager {
             }
         }, 1000);
         
-        console.log('🔄 Loading affiché:', title);
+        console.log(' Loading affiché:', title);
     }
 
     hide() {
@@ -64,13 +64,13 @@ class LoadingManager {
             this.timerInterval = null;
         }
         
-        console.log('✅ Loading masqué');
+        console.log(' Loading masqué');
     }
 
     updateStep(stepName, message, status = 'active') {
         const stepElement = document.getElementById(`step-${stepName}`);
         if (!stepElement) {
-            console.warn(`⚠️ Étape non trouvée: ${stepName}`);
+            console.warn(` Étape non trouvée: ${stepName}`);
             return;
         }
         
@@ -101,7 +101,7 @@ class LoadingManager {
         // Mettre à jour la progress bar
         this.updateProgress();
         
-        console.log(`🔄 Étape ${stepName}: ${message} (${status})`);
+        console.log(` Étape ${stepName}: ${message} (${status})`);
     }
 
     updateProgress(customProgress = null) {
@@ -169,7 +169,7 @@ class LoadingManager {
     }
 
 completeAll() {
-    console.log('🎉 Finalisation complète');
+    console.log(' Finalisation complète');
     
     // S'assurer que toutes les étapes sont marquées comme terminées
     this.completeWarmup();
@@ -189,4 +189,4 @@ completeAll() {
 // Instance globale
 window.loadingManager = new LoadingManager();
 
-console.log('📦 LoadingManager chargé');
+console.log('LoadingManager chargé');

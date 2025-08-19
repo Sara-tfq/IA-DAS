@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🔧 Page de modification d\'analyse chargée');
 
     const selectionStep = document.getElementById('selection-step');
     const editStep = document.getElementById('edit-step');
@@ -72,7 +71,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Exécuter une requête SPARQL
     async function executeQuery(sparqlQuery) {
         try {
-            console.log('📤 Envoi requête SPARQL...');
 
             const response = await fetch(
                 window.location.hostname === 'localhost'
@@ -96,12 +94,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const data = await response.json();
-            console.log('📥 Réponse reçue:', data.performance || 'pas de performance');
 
             return data.results?.bindings || [];
 
         } catch (error) {
-            console.error('💥 Erreur lors de l\'exécution de la requête:', error);
             throw new Error(`Impossible de contacter le serveur: ${error.message}`);
         }
     }
@@ -129,7 +125,6 @@ LIMIT 50`;
 
     // Récupérer toutes les analyses (limitées)
     async function getAllAnalyses() {
-        console.log('📋 Récupération de toutes les analyses...');
 
         const query = `
 PREFIX iadas: <http://ia-das.org/onto#>
@@ -155,7 +150,6 @@ LIMIT 10000`;
             return;
         }
 
-        console.log(`📊 Affichage de ${analyses.length} analyses`);
 
         analyses.forEach(analysis => {
             const analysisId = analysis.analysisId?.value || 'ID inconnu';
@@ -183,7 +177,6 @@ LIMIT 10000`;
 
     // Charger toutes les données d'une analyse
     async function loadCompleteAnalysisData(analysisId) {
-        console.log('📥 Chargement complet des données pour l\'analyse:', analysisId);
 
         // Requête complexe pour récupérer TOUTES les données
         const query = `
@@ -266,7 +259,6 @@ SELECT ?property ?value ?entity WHERE {
 
     // Parser les résultats SPARQL en objet structuré
     function parseAnalysisResults(results) {
-        console.log('🔄 Parsing des résultats SPARQL...');
 
         const data = {};
 
@@ -317,7 +309,6 @@ SELECT ?property ?value ?entity WHERE {
             }
         });
 
-        console.log('✅ Données parsées:', data);
         return data;
     }
 
@@ -341,7 +332,6 @@ SELECT ?property ?value ?entity WHERE {
 
         if (mapping[propName]) {
             data[mapping[propName]] = value;
-            console.log(`🔬 Analysis - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
 
@@ -358,10 +348,8 @@ SELECT ?property ?value ?entity WHERE {
 
         if (mapping[propName]) {
             data[mapping[propName]] = value;
-            console.log(`📄 Article - ${propName} → ${mapping[propName]}: ${value}`);
         } else {
             // Debug : afficher les propriétés non mappées
-            console.log(`🔍 Article propriété non mappée: ${propName} = ${value}`);
         }
     }
 
@@ -379,7 +367,6 @@ SELECT ?property ?value ?entity WHERE {
 
         if (mapping[propName]) {
             data[mapping[propName]] = value;
-            console.log(`👥 Population - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
 
@@ -393,7 +380,7 @@ SELECT ?property ?value ?entity WHERE {
 
         if (mapping[propName]) {
             data[mapping[propName]] = value;
-            console.log(`🏃 Sport - ${propName} → ${mapping[propName]}: ${value}`);
+            console.log(` Sport - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
 
@@ -412,7 +399,6 @@ SELECT ?property ?value ?entity WHERE {
 
         if (mapping[propName]) {
             data[mapping[propName]] = value;
-            console.log(`📊 Relations - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
 
@@ -435,7 +421,6 @@ SELECT ?property ?value ?entity WHERE {
 
         if (mapping[propName]) {
             data[mapping[propName]] = value;
-            console.log(`🔢 Variable ${type.toUpperCase()} - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
 
@@ -450,7 +435,6 @@ SELECT ?property ?value ?entity WHERE {
 
         if (mapping[propName]) {
             data[mapping[propName]] = value;
-            console.log(`👴 Age Stats - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
 
@@ -465,7 +449,6 @@ SELECT ?property ?value ?entity WHERE {
 
         if (mapping[propName]) {
             data[mapping[propName]] = value;
-            console.log(`⚖️ BMI Stats - ${propName} → ${mapping[propName]}: ${value}`);
         }
     }
 
@@ -473,7 +456,6 @@ SELECT ?property ?value ?entity WHERE {
 
     // Pré-remplir le formulaire avec les données
     function populateForm(data) {
-        console.log('📝 Pré-remplissage du formulaire...');
 
         // Parcourir tous les champs et les remplir
         Object.keys(data).forEach(key => {
@@ -599,7 +581,6 @@ WHERE {
 
     // Fonction globale pour sélectionner une analyse (appelée depuis le HTML)
     window.selectAnalysisForEditing = async function (analysisId) {
-        console.log('✏️ Sélection de l\'analyse pour modification:', analysisId);
 
         if (isLoading) return;
         isLoading = true;
@@ -800,7 +781,6 @@ WHERE {
             const generator = new ExtendedUpdateSPARQLGenerator();
             const updateQueries = generator.generateAllUpdates(formData, currentAnalysisData);
 
-            console.log('📝 Requêtes UPDATE générées:', Object.keys(updateQueries));
 
             // Envoyer au serveur
             showMessage('info', 'Envoi des modifications au serveur...');
@@ -889,7 +869,7 @@ WHERE {
     // Test de connexion serveur au chargement
     async function testServerConnection() {
         try {
-            console.log('🔗 Test de connexion au serveur...');
+            console.log('Test de connexion au serveur...');
 
             const testQuery = `
 PREFIX iadas: <http://ia-das.org/onto#>
@@ -899,20 +879,20 @@ SELECT (COUNT(*) as ?count) WHERE {
 LIMIT 1`;
 
             await executeQuery(testQuery);
-            console.log('✅ Connexion serveur OK');
+            console.log(' Connexion serveur OK');
 
         } catch (error) {
-            console.error('❌ Erreur de connexion serveur:', error);
+            console.error(' Erreur de connexion serveur:', error);
             showMessage('error', 'Impossible de se connecter au serveur SPARQL. Vérifiez que le serveur est démarré sur le port 8003.');
         }
     }
 
     // Initialisation
-    console.log('🚀 Initialisation de la page de modification');
+    console.log('Initialisation de la page de modification');
     showStep('selection'); // Afficher l'étape de sélection au démarrage
     testServerConnection();
 
-    console.log('✅ Page de modification prête');
+    console.log(' Page de modification prête');
 });
 
 // ================== GÉNÉRATEUR SPARQL UPDATE ÉTENDU ==================
@@ -1098,7 +1078,7 @@ WHERE {
 
     // Générer toutes les requêtes UPDATE
     generateAllUpdates(data, originalData) {
-        console.log('🔄 Génération de toutes les requêtes UPDATE...');
+        console.log(' Génération de toutes les requêtes UPDATE...');
 
         const queries = {
             analysis: this.generateAnalysisUpdate(data),
@@ -1109,7 +1089,7 @@ WHERE {
             relations: this.generateRelationsUpdate(data)
         };
 
-        console.log('✅ Requêtes UPDATE générées:', Object.keys(queries));
+        console.log(' Requêtes UPDATE générées:', Object.keys(queries));
         return queries;
     }
 

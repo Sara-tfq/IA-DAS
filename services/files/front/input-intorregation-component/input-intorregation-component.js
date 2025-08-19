@@ -351,9 +351,7 @@ class InputInterrogationComponent extends HTMLElement {
                 skipEmptyLines: true,
                 delimitersToGuess: [',', '\t', '|', ';']
             });
-            console.log('🔍 Colonnes détectées:', result.meta.fields);
-            console.log('🔍 Première ligne de données:', result.data[0]);
-
+           
 
             const response2 = await fetch('/data/Sport.csv');
             if (!response2.ok) {
@@ -482,7 +480,6 @@ class InputInterrogationComponent extends HTMLElement {
     }
 
     extractUniqueValues() {
-        console.log('🔍 DEBUG: csvData length:', this.csvData.length);
 
         // Extraire toutes les variables (backup)
         this.allVD = [...new Set(
@@ -513,9 +510,7 @@ class InputInterrogationComponent extends HTMLElement {
                 .filter(val => val != null && val !== '' && val !== undefined)
         )].sort();
 
-        console.log('🔍 Categories VD:', this.availableCategoriesVD);
-        console.log('🔍 Categories VI:', this.availableCategoriesVI);
-
+        
         // Initialiser avec toutes les variables
         this.availableVD = [...this.allVD];
         this.availableVI = [...this.allVI];
@@ -545,7 +540,6 @@ class InputInterrogationComponent extends HTMLElement {
         // Initialiser avec tous les sports
         this.availableSports = [...this.allSports];
 
-        console.log('🔍 Sports extraits depuis Sport.csv:', this.availableSports.length, this.availableSports.slice(0, 10));
         // Peupler les sélecteurs de catégories
         this.populateCategorySelectors();
     }
@@ -610,12 +604,10 @@ class InputInterrogationComponent extends HTMLElement {
                     // Envoyer directement les valeurs sans calculs
                     if (meanAge && meanAge.trim() !== '') {
                         searchData.meanAge = parseFloat(meanAge);
-                        console.log(`🎯 Âge moyen saisi: ${meanAge} (SPARQL fera ± 1)`);
                     } else {
                         // Min/Max seulement si pas de moyenne
                         if (minAge && minAge.trim() !== '') searchData.minAge = parseInt(minAge);
                         if (maxAge && maxAge.trim() !== '') searchData.maxAge = parseInt(maxAge);
-                        console.log(`🎯 Plage d'âge: [${minAge || 'min'}, ${maxAge || 'max'}]`);
                     }
                 } else {
                     searchData.ageCategory = ageCategory.value;
@@ -637,12 +629,10 @@ class InputInterrogationComponent extends HTMLElement {
                     // Envoyer directement les valeurs sans calculs
                     if (meanExFR && meanExFR.trim() !== '') {
                         searchData.meanExFR = parseFloat(meanExFR);
-                        console.log(`🎯 Fréquence moyenne saisie: ${meanExFR} (SPARQL fera ± 1)`);
                     } else {
                         // Min/Max seulement si pas de moyenne
                         if (minExFR && minExFR.trim() !== '') searchData.minExFR = parseInt(minExFR);
                         if (maxExFR && maxExFR.trim() !== '') searchData.maxExFR = parseInt(maxExFR);
-                        console.log(`🎯 Plage de fréquence: [${minExFR || 'min'}, ${maxExFR || 'max'}]`);
                     }
                 } else {
                     searchData.exerciseFrequency = exerciseFrequency.value;
@@ -664,19 +654,16 @@ class InputInterrogationComponent extends HTMLElement {
                     // Envoyer directement les valeurs sans calculs
                     if (meanYOE && meanYOE.trim() !== '') {
                         searchData.meanYOE = parseFloat(meanYOE);
-                        console.log(`🎯 Expérience moyenne saisie: ${meanYOE} (SPARQL fera ± 1)`);
                     } else {
                         // Min/Max seulement si pas de moyenne
                         if (minYOE && minYOE.trim() !== '') searchData.minYOE = parseInt(minYOE);
                         if (maxYOE && maxYOE.trim() !== '') searchData.maxYOE = parseInt(maxYOE);
-                        console.log(`🎯 Plage d'expérience: [${minYOE || 'min'}, ${maxYOE || 'max'}]`);
                     }
                 } else {
                     searchData.experienceCategory = experienceCategory.value;
                 }
             }
 
-            console.log("🚀 Recherche avec données finales:", searchData);
 
             // Dispatcher l'événement
             this.dispatchEvent(new CustomEvent('search', {
@@ -684,9 +671,7 @@ class InputInterrogationComponent extends HTMLElement {
             }));
 
         } catch (error) {
-            console.error('💥 Erreur détaillée dans handleSearch:', error);
-            console.error('💥 Stack trace:', error.stack);
-
+           
             if (window.loadingManager) {
                 window.loadingManager.showError('Erreur de recherche', error.message);
             }

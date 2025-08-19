@@ -4,7 +4,6 @@ let currentMode = 'table';
 
 console.log("Script principal chargé !");
 document.addEventListener('DOMContentLoaded', async function () {
-    console.log("📄 Page chargée, début de l'initialisation...");
 
     const inputs = document.querySelectorAll('input, button, select');
     inputs.forEach(input => input.disabled = true);
@@ -24,18 +23,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     let excelLoaded = false;
     for (const excelPath of excelPaths) {
         try {
-            console.log(`🔍 Tentative chargement Excel: ${excelPath}`);
 
             if (window.csvLoader && typeof window.csvLoader.
                 Data === 'function') {
                 const excelData = await window.csvLoader.loadExcelData(excelPath);
                 if (excelData && excelData.length > 0) {
-                    console.log(`✅ Excel chargé avec succès: ${excelData.length} analyses depuis ${excelPath}`);
                     excelLoaded = true;
                     break;
                 }
             } else {
-                console.log(`⏳ ExcelLoader pas encore disponible, attente...`);
                 await new Promise(resolve => setTimeout(resolve, 100));
                 continue;
             }
@@ -65,7 +61,6 @@ async function rechercher(data) {
     try {
         const isReady = await window.pageInitializer.ensureReady();
         if (!isReady) {
-            console.log('❌ Page pas prête pour la recherche');
             return;
         }
 

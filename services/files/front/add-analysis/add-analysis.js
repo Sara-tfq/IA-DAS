@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Fonction pour envoyer les requêtes SPARQL au serveur - VERSION CORRIGÉE
     // Fonction pour envoyer les requêtes SPARQL au serveur - VERSION COMPLÈTEMENT CORRIGÉE
     async function sendToServer(formData, sparqlQueries) {
-        console.log('🚀 Envoi au serveur...');
+        console.log(' Envoi au serveur...');
 
         // ✅ CORRECTION : URL cohérente avec endpoint correct
         const serverURL = window.location.hostname === 'localhost'
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
             sparqlQueries: sparqlQueries
         };
 
-        console.log('📤 Payload à envoyer:', {
+        console.log('Payload à envoyer:', {
             serverURL: serverURL,
             formDataKeys: Object.keys(formData),
             queryCount: Object.keys(sparqlQueries).length,
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const responseData = await response.json();
 
-            console.log('📨 Réponse serveur:', {
+            console.log(' Réponse serveur:', {
                 status: response.status,
                 success: responseData.success,
                 message: responseData.message
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
         } catch (error) {
-            console.error('💥 Erreur réseau:', error);
+            console.error(' Erreur réseau:', error);
             throw new Error(`Erreur de connexion au serveur: ${error.message}`);
         }
     }
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             console.log('Requêtes SPARQL générées avec succès:');
             Object.keys(sparqlQueries).forEach(name => {
-                console.log(`✅ ${name}`);
+                console.log(` ${name}`);
             });
 
             // Envoyer au serveur
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             sendToServer(data, sparqlQueries)
                 .then(result => {
-                    console.log('🎉 Réponse finale du serveur:', result);
+                    console.log(' Réponse finale du serveur:', result);
 
                     if (result.success) {
                         // Succès complet
@@ -274,7 +274,7 @@ Vérifiez la console pour plus de détails.`;
                     }
                 })
                 .catch(error => {
-                    console.error('💥 Erreur lors de l\'envoi:', error);
+                    console.error(' Erreur lors de l\'envoi:', error);
                     alert(`Erreur de connexion au serveur:
                     
 ${error.message}

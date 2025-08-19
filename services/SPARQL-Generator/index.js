@@ -17,12 +17,12 @@ let warmupPromise = null;
 // 🔥 WARMUP AU DÉMARRAGE DU SERVICE
 async function performStartupWarmup() {
   if (warmupInProgress || isFusekiWarmed) {
-    console.log('⏭️ Warmup déjà fait ou en cours - skip');
+    console.log(' Warmup déjà fait ou en cours - skip');
     return true;
   }
 
   warmupInProgress = true;
-  console.log('\n🔥 === WARMUP AU DÉMARRAGE DU SPARQL GENERATOR ===');
+  console.log('\n === WARMUP AU DÉMARRAGE DU SPARQL GENERATOR ===');
 
   const fusekiEndpoint = 'http://fuseki:3030/ds/sparql';
   const startTime = Date.now();
@@ -197,7 +197,7 @@ LIMIT 500`,
   let successCount = 0;
 
   for (const [index, warmupQuery] of warmupQueries.entries()) {
-    console.log(`\n🎯 [${index + 1}/${warmupQueries.length}] ${warmupQuery.name}`);
+    console.log(`\n [${index + 1}/${warmupQueries.length}] ${warmupQuery.name}`);
 
     const queryStart = Date.now();
 
@@ -206,16 +206,15 @@ LIMIT 500`,
       const queryTime = Date.now() - queryStart;
       const resultCount = data.results?.bindings?.length || 0;
 
-      console.log(`   ✅ Succès: ${resultCount} résultats en ${queryTime}ms`);
+      console.log(`   Succès: ${resultCount} résultats en ${queryTime}ms`);
       successCount++;
-
     } catch (error) {
       const queryTime = Date.now() - queryStart;
-      console.log(`   ❌ Échec: ${error.message} (${queryTime}ms)`);
+      console.log(`    Échec: ${error.message} (${queryTime}ms)`);
 
       // Si le test de connexion échoue, on attend un peu
       if (index === 0) {
-        console.log('   ⏳ Fuseki pas encore prêt - attente 5s...');
+        console.log('    Fuseki pas encore prêt - attente 5s...');
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
@@ -228,17 +227,17 @@ LIMIT 500`,
 
   const totalTime = Date.now() - startTime;
 
-  console.log(`\n🔥 === BILAN WARMUP DÉMARRAGE ===`);
-  console.log(`   ✅ Succès: ${successCount}/${warmupQueries.length} requêtes`);
-  console.log(`   ⏱️ Temps total: ${(totalTime / 1000).toFixed(1)}s`);
+  console.log(`\n === BILAN WARMUP DÉMARRAGE ===`);
+  console.log(`    Succès: ${successCount}/${warmupQueries.length} requêtes`);
+  console.log(`    Temps total: ${(totalTime / 1000).toFixed(1)}s`);
 
   if (successCount >= 4) { // Au moins 4/6 requêtes réussies
     isFusekiWarmed = true;
-    console.log(`   🚀 FUSEKI EST MAINTENANT CHAUD !`);
-    console.log(`   🎯 Plus de warmup nécessaire pour les requêtes suivantes`);
-    console.log(`   ⚡ Performance optimale garantie`);
+    console.log(`    FUSEKI EST MAINTENANT CHAUD !`);
+    console.log(`    Plus de warmup nécessaire pour les requêtes suivantes`);
+    console.log(`    Performance optimale garantie`);
   } else {
-    console.log(`   ⚠️ Warmup insuffisant (${successCount}/${warmupQueries.length}) - warmup par requête activé`);
+    console.log(`    Warmup insuffisant (${successCount}/${warmupQueries.length}) - warmup par requête activé`);
   }
 
   warmupInProgress = false;
@@ -247,22 +246,20 @@ LIMIT 500`,
 
 // Fonction pour générer les requêtes SPARQL de hiérarchie
 function generateHierarchyQuery(conceptLabel) {
-  console.log("🌳 === GÉNÉRATEUR DE REQUÊTES HIÉRARCHIE ===");
-  console.log("📝 Concept reçu:", conceptLabel);
-  console.log("🔍 Type:", typeof conceptLabel);
+ 
   
   // Vérifications de base
   if (!conceptLabel || conceptLabel.trim() === '') {
-    console.error("❌ ERREUR: conceptLabel est vide !");
+    console.error(" ERREUR: conceptLabel est vide !");
     throw new Error("Concept label requis pour la requête hiérarchie");
   }
   
   // Fonction automatique de mapping label → URI ontologique
-  console.log("🤖 Génération automatique de l'URI...");
+  console.log(" Génération automatique de l'URI...");
   
   let conceptUri = generateAutomaticUri(conceptLabel);
   
-  console.log(`✅ URI généré: ${conceptLabel} → ${conceptUri}`);
+  console.log(` URI généré: ${conceptLabel} → ${conceptUri}`);
   
   // Générer la requête SPARQL complète
   const prefixes = `
@@ -310,25 +307,13 @@ SELECT ?concept ?conceptLabel ?relation ?related ?relatedLabel WHERE {
 ORDER BY ?relation ?conceptLabel
 LIMIT 50`;
 
-  console.log("📊 === RÉSUMÉ GÉNÉRATION HIÉRARCHIE ===");
-  console.log(`🎯 Concept original: "${conceptLabel}"`);
-  console.log(`🔗 URI ontologique: ${conceptUri}`);
-  console.log(`📏 Longueur requête: ${query.length} caractères`);
-  console.log(`🔍 Recherche parents: ✅`);
-  console.log(`🔍 Recherche enfants: ✅`);
-  console.log(`🔍 Concept self: ✅`);
-  console.log(`⚡ Limite: 50 résultats`);
-  
-  console.log("📝 === REQUÊTE SPARQL HIÉRARCHIE GÉNÉRÉE ===");
-  console.log(query);
-  console.log("=" .repeat(80));
+
   
   return query;
 }
 
 // Fonction automatique pour générer les URIs ontologiques
 function generateAutomaticUri(label) {
-  console.log(`🤖 Génération automatique URI pour: "${label}"`);
   
   if (!label || label.trim() === '') {
     throw new Error("Label vide pour génération URI");
@@ -368,7 +353,6 @@ function generateAutomaticUri(label) {
   
   const finalUri = camelCaseWords.join('');
   
-  console.log(`   📝 Étapes: "${label}" → "${cleanLabel}" → "${finalUri}"`);
   
   return `iadas:${finalUri}`;
 }
@@ -388,7 +372,6 @@ function testAutomaticMapping() {
     "Hours Spent on Social Media"
   ];
   
-  console.log("🧪 Test automatique des mappings:");
   testCases.forEach(label => {
     const uri = generateAutomaticUri(label);
     console.log(`   "${label}" → ${uri}`);
@@ -399,30 +382,25 @@ function testAutomaticMapping() {
 async function warmupFuseki(endpoint) {
   // Si déjà warm, skip
   if (isFusekiWarmed) {
-    console.log('⚡ WARMUP SKIPPÉ - Fuseki déjà chaud depuis le démarrage !');
     return true;
   }
 
   // Si warmup en cours, attendre qu'il finisse
   if (warmupInProgress && warmupPromise) {
-    console.log('⏳ Warmup en cours - attente de la fin...');
     return await warmupPromise;
   }
 
-  console.log('🔥 WARMUP de Fuseki avec requête fallback...');
   const warmupQuery = generateFallbackQuery();
 
   try {
     const result = await executeWithRetry(endpoint, warmupQuery, 2);
     const resultCount = result.results?.bindings?.length || 0;
-    console.log(`✅ Fuseki est réveillé et opérationnel (${resultCount} résultats warmup)`);
 
     // Marquer comme warm même si ce n'était qu'un mini-warmup
     isFusekiWarmed = true;
     return true;
 
   } catch (error) {
-    console.error('❌ Warmup échoué même avec retry:', error.message);
     return false;
   }
 }
@@ -468,7 +446,6 @@ async function executeWithRetry(endpoint, query, maxRetries = MAX_RETRIES) {
 
 function generateSparqlQuery(filters) {
   console.log("=== SPARQL GENERATOR avec FILTRES MIN/MAX CORRIGÉS ===");
-  console.log("📥 Filtres reçus:", JSON.stringify(filters, null, 2));
 
   const prefixes = `
 PREFIX iadas: <http://ia-das.org/onto#>
@@ -512,7 +489,6 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?meanAgeStr) AS ?meanAge)
     FILTER(?meanAge >= ${minAge} && ?meanAge <= ${maxAge})`;
 
-    console.log(`✅ Filtre âge moyen: ${moyenne} ± 1 = [${minAge}, ${maxAge}]`);
 
   } else if (filters.minAge !== undefined || filters.maxAge !== undefined) {
     // Cas normal : filtrer sur les VRAIES propriétés minAge/maxAge
@@ -531,7 +507,6 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?maxAgeStr) AS ?maxAge)
     FILTER(?minAge >= ${filters.minAge} && ?maxAge <= ${filters.maxAge})`;
 
-      console.log(`✅ Filtre plage d'âge: population dans [${filters.minAge}, ${filters.maxAge}] ans`);
 
     } else if (filters.minAge !== undefined) {
       // Seulement minAge
@@ -540,7 +515,6 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?minAgeStr) AS ?minAge)
     FILTER(?minAge >= ${filters.minAge})`;
 
-      console.log(`✅ Filtre âge minimum: minAge >= ${filters.minAge}`);
 
     } else if (filters.maxAge !== undefined) {
       // Seulement maxAge
@@ -549,7 +523,6 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?maxAgeStr) AS ?maxAge)
     FILTER(?maxAge <= ${filters.maxAge})`;
 
-      console.log(`✅ Filtre âge maximum: maxAge <= ${filters.maxAge}`);
     }
   }
 
@@ -573,7 +546,6 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?meanExFRStr) AS ?meanExFR)
     FILTER(?meanExFR >= ${minFreq} && ?meanExFR <= ${maxFreq})`;
 
-    console.log(`✅ Filtre fréquence moyenne: ${moyenne} ± 1 = [${minFreq}, ${maxFreq}]`);
 
   } else if (filters.minExFR !== undefined || filters.maxExFR !== undefined) {
     // Cas normal : filtrer sur les VRAIES propriétés minExFR/maxExFR
@@ -595,7 +567,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?maxExFRStr) AS ?maxExFR)
     FILTER(?minExFR >= ${filters.minExFR} && ?maxExFR <= ${filters.maxExFR})`;
 
-      console.log(`✅ Filtre plage fréquence: population dans [${filters.minExFR}, ${filters.maxExFR}] h/sem`);
+      console.log(` Filtre plage fréquence: population dans [${filters.minExFR}, ${filters.maxExFR}] h/sem`);
 
     } else if (filters.minExFR !== undefined) {
       // Seulement minExFR
@@ -604,7 +576,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?minExFRStr) AS ?minExFR)
     FILTER(?minExFR >= ${filters.minExFR})`;
 
-      console.log(`✅ Filtre fréquence minimum: minExFR >= ${filters.minExFR}`);
+      console.log(` Filtre fréquence minimum: minExFR >= ${filters.minExFR}`);
 
     } else if (filters.maxExFR !== undefined) {
       // Seulement maxExFR
@@ -613,7 +585,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?maxExFRStr) AS ?maxExFR)
     FILTER(?maxExFR <= ${filters.maxExFR})`;
 
-      console.log(`✅ Filtre fréquence maximum: maxExFR <= ${filters.maxExFR}`);
+      console.log(` Filtre fréquence maximum: maxExFR <= ${filters.maxExFR}`);
     }
   }
 
@@ -636,7 +608,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?meanYOEStr) AS ?meanYOE)
     FILTER(?meanYOE >= ${minExp} && ?meanYOE <= ${maxExp})`;
 
-    console.log(`✅ Filtre expérience moyenne: ${moyenne} ± 1 = [${minExp}, ${maxExp}]`);
+    console.log(` Filtre expérience moyenne: ${moyenne} ± 1 = [${minExp}, ${maxExp}]`);
 
   } else if (filters.minYOE !== undefined || filters.maxYOE !== undefined) {
     // Cas normal : filtrer sur les VRAIES propriétés minYOE/maxYOE
@@ -658,7 +630,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?maxYOEStr) AS ?maxYOE)
     FILTER(?minYOE >= ${filters.minYOE} && ?maxYOE <= ${filters.maxYOE})`;
 
-      console.log(`✅ Filtre plage expérience: population dans [${filters.minYOE}, ${filters.maxYOE}] ans`);
+      console.log(` Filtre plage expérience: population dans [${filters.minYOE}, ${filters.maxYOE}] ans`);
 
     } else if (filters.minYOE !== undefined) {
       // Seulement minYOE
@@ -667,7 +639,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?minYOEStr) AS ?minYOE)
     FILTER(?minYOE >= ${filters.minYOE})`;
 
-      console.log(`✅ Filtre expérience minimum: minYOE >= ${filters.minYOE}`);
+      console.log(` Filtre expérience minimum: minYOE >= ${filters.minYOE}`);
 
     } else if (filters.maxYOE !== undefined) {
       // Seulement maxYOE
@@ -676,7 +648,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     BIND(xsd:decimal(?maxYOEStr) AS ?maxYOE)
     FILTER(?maxYOE <= ${filters.maxYOE})`;
 
-      console.log(`✅ Filtre expérience maximum: maxYOE <= ${filters.maxYOE}`);
+      console.log(` Filtre expérience maximum: maxYOE <= ${filters.maxYOE}`);
     }
   }
 
@@ -693,7 +665,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     }
     query += `
     ?population iadas:gender "${filters.gender}" .`;
-    console.log("✅ Filtre genre ajouté:", filters.gender);
+    console.log(" Filtre genre ajouté:", filters.gender);
   }
 
   // Filtre catégorie VD
@@ -702,7 +674,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     # Filtrer sur les VD de catégorie
     ?variableVD iadas:hasCategory "${filters.categoryVD}" .`;
-    console.log("✅ Filtre catégorie VD ajouté:", filters.categoryVD);
+    console.log(" Filtre catégorie VD ajouté:", filters.categoryVD);
   }
 
   // Filtre catégorie VI 
@@ -711,7 +683,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     # Filtrer sur les VI de catégorie spécifique
     FILTER(?categoryVI = "${filters.categoryVI}")`;
-    console.log("✅ Filtre catégorie VI ajouté:", filters.categoryVI);
+    console.log(" Filtre catégorie VI ajouté:", filters.categoryVI);
   }
 
   // Filtre sport
@@ -722,7 +694,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     ?analysis iadas:hasSport ?sport .
     ?sport iadas:sportName ?sportName .
     FILTER(CONTAINS(LCASE(?sportName), "${filters.sportType.toLowerCase()}"))`;
-    console.log("✅ Filtre sport ajouté:", filters.sportType);
+    console.log(" Filtre sport ajouté:", filters.sportType);
   }
 
   // Filtre VI spécifique
@@ -731,7 +703,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     # Filtrer sur VI spécifique
     FILTER(?vi = "${filters.selectedVI}")`;
-    console.log("✅ Filtre VI spécifique ajouté:", filters.selectedVI);
+    console.log(" Filtre VI spécifique ajouté:", filters.selectedVI);
   }
 
   // Filtre VD spécifique
@@ -740,7 +712,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     # Filtrer sur VD spécifique
     FILTER(?vd = "${filters.selectedVD}")`;
-    console.log("✅ Filtre VD spécifique ajouté:", filters.selectedVD);
+    console.log(" Filtre VD spécifique ajouté:", filters.selectedVD);
   }
 
   // Filtre résultat relation
@@ -750,7 +722,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     # Filtrer sur résultat de relation spécifique
     ?relation iadas:resultatRelation "${filters.relationDirection}" .
     BIND("${filters.relationDirection}" AS ?resultatRelation)`;
-    console.log("✅ Filtre relation ajouté:", filters.relationDirection);
+    console.log(" Filtre relation ajouté:", filters.relationDirection);
   } else {
     // Récupérer tous les résultats de relation
     query += `
@@ -781,12 +753,12 @@ ORDER BY ?analysis`;
   if (activeFilters === 0) {
     query += `
 LIMIT 1500`;
-    console.log("⚠️ Aucun filtre actif - LIMIT 1500 ajouté");
+    console.log(" Aucun filtre actif - LIMIT 1500 ajouté");
   } else {
-    console.log(`✅ ${activeFilters} filtres actifs détectés - pas de LIMIT ajouté`);
+    console.log(`${activeFilters} filtres actifs détectés - pas de LIMIT ajouté`);
   }
 
-  console.log("📝 REQUÊTE GÉNÉRÉE :");
+  console.log(" REQUÊTE GÉNÉRÉE :");
   console.log(query);
 
   return query;
@@ -794,8 +766,8 @@ LIMIT 1500`;
 
 // Fonction pour exécuter une requête SPARQL UPDATE
 async function executeSparqlUpdate(sparqlQuery) {
-  console.log('🔄 Exécution requête SPARQL UPDATE...');
-  console.log('📝 Requête:', sparqlQuery.substring(0, 200) + '...');
+  console.log(' Exécution requête SPARQL UPDATE...');
+  console.log(' Requête:', sparqlQuery.substring(0, 200) + '...');
 
   try {
     const response = await fetch(FUSEKI_UPDATE_URL, {
@@ -809,11 +781,11 @@ async function executeSparqlUpdate(sparqlQuery) {
       timeout: FUSEKI_TIMEOUT
     });
 
-    console.log(`📨 Réponse UPDATE: Status ${response.status}`);
+    console.log(` Réponse UPDATE: Status ${response.status}`);
 
     if (response.ok) {
       const responseText = await response.text();
-      console.log('✅ UPDATE réussi:', responseText || 'Success');
+      console.log(' UPDATE réussi:', responseText || 'Success');
       return {
         success: true,
         message: responseText || 'Update successful',
@@ -821,35 +793,35 @@ async function executeSparqlUpdate(sparqlQuery) {
       };
     } else {
       const errorText = await response.text();
-      console.error('❌ Erreur UPDATE:', errorText);
+      console.error(' Erreur UPDATE:', errorText);
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 
   } catch (error) {
-    console.error('💥 Erreur lors de l\'UPDATE:', error.message);
+    console.error('Erreur lors de l\'UPDATE:', error.message);
     throw error;
   }
 }
 
 // Fonction pour exécuter plusieurs requêtes UPDATE en séquence
 async function executeMultipleSparqlUpdates(queries) {
-  console.log(`🔄 Exécution de ${Object.keys(queries).length} requêtes UPDATE...`);
+  console.log(` Exécution de ${Object.keys(queries).length} requêtes UPDATE...`);
 
   const results = {};
   const errors = [];
 
   for (const [queryName, query] of Object.entries(queries)) {
     try {
-      console.log(`\n🎯 Exécution: ${queryName}`);
+      console.log(`\n Exécution: ${queryName}`);
       const result = await executeSparqlUpdate(query);
       results[queryName] = result;
-      console.log(`✅ ${queryName}: Succès`);
+      console.log(` ${queryName}: Succès`);
 
       // Petit délai entre les requêtes pour éviter la surcharge
       await new Promise(resolve => setTimeout(resolve, 200));
 
     } catch (error) {
-      console.error(`❌ ${queryName}: Échec -`, error.message);
+      console.error(` ${queryName}: Échec -`, error.message);
       errors.push({
         queryName: queryName,
         error: error.message,
@@ -868,35 +840,30 @@ async function executeMultipleSparqlUpdates(queries) {
 }
 
 function generateCompetenceQuery(questionId) {
-  console.log("🚀 === GÉNÉRATEUR DE REQUÊTES DE COMPÉTENCE DÉMARRÉ ===");
-  console.log("⏰ Timestamp:", new Date().toISOString());
-  console.log("📝 Question ID reçue:", questionId);
-  console.log("🔍 Type de questionId:", typeof questionId);
-  console.log("🔍 QuestionId vide ?", questionId === null || questionId === undefined || questionId === '');
 
   // Vérifications de base
   if (!questionId) {
-    console.error("❌ ERREUR: questionId est vide/null/undefined !");
-    console.log("🔧 Tentative de récupération d'un ID par défaut...");
+    console.error(" ERREUR: questionId est vide/null/undefined !");
+    console.log(" Tentative de récupération d'un ID par défaut...");
     questionId = 'q1'; // Fallback
-    console.log("✅ ID par défaut assigné:", questionId);
+    console.log(" ID par défaut assigné:", questionId);
   }
 
   const prefixes = `
 PREFIX iadas: <http://ia-das.org/onto#>
 PREFIX iadas-data: <http://ia-das.org/data#>`;
 
-  console.log("📋 Prefixes SPARQL définis");
+  console.log(" Prefixes SPARQL définis");
 
   let query = '';
   let selectedCase = 'aucun';
   let expectedResults = 'inconnu';
 
-  console.log("🔄 Entrée dans le switch avec questionId:", questionId);
+  console.log(" Entrée dans le switch avec questionId:", questionId);
 
   switch (questionId) {
     case 'q1':
-      console.log("✅ CASE Q1 DÉTECTÉ: Pour une ACAD spécifique, facteurs psychosociaux");
+      console.log(" CASE Q1 DÉTECTÉ: Pour une ACAD spécifique, facteurs psychosociaux");
       selectedCase = 'q1 - ACAD → Facteurs psychosociaux';
       expectedResults = '800-1000 relations (toutes catégories)';
 
@@ -930,7 +897,7 @@ LIMIT 1000`;
       break;
 
     case 'q2-protecteur':
-      console.log("✅ CASE Q2-PROTECTEUR DÉTECTÉ: Facteurs protecteurs → ACAD");
+      console.log(" CASE Q2-PROTECTEUR DÉTECTÉ: Facteurs protecteurs → ACAD");
       selectedCase = 'q2-protecteur - Facteurs protecteurs UNIQUEMENT';
       expectedResults = '200-400 relations avec resultatRelation = "-"';
 
@@ -959,7 +926,7 @@ LIMIT 500`;
       break;
 
     case 'q2-risque':
-      console.log("✅ CASE Q2-RISQUE DÉTECTÉ: Facteurs de risque → ACAD");
+      console.log(" CASE Q2-RISQUE DÉTECTÉ: Facteurs de risque → ACAD");
       selectedCase = 'q2-risque - Facteurs de risque UNIQUEMENT';
       expectedResults = '300-600 relations avec resultatRelation = "+"';
 
@@ -988,7 +955,7 @@ LIMIT 500`;
       break;
 
     case 'q2-ambigu':
-      console.log("✅ CASE Q2-AMBIGU DÉTECTÉ: Facteurs ambigus → ACAD");
+      console.log(" CASE Q2-AMBIGU DÉTECTÉ: Facteurs ambigus → ACAD");
       selectedCase = 'q2-ambigu - Facteurs ambigus UNIQUEMENT';
       expectedResults = '100-300 relations avec resultatRelation = "NS"';
 
@@ -1017,7 +984,7 @@ LIMIT 500`;
       break;
 
     case 'q3-socioenvironnementaux':
-      console.log("✅ CASE Q3-SOCIO DÉTECTÉ: Facteurs socio-environnementaux → ACAD");
+      console.log(" CASE Q3-SOCIO DÉTECTÉ: Facteurs socio-environnementaux → ACAD");
       selectedCase = 'q3-socioenvironnementaux - Catégorie Sociocultural factor related to DEAB';
       expectedResults = '50-150 relations de cette catégorie';
 
@@ -1046,7 +1013,7 @@ LIMIT 300`;
       break;
 
     case 'q3-autres':
-      console.log("✅ CASE Q3-AUTRES DÉTECTÉ: Autres comportements → ACAD");
+      console.log(" CASE Q3-AUTRES DÉTECTÉ: Autres comportements → ACAD");
       selectedCase = 'q3-autres - Catégorie Other behaviors';
       expectedResults = '50-100 relations de cette catégorie';
 
@@ -1075,9 +1042,9 @@ LIMIT 300`;
       break;
 
     default:
-      console.error("❌ CASE DEFAULT DÉCLENCHÉ !");
-      console.error("❌ Question ID non reconnue:", questionId);
-      console.error("❌ Valeurs possibles attendues:");
+      console.error(" CASE DEFAULT DÉCLENCHÉ !");
+      console.error(" Question ID non reconnue:", questionId);
+      console.error(" Valeurs possibles attendues:");
       console.error("   - q1, q2-protecteur, q2-risque, q2-ambigu");
       console.error("   - q3-intrapersonnels, q3-interpersonnels");
       console.error("   - q3-socioenvironnementaux, q3-autres");
@@ -1110,21 +1077,7 @@ LIMIT 200`;
       break;
   }
 
-  // Logs de résumé
-  console.log("📊 === RÉSUMÉ DE LA GÉNÉRATION ===");
-  console.log("🎯 Case sélectionné:", selectedCase);
-  console.log("📈 Résultats attendus:", expectedResults);
-  console.log("📏 Longueur de la requête:", query.length, "caractères");
-  console.log("🔍 Requête contient LIMIT ?", query.includes('LIMIT'));
-  console.log("🔍 Requête contient DISTINCT ?", query.includes('DISTINCT'));
-  console.log("🔍 Requête contient des filtres ?", query.includes('FILTRE SPÉCIFIQUE') || query.includes('iadas:resultatRelation'));
 
-  console.log("📝 === REQUÊTE SPARQL GÉNÉRÉE ===");
-  console.log(query);
-  console.log("=" * 80);
-  console.log("🎯 Fin de génération pour questionId:", questionId);
-  console.log("⏰ Timestamp fin:", new Date().toISOString());
-  console.log("=" * 80);
 
   return query;
 }
@@ -1146,7 +1099,7 @@ function getFilterDescription(questionId) {
 
 // Fonction de fallback simplifiée
 function generateFallbackQuery() {
-  console.log("🚨 GÉNÉRATION REQUÊTE DE FALLBACK");
+  console.log(" GÉNÉRATION REQUÊTE DE FALLBACK");
 
   return `
 PREFIX iadas: <http://ia-das.org/onto#>
@@ -1192,11 +1145,11 @@ http.createServer(async (req, res) => {
       const startTime = Date.now();
 
       try {
-        console.log('\n🚀 === DÉBUT UPDATE ANALYSIS ===');
-        console.log('⏰ Timestamp:', new Date().toISOString());
+        console.log('\n=== DÉBUT UPDATE ANALYSIS ===');
+        console.log('Timestamp:', new Date().toISOString());
 
         const requestData = JSON.parse(body);
-        console.log('📥 Données reçues:', {
+        console.log(' Données reçues:', {
           hasFormData: !!requestData.formData,
           hasSparqlQueries: !!requestData.sparqlQueries,
           queryCount: requestData.sparqlQueries ? Object.keys(requestData.sparqlQueries).length : 0
@@ -1208,20 +1161,15 @@ http.createServer(async (req, res) => {
         }
 
         const queries = requestData.sparqlQueries;
-        console.log('📋 Requêtes à exécuter:', Object.keys(queries));
 
         // Exécuter toutes les requêtes UPDATE
         const updateResults = await executeMultipleSparqlUpdates(queries);
 
         const totalTime = Date.now() - startTime;
 
-        console.log('\n📊 RÉSULTATS UPDATE:');
-        console.log(`   ✅ Succès: ${updateResults.successCount}/${updateResults.totalQueries}`);
-        console.log(`   ❌ Erreurs: ${updateResults.errorCount}`);
-        console.log(`   ⏱️ Temps total: ${totalTime}ms`);
+        
 
         if (updateResults.errors.length > 0) {
-          console.log('\n❌ DÉTAIL DES ERREURS:');
           updateResults.errors.forEach(err => {
             console.log(`   - ${err.queryName}: ${err.error}`);
           });
@@ -1267,7 +1215,7 @@ http.createServer(async (req, res) => {
 
       } catch (error) {
         const totalTime = Date.now() - startTime;
-        console.error('\n💥 ERREUR CRITIQUE UPDATE ANALYSIS:');
+        console.error('\n ERREUR CRITIQUE UPDATE ANALYSIS:');
         console.error(`   Message: ${error.message}`);
         console.error(`   Temps écoulé: ${totalTime}ms`);
 
@@ -1294,89 +1242,85 @@ http.createServer(async (req, res) => {
 
       try {
         const requestPayload = JSON.parse(body);
-        console.log("🚀 DÉBUT DU TRAITEMENT");
-        console.log("⏰ Timestamp:", new Date().toISOString());
+        console.log(" DÉBUT DU TRAITEMENT");
+        console.log(" Timestamp:", new Date().toISOString());
 
         // Configuration Fuseki
         const fusekiEndpoint = 'http://fuseki:3030/ds/sparql';
 
-        console.log("🔄 Détermination du type de requête...");
-        console.log("🔍 queryType détecté:", requestPayload.queryType);
-
+       
         if (requestPayload.queryType === 'predefined_competence') {
-          console.log("🎯 REQUÊTE DE COMPÉTENCE PRÉDÉFINIE");
-          console.log("📝 Question ID:", requestPayload.questionId);
-
+        
           sparqlQuery = generateCompetenceQuery(requestPayload.questionId);
 
           if (!sparqlQuery) {
             throw new Error(`Question de compétence non reconnue: ${requestPayload.questionId}`);
           }
 
-          console.log("✅ Requête de compétence générée avec succès");
-          console.log("📏 Longueur de la requête:", sparqlQuery.length, "caractères");
+          console.log(" Requête de compétence générée avec succès");
+          console.log(" Longueur de la requête:", sparqlQuery.length, "caractères");
 
         } else if (requestPayload.queryType === 'raw_sparql') {
-          console.log("⚡ REQUÊTE SPARQL BRUTE");
+          console.log(" REQUÊTE SPARQL BRUTE");
 
           sparqlQuery = requestPayload.rawSparqlQuery;
-          console.log("✅ Requête SPARQL brute utilisée");
+          console.log(" Requête SPARQL brute utilisée");
 
         } else if (requestPayload.queryType === 'hierarchy') {
-          console.log("🌳 REQUÊTE HIÉRARCHIE");
-          console.log("📝 Concept:", requestPayload.concept);
+          console.log(" REQUÊTE HIÉRARCHIE");
+          console.log(" Concept:", requestPayload.concept);
 
           sparqlQuery = generateHierarchyQuery(requestPayload.concept);
 
         } else {
-          console.log("🔍 REQUÊTE DE RECHERCHE NORMALE (avec filtres)");
+          console.log("REQUÊTE DE RECHERCHE NORMALE (avec filtres)");
 
           // Utiliser generateSparqlQuery SEULEMENT pour les requêtes normales
           sparqlQuery = generateSparqlQuery(requestPayload);
-          console.log("✅ Requête avec filtres générée");
+          console.log(" Requête avec filtres générée");
         }
 
-        console.log("✅ Type final de requête déterminé");
-        console.log("✅ Requête finale prête pour exécution");
+        console.log(" Type final de requête déterminé");
+        console.log(" Requête finale prête pour exécution");
 
         // 🔥 WARMUP CONDITIONNEL (seulement si pas fait au démarrage)
         if (!isFusekiWarmed) {
-          console.log("🔥 WARMUP NÉCESSAIRE - Fuseki pas encore chaud...");
+          console.log("WARMUP NÉCESSAIRE - Fuseki pas encore chaud...");
           const warmupSuccess = await warmupFuseki(fusekiEndpoint);
           if (!warmupSuccess) {
-            console.log("⚠️ Warmup échoué - on continue quand même...");
+            console.log(" Warmup échoué - on continue quand même...");
           } else {
-            console.log("✅ Warmup réussi - Fuseki est prêt !");
+            console.log(" Warmup réussi - Fuseki est prêt !");
           }
         } else {
-          console.log("⚡ WARMUP SKIPPÉ - Fuseki déjà chaud depuis le démarrage !");
+          console.log(" WARMUP SKIPPÉ - Fuseki déjà chaud depuis le démarrage !");
         }
 
         if (!sparqlQuery || sparqlQuery.trim() === '') {
           throw new Error("Requête SPARQL vide générée");
         }
 
-        console.log("🎯 Exécution requête principale...");
+        console.log(" Exécution requête principale...");
 
         let data;
         try {
           data = await executeWithRetry(fusekiEndpoint, sparqlQuery, MAX_RETRIES);
 
         } catch (mainError) {
-          console.log("🚨 TENTATIVE FALLBACK après échec principal...");
+          console.log(" TENTATIVE FALLBACK après échec principal...");
 
           try {
             // Essayer la requête fallback
             const fallbackQuery = generateFallbackQuery();
             data = await executeWithRetry(fusekiEndpoint, fallbackQuery, 2);
             usedFallback = true;
-            console.log("✅ FALLBACK RÉUSSI");
+            console.log(" FALLBACK RÉUSSI");
 
             // Ajouter un warning
             data.warning = "Requête simplifiée utilisée à cause d'un timeout";
 
           } catch (fallbackError) {
-            console.error("❌ FALLBACK AUSSI ÉCHOUÉ:", fallbackError.message);
+            console.error(" FALLBACK AUSSI ÉCHOUÉ:", fallbackError.message);
             throw mainError; // Relancer l'erreur principale
           }
         }
@@ -1384,16 +1328,16 @@ http.createServer(async (req, res) => {
         const queryTime = Date.now() - startTime;
         const resultCount = data.results?.bindings?.length || 0;
 
-        console.log("🎉 SUCCÈS COMPLET!");
-        console.log(`📊 Résultats trouvés: ${resultCount}`);
-        console.log(`⏱️ Temps total: ${queryTime}ms`);
+        console.log(" SUCCÈS COMPLET!");
+        console.log(` Résultats trouvés: ${resultCount}`);
+        console.log(` Temps total: ${queryTime}ms`);
 
         if (resultCount > 0) {
           const firstResult = data.results.bindings[0];
           const availableVars = Object.keys(firstResult);
           const expectedVars = ['analysis', 'vi', 'vd', 'categoryVI', 'categoryVD', 'mediator', 'moderator', 'resultatRelation'];
 
-          console.log("🔍 VÉRIFICATION COMPATIBILITÉ PARSER:");
+          console.log(" VÉRIFICATION COMPATIBILITÉ PARSER:");
           console.log(`   Variables disponibles: ${availableVars.join(', ')}`);
           console.log(`   Variables attendues: ${expectedVars.join(', ')}`);
 
@@ -1413,7 +1357,6 @@ http.createServer(async (req, res) => {
             };
           });
 
-          console.log("📈 COMPLÉTUDE DES DONNÉES:");
           Object.entries(stats).forEach(([varName, stat]) => {
             console.log(`   ${varName}: ${stat.count}/${resultCount} (${stat.percentage}%)`);
           });
@@ -1437,7 +1380,7 @@ http.createServer(async (req, res) => {
 
       } catch (err) {
         const totalTime = Date.now() - startTime;
-        console.error("💥 ERREUR CRITIQUE FINALE:");
+        console.error(" ERREUR CRITIQUE FINALE:");
         console.error(`   Message: ${err.message}`);
         console.error(`   Temps écoulé: ${totalTime}ms`);
 
@@ -1478,17 +1421,7 @@ http.createServer(async (req, res) => {
     res.end('Méthode non autorisée');
   }
 }).listen(8003, '0.0.0.0', () => {
-  console.log("🚀 SPARQL Generator avec WARMUP AU DÉMARRAGE - Port 8003");
-  console.log("✨ Nouvelles fonctionnalités:");
-  console.log("   🔥 Warmup automatique AU DÉMARRAGE (une seule fois)");
-  console.log("   🔄 Système de retry intelligent (3 tentatives)");
-  console.log("   📊 Variables complètes pour le parser");
-  console.log("   🎯 Compatibilité totale avec SPARQLDataParser");
-  console.log("   ⚡ Skip warmup si déjà fait au démarrage");
-  console.log("   🛡️ Fallback automatique en cas d'échec");
-  console.log("   🆕 Endpoint UPDATE pour ajouter des analyses (/update-analysis)");
-  console.log("=" * 60);
+  
 
-  console.log("\n🔥 LANCEMENT DU WARMUP AU DÉMARRAGE...");
   warmupPromise = performStartupWarmup();
 });

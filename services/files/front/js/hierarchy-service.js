@@ -4,14 +4,11 @@ class HierarchyService {
       ? 'http://localhost:8003' 
       : 'http://51.44.188.162:8003';
     
-    console.log('🌳 HierarchyService initialisé avec endpoint:', this.endpoint);
   }
 
  
   async getHierarchy(conceptLabel) {
-    console.log(`🌳 === RÉCUPÉRATION HIÉRARCHIE ===`);
-    console.log(`📝 Concept demandé: "${conceptLabel}"`);
-    console.log(`🎯 Endpoint: ${this.endpoint}`);
+ 
     
     const startTime = Date.now();
     
@@ -21,7 +18,6 @@ class HierarchyService {
         throw new Error('Label de concept requis');
       }
       
-      console.log(`📤 Envoi requête hiérarchie...`);
       
       // Payload pour votre service SPARQL
       const payload = {
@@ -29,7 +25,6 @@ class HierarchyService {
         concept: conceptLabel.trim()
       };
       
-      console.log(`📋 Payload:`, payload);
       
       // Appel vers votre service (même logique que vos requêtes actuelles)
       const response = await fetch(this.endpoint, {
@@ -41,7 +36,6 @@ class HierarchyService {
       });
       
       const responseTime = Date.now() - startTime;
-      console.log(`📨 Réponse reçue en ${responseTime}ms - Status: ${response.status}`);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -49,20 +43,17 @@ class HierarchyService {
       }
       
       const sparqlData = await response.json();
-      console.log(`📊 Données SPARQL brutes:`, sparqlData);
       
       // Parser les données hiérarchiques
       const hierarchyData = this.parseHierarchyResponse(sparqlData, conceptLabel);
       
       const totalTime = Date.now() - startTime;
-      console.log(`✅ Hiérarchie récupérée avec succès en ${totalTime}ms`);
-      console.log(`📈 Résultat:`, hierarchyData);
       
       return hierarchyData;
       
     } catch (error) {
       const totalTime = Date.now() - startTime;
-      console.error(`❌ Erreur récupération hiérarchie après ${totalTime}ms:`, error);
+      console.error(` Erreur récupération hiérarchie après ${totalTime}ms:`, error);
       
       // Retourner une structure vide mais cohérente
       return {
@@ -83,17 +74,14 @@ class HierarchyService {
    * @returns {Object} - Structure hiérarchique parsée
    */
   parseHierarchyResponse(sparqlData, originalConcept) {
-    console.log(`🔍 === PARSING RÉPONSE HIÉRARCHIE ===`);
-    console.log(`📝 Concept original: "${originalConcept}"`);
+
     
     // Vérifier la structure de la réponse
     if (!sparqlData || !sparqlData.results || !sparqlData.results.bindings) {
-      console.warn(`⚠️ Structure SPARQL invalide:`, sparqlData);
       throw new Error('Structure de réponse SPARQL invalide');
     }
     
     const bindings = sparqlData.results.bindings;
-    console.log(`📊 Nombre de résultats: ${bindings.length}`);
     
     const parents = [];
     const children = [];
@@ -109,10 +97,7 @@ class HierarchyService {
       const related = binding.related?.value;
       const relatedLabel = binding.relatedLabel?.value || this.extractLabelFromUri(related);
       
-      console.log(`🔗 Relation: ${relation}`);
-      console.log(`📝 Concept: ${conceptLabel} (${concept})`);
-      console.log(`🎯 Related: ${relatedLabel} (${related})`);
-      
+     
       // Créer l'objet nœud
       const nodeData = {
         uri: related,
@@ -125,29 +110,22 @@ class HierarchyService {
       switch (relation) {
         case 'parent':
           parents.push(nodeData);
-          console.log(`   ↗️ Ajouté aux parents`);
           break;
           
         case 'child':
           children.push(nodeData);
-          console.log(`   ↘️ Ajouté aux enfants`);
           break;
           
         case 'self':
           self = nodeData;
-          console.log(`   🎯 Concept lui-même`);
           break;
           
         default:
-          console.warn(`   ⚠️ Type de relation inconnu: ${relation}`);
+          console.warn(`    Type de relation inconnu: ${relation}`);
       }
     });
     
-    // Statistiques finales
-    console.log(`\n📊 === STATISTIQUES PARSING ===`);
-    console.log(`👨‍👩‍👧‍👦 Parents trouvés: ${parents.length}`);
-    console.log(`👶 Enfants trouvés: ${children.length}`);
-    console.log(`🎯 Concept self: ${self ? 'Oui' : 'Non'}`);
+    
     
     if (parents.length > 0) {
       console.log(`   Parents: ${parents.map(p => p.label).join(', ')}`);
@@ -167,7 +145,7 @@ class HierarchyService {
       timestamp: new Date().toISOString()
     };
     
-    console.log(`✅ Parsing terminé avec succès`);
+    console.log(` Parsing terminé avec succès`);
     return result;
   }
 
@@ -197,19 +175,16 @@ class HierarchyService {
    * @returns {Promise<boolean>} - True si le service répond
    */
   async testConnectivity() {
-    console.log(`🔧 Test de connectivité vers ${this.endpoint}...`);
     
     try {
       // Utiliser un concept simple pour tester
       const testResult = await this.getHierarchy('Depression');
       
-      console.log(`✅ Service SPARQL accessible`);
-      console.log(`📊 Test résultat:`, testResult);
-      
+     
       return testResult.success;
       
     } catch (error) {
-      console.error(`❌ Service SPARQL inaccessible:`, error.message);
+      console.error(` Service SPARQL inaccessible:`, error.message);
       return false;
     }
   }
@@ -250,5 +225,4 @@ class HierarchyService {
 // Créer une instance globale (comme vos autres services)
 if (typeof window !== 'undefined') {
   window.hierarchyService = new HierarchyService();
-  console.log('🌳 HierarchyService disponible globalement via window.hierarchyService');
 }

@@ -157,7 +157,6 @@ class CSVLoader {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log("🚀 Chargement automatique du CSV...");
   await CSVLoader.loadCSVData();
   window.csvLoader = CSVLoader; // Disponible globalement
 });

@@ -17,8 +17,7 @@ class FusekiAnalysisRetriever {
     
     this.cache = new Map();
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
-    console.log('📡 FusekiAnalysisRetriever initialisé');
-    console.log('🌍 URL serveur:', this.serverURL);
+   
 }
 
     // ================== MÉTHODE PUBLIQUE PRINCIPALE ==================
@@ -29,14 +28,12 @@ class FusekiAnalysisRetriever {
      * @returns {Object} Données de l'analyse au format compatible AnalysisPanel
      */
     async getAnalysisData(analysisId) {
-        console.log(`🔍 Récupération Fuseki pour analyse: ${analysisId}`);
         
         // Vérifier le cache d'abord
         const cacheKey = `analysis_${analysisId}`;
         const cached = this.cache.get(cacheKey);
         
         if (cached && (Date.now() - cached.timestamp) < this.cacheTimeout) {
-            console.log(`✅ Cache hit pour ${analysisId}`);
             return cached.data;
         }
 
@@ -53,11 +50,10 @@ class FusekiAnalysisRetriever {
                 timestamp: Date.now()
             });
 
-            console.log(`✅ Analyse ${analysisId} récupérée depuis Fuseki:`, analysisData);
             return analysisData;
 
         } catch (error) {
-            console.error(`❌ Erreur récupération Fuseki pour ${analysisId}:`, error);
+            console.error(` Erreur récupération Fuseki pour ${analysisId}:`, error);
             return this.createErrorAnalysis(analysisId, error.message);
         }
     }
@@ -68,10 +64,10 @@ class FusekiAnalysisRetriever {
      * @returns {Array} Liste des analyses au format AnalysisPanel
      */
     async getAllAnalysesData(nodeData) {
-        console.log(`🔍 Récupération de toutes les analyses pour: ${nodeData.label}`);
+        console.log(` Récupération de toutes les analyses pour: ${nodeData.label}`);
         
         if (!nodeData.analyses || nodeData.analyses.length === 0) {
-            console.log(`⚠️ Aucune analyse liée à ${nodeData.label}`);
+            console.log(` Aucune analyse liée à ${nodeData.label}`);
             return [];
         }
 
@@ -86,11 +82,11 @@ class FusekiAnalysisRetriever {
             const results = await Promise.all(promises);
             allAnalyses.push(...results);
             
-            console.log(`✅ ${allAnalyses.length} analyses récupérées pour ${nodeData.label}`);
+            console.log(` ${allAnalyses.length} analyses récupérées pour ${nodeData.label}`);
             return allAnalyses;
 
         } catch (error) {
-            console.error(`❌ Erreur lors de la récupération en lot:`, error);
+            console.error(` Erreur lors de la récupération en lot:`, error);
             
             // Fallback : récupérer une par une
             for (const analysisId of nodeData.analyses) {
@@ -98,7 +94,7 @@ class FusekiAnalysisRetriever {
                     const analysis = await this.getAnalysisData(analysisId);
                     allAnalyses.push(analysis);
                 } catch (individualError) {
-                    console.error(`❌ Échec individuel pour ${analysisId}:`, individualError);
+                    console.error(` Échec individuel pour ${analysisId}:`, individualError);
                     allAnalyses.push(this.createErrorAnalysis(analysisId, individualError.message));
                 }
             }
@@ -116,7 +112,6 @@ class FusekiAnalysisRetriever {
      */
     async executeQuery(sparqlQuery) {
         try {
-            console.log('📤 Envoi requête SPARQL...');
             
             const response = await fetch(this.serverURL, {
                 method: 'POST',
@@ -134,12 +129,10 @@ class FusekiAnalysisRetriever {
             }
             
             const data = await response.json();
-            console.log('📥 Réponse reçue:', data.performance || 'pas de performance');
             
             return data.results?.bindings || [];
             
         } catch (error) {
-            console.error('💥 Erreur lors de l\'exécution de la requête:', error);
             throw new Error(`Impossible de contacter le serveur: ${error.message}`);
         }
     }
@@ -150,7 +143,6 @@ class FusekiAnalysisRetriever {
      * @returns {Object} Données parsées de l'analyse
      */
     async loadCompleteAnalysisData(analysisId) {
-        console.log('📥 Chargement complet des données pour l\'analyse:', analysisId);
         
         // Requête complexe pour récupérer TOUTES les données
         const query = `
@@ -237,7 +229,6 @@ SELECT ?property ?value ?entity WHERE {
      * @returns {Object} Données structurées
      */
     parseAnalysisResults(results) {
-        console.log('🔄 Parsing des résultats SPARQL...');
         
         const data = {};
         
@@ -287,7 +278,6 @@ SELECT ?property ?value ?entity WHERE {
             }
         });
         
-        console.log('✅ Données parsées:', data);
         return data;
     }
 
@@ -536,7 +526,6 @@ SELECT ?property ?value ?entity WHERE {
      */
     clearCache() {
         this.cache.clear();
-        console.log('🗑️ Cache vidé');
     }
 
     /**
@@ -563,4 +552,3 @@ window.FusekiAnalysisRetriever = FusekiAnalysisRetriever;
 // Instance globale (optionnelle, pour faciliter l'usage)
 window.fusekiRetriever = new FusekiAnalysisRetriever();
 
-console.log('📡 FusekiAnalysisRetriever disponible globalement');

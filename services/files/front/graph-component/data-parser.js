@@ -85,7 +85,6 @@ class SPARQLDataParser {
   }
 
   static getColorByCategory(type, category) {
-    console.log(`🎨 Couleur demandée pour: type="${type}", category="${category}"`);
     
     switch (type) {
       case 'acad':
@@ -113,7 +112,6 @@ class SPARQLDataParser {
 
   static getRelationColor(relation) {
     const color = this.relationColorPalette[relation] || this.relationColorPalette.default;
-    console.log(`🔗 Couleur relation "${relation}": ${color}`);
     return color;
   }
   
@@ -152,7 +150,6 @@ class SPARQLDataParser {
       if (vi) {
         const factorNodeId = `factor_${vi}`;
         if (!nodeMap.has(factorNodeId)) {
-          console.log(`🔵 Création nœud facteur UNIQUE: ${vi} [${categoryVI}]`);
           nodes.push({
             id: factorNodeId,
             label: vi,
@@ -175,7 +172,6 @@ class SPARQLDataParser {
       if (vd) {
         const acadNodeId = `acad_${vd}`;
         if (!nodeMap.has(acadNodeId)) {
-          console.log(`🔴 Création nœud ACAD UNIQUE: ${vd} [${categoryVD}]`);
           nodes.push({
             id: acadNodeId,
             label: vd,
@@ -197,7 +193,6 @@ class SPARQLDataParser {
       if (mediator && mediator !== 'N.A.' && mediator.trim() !== '') {
         const mediatorNodeId = `mediator_${mediator}`;
         if (!nodeMap.has(mediatorNodeId)) {
-          console.log(`🟡 Création nœud médiateur UNIQUE: ${mediator}`);
           nodes.push({
             id: mediatorNodeId,
             label: mediator,
@@ -218,7 +213,6 @@ class SPARQLDataParser {
       if (moderator && moderator !== 'N.A.' && moderator.trim() !== '') {
         const moderatorNodeId = `moderator_${moderator}`;
         if (!nodeMap.has(moderatorNodeId)) {
-          console.log(`🟠 Création nœud modérateur UNIQUE: ${moderator}`);
           nodes.push({
             id: moderatorNodeId,
             label: moderator,
@@ -308,7 +302,6 @@ class SPARQLDataParser {
   }
 
   static applySmartFiltering(allRelations) {
-    console.log("🔍 Application du filtrage intelligent...");
     
     // Grouper par paire source-target
     const relationGroups = new Map();
@@ -338,14 +331,14 @@ class SPARQLDataParser {
       } else {
         // Si le type n'existe pas, le mettre dans 'NS'
         group['NS'].push(rel);
-        console.warn(`⚠️ Type de relation inconnu: "${rel.relation}" → placé dans 'NS'`);
+        console.warn(` Type de relation inconnu: "${rel.relation}" → placé dans 'NS'`);
       }
     });
     
     const filteredLinks = [];
     
     relationGroups.forEach((group, pairKey) => {
-      console.log(`\n🔗 Paire ${pairKey}:`);
+      console.log(`\n Paire ${pairKey}:`);
       
       Object.keys(group).forEach(relationType => {
         const relations = group[relationType];
@@ -365,13 +358,13 @@ class SPARQLDataParser {
           
           filteredLinks.push(enrichedLink);
           
-          console.log(`   ✅ ${relationType}: ${relations.length} relations → 1 lien affiché`);
+          console.log(`    ${relationType}: ${relations.length} relations → 1 lien affiché`);
           console.log(`      Analyses: ${relations.map(r => r.analysisId).join(', ')}`);
         }
       });
     });
     
-    console.log(`🎯 Filtrage terminé: ${allRelations.length} → ${filteredLinks.length} liens`);
+    console.log(` Filtrage terminé: ${allRelations.length} → ${filteredLinks.length} liens`);
     return filteredLinks;
 }
   

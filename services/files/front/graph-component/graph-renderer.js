@@ -70,13 +70,11 @@ class GraphRenderer {
   }
 
   renderNetworkGraph() {
-    console.log('🚀 === DÉBUT RENDERNETWORKGRAPH ===');
 
     const networkData = this.parsedData.networkData;
     const nodes = [...networkData.nodes];
     const links = [...networkData.links];
 
-    console.log('🎨 Rendu du graphe avec liens courbés:', { nodes: nodes.length, links: links.length });
 
     const processedLinks = this.calculateLinkCurves(links);
 
@@ -147,22 +145,17 @@ class GraphRenderer {
       .text(d => this.truncateLabel(d.label, 40));
 
     // ✅ GESTIONNAIRES D'ÉVÉNEMENTS CORRIGÉS
-    console.log('🎯 === ATTACHEMENT DES GESTIONNAIRES D\'ÉVÉNEMENTS ===');
 
     node
       .on('mouseover', (event, d) => {
-        console.log(`🐭 Mouseover sur: ${d.label}`);
         if (!this.longClickInProgress) { // ← Ne pas afficher tooltip pendant clic prolongé
           this.showTooltip(event, d);
         }
       })
       .on('mouseout', (event, d) => {
-        console.log(`🐭 Mouseout de: ${d.label}`);
         this.hideTooltip();
       })
       .on('dblclick', (event, d) => {
-        console.log(`📋 Double-clic sur nœud: ${d.label}`);
-        console.log(`La la je suis dans le graph rendrererererezrzerzerzerzeze ptn ça ne veut pas marcher  fjjdjdjfj`)
         event.stopPropagation();
         event.preventDefault();
         this.cancelLongClickTimer();
@@ -170,16 +163,16 @@ class GraphRenderer {
       })
       // ✅ ÉVÉNEMENTS CLIC PROLONGÉ CORRIGÉS
       .on('mousedown', (event, d) => {
-        console.log(`⬇️ MOUSEDOWN sur: ${d.label} - DÉMARRAGE CLIC PROLONGÉ`);
+        console.log(`⬇ MOUSEDOWN sur: ${d.label} - DÉMARRAGE CLIC PROLONGÉ`);
         event.preventDefault(); // ← Empêcher la sélection de texte
         this.startLongClickTimer(event, d);
       })
       .on('mouseup', (event, d) => {
-        console.log(`⬆️ MOUSEUP sur: ${d.label} - ARRÊT CLIC PROLONGÉ`);
+        console.log(`⬆ MOUSEUP sur: ${d.label} - ARRÊT CLIC PROLONGÉ`);
         this.cancelLongClickTimer();
       })
       .on('mouseleave', (event, d) => {
-        console.log(`🚪 MOUSELEAVE de: ${d.label} - ANNULATION CLIC PROLONGÉ`);
+        console.log(` MOUSELEAVE de: ${d.label} - ANNULATION CLIC PROLONGÉ`);
         this.cancelLongClickTimer();
         this.hideTooltip();
       })
@@ -192,13 +185,13 @@ class GraphRenderer {
               d.fx = d.fx ? null : d.x;
               d.fy = d.fy ? null : d.y;
               this.simulation.alpha(0.3).restart();
-              console.log(`📌 Nœud ${d.fx ? 'fixé' : 'libéré'}: ${d.label}`);
+              console.log(` Nœud ${d.fx ? 'fixé' : 'libéré'}: ${d.label}`);
             }
           }, 200);
         }
       });
 
-    console.log('✅ TOUS les gestionnaires d\'événements attachés aux nœuds');
+    console.log(' TOUS les gestionnaires d\'événements attachés aux nœuds');
 
     // Animation tick
     this.simulation.on('tick', () => {
@@ -215,12 +208,12 @@ class GraphRenderer {
       nodeLabels.attr('transform', d => `translate(${d.x},${d.y + d.size + 15})`);
     });
 
-    console.log('🎉 === FIN RENDERNETWORKGRAPH - TOUT EST PRÊT ===');
+    console.log(' === FIN RENDERNETWORKGRAPH - TOUT EST PRÊT ===');
   }
 
   // ✅ FONCTIONS CLIC PROLONGÉ CORRIGÉES
   startLongClickTimer(event, nodeData) {
-    console.log(`⏳ Début clic prolongé sur: ${nodeData.label}`);
+    console.log(` Début clic prolongé sur: ${nodeData.label}`);
 
     // Nettoyer tout état précédent
     this.cancelLongClickTimer();
@@ -235,7 +228,6 @@ class GraphRenderer {
 
     // Démarrer le timer
     this.longClickTimer = setTimeout(() => {
-      console.log(`🌳 Clic prolongé déclenché pour: ${nodeData.label}`);
       this.hideLongClickProgress();
       this.longClickInProgress = false;
       this.handleHierarchyRequest(event, nodeData);
@@ -245,7 +237,6 @@ class GraphRenderer {
 
   cancelLongClickTimer() {
     if (this.longClickTimer) {
-      console.log(`🚫 Annulation clic prolongé pour: ${this.longClickNode?.label || 'unknown'}`);
       clearTimeout(this.longClickTimer);
       this.longClickTimer = null;
     }
@@ -312,8 +303,6 @@ class GraphRenderer {
   // ... reste du code inchangé (openAnalysisPanel, handleHierarchyRequest, etc.) ...
 
   async handleHierarchyRequest(event, nodeData) {
-    console.log(`🌳 === DEMANDE HIÉRARCHIE ===`);
-    console.log(`📝 Nœud: ${nodeData.label}`);
 
     try {
       // Cacher la hiérarchie actuelle si visible
@@ -323,7 +312,6 @@ class GraphRenderer {
 
       // Vérifier que le service hiérarchie est disponible
       if (typeof window.hierarchyService === 'undefined') {
-        console.error('❌ HierarchyService non disponible !');
         this.showHierarchyError(nodeData, 'Service hiérarchie non disponible');
         return;
       }
@@ -332,14 +320,12 @@ class GraphRenderer {
       this.showHierarchyLoading(nodeData);
 
       // Récupérer la hiérarchie
-      console.log(`🔍 Récupération hiérarchie pour: "${nodeData.label}"`);
       const hierarchyData = await window.hierarchyService.getHierarchy(nodeData.label);
 
       // Cacher l'indicateur de chargement
       this.hideHierarchyLoading();
 
       if (!hierarchyData.success) {
-        console.warn(`⚠️ Pas de hiérarchie trouvée pour: ${nodeData.label}`);
         this.showHierarchyError(nodeData, 'Aucune hiérarchie trouvée');
         return;
       }
@@ -347,17 +333,15 @@ class GraphRenderer {
       // Vérifier s'il y a des données hiérarchiques
       const stats = window.hierarchyService.getHierarchyStats(hierarchyData);
       if (stats.isEmpty) {
-        console.log(`ℹ️ Concept sans hiérarchie: ${nodeData.label}`);
         this.showHierarchyError(nodeData, 'Concept sans hiérarchie parent/enfant');
         return;
       }
 
       // Afficher la hiérarchie
-      console.log(`✅ Affichage hiérarchie: ${stats.parentCount} parents, ${stats.childCount} enfants`);
       this.showHierarchy(nodeData, hierarchyData);
 
     } catch (error) {
-      console.error(`❌ Erreur lors de la récupération hiérarchie:`, error);
+      console.error(` Erreur lors de la récupération hiérarchie:`, error);
       this.hideHierarchyLoading();
       this.showHierarchyError(nodeData, error.message);
     }
@@ -383,16 +367,13 @@ class GraphRenderer {
     const nodes = [...networkData.nodes]; // Copie pour D3
     const links = [...networkData.links]; // Copie pour D3
 
-    console.log('🎨 Rendu du graphe avec liens courbés:', { nodes: nodes.length, links: links.length });
 
     // Debug : Afficher les nœuds avec leur taille
     nodes.forEach(node => {
-      console.log(`🎨 Nœud "${node.label}" (${node.type}) -> Couleur: ${node.color}, Taille: ${node.size}, Analyses: ${node.analyses ? node.analyses.length : 'N/A'}`);
     });
 
     // Debug : Afficher les couleurs des liens
     links.forEach(link => {
-      console.log(`🔗 Lien "${link.label}" -> Couleur: ${link.color}`);
     });
 
     const processedLinks = this.calculateLinkCurves(links);
@@ -412,7 +393,6 @@ class GraphRenderer {
       .attr('class', 'link')
       .style('fill', 'none')
       .style('stroke', d => {
-        console.log(`🔗 Application couleur lien: ${d.color}`);
         return d.color || '#aaa'; // Utiliser la couleur du parser ou gris par défaut
       })
       .style('stroke-width', 3) // Plus épais pour mieux voir les couleurs
@@ -447,7 +427,6 @@ class GraphRenderer {
     node.append('circle')
       .attr('r', d => d.size)
       .style('fill', d => {
-        console.log(`🎨 Application couleur nœud "${d.label}": ${d.color}`);
         return d.color || '#808080'; // Utiliser la couleur du parser ou gris par défaut
       })
       .style('stroke', '#fff')
@@ -473,8 +452,6 @@ class GraphRenderer {
       .on('mouseout', () => this.hideTooltip());
 
     node.on('dblclick', (event, d) => {
-      console.log(`📋 Double-clic sur nœud: ${d.label}`);
-      console.log(`La la je suis dans le graph rendrererererezrzerzerzerzeze ptn ça ne veut pas marcher  fjjdjdjfj`);
 
       // Empêcher les autres comportements
       event.stopPropagation();
@@ -485,16 +462,13 @@ class GraphRenderer {
     });
 
     node.on('mousedown', (event, d) => {
-      console.log(`⬇ MOUSEDOWN sur: ${d.label} - DÉMARRAGE CLIC PROLONGÉ`);
       event.preventDefault(); // ← Empêcher la sélection de texte
       this.startLongClickTimer(event, d);
     })
     node.on('mouseup', (event, d) => {
-      console.log(`⬆ MOUSEUP sur: ${d.label} - ARRÊT CLIC PROLONGÉ`);
       this.cancelLongClickTimer();
     })
     node.on('mouseleave', (event, d) => {
-      console.log(` MOUSELEAVE de: ${d.label} - ANNULATION CLIC PROLONGÉ`);
       this.cancelLongClickTimer();
       this.hideTooltip();
     })
@@ -570,7 +544,6 @@ class GraphRenderer {
           totalLinks: linkCount
         });
 
-        console.log(`🔗 Lien ${link.label}: offset ${curveOffset}, groupe de ${linkCount} liens`);
       });
     });
 
@@ -637,8 +610,6 @@ class GraphRenderer {
   }
 
   openAnalysisPanel(nodeData) {
-    console.log(`📋 Ouverture panneau pour nœud: ${nodeData.label}`);
-    console.log(`📊 Analyses liées: ${nodeData.analyses ? nodeData.analyses.length : 0}`);
 
     // Vérifier que le panneau est disponible
     if (typeof window.analysisPanel === 'undefined') {
@@ -657,13 +628,12 @@ class GraphRenderer {
     // Utiliser FusekiAnalysisRetriever au lieu de la logique CSV locale
     window.fusekiRetriever.getAllAnalysesData(nodeData)
       .then(allAnalysesData => {
-        console.log(`✅ Analyses récupérées depuis Fuseki pour ${nodeData.label}:`, allAnalysesData);
 
         // Ouvrir le panneau avec toutes les analyses
         window.analysisPanel.openMultipleAnalyses(nodeData.label, allAnalysesData);
       })
       .catch(error => {
-        console.error(`❌ Erreur lors de la récupération des analyses pour ${nodeData.label}:`, error);
+        console.error(` Erreur lors de la récupération des analyses pour ${nodeData.label}:`, error);
 
         // Afficher un message d'erreur mais ouvrir quand même le panneau avec des données d'erreur
         const errorAnalyses = nodeData.analyses ? nodeData.analyses.map(id => ({
@@ -701,103 +671,7 @@ class GraphRenderer {
       });
   }
 
-  // async getAllAnalysesData(nodeData) {
-  //   console.log(`🔍 Récupération de toutes les analyses pour: ${nodeData.label}`);
-
-  //   const allAnalyses = [];
-
-  //   if (nodeData.analyses && nodeData.analyses.length > 0) {
-  //     for (const analysisId of nodeData.analyses) {
-  //       const analysisData = await this.getAnalysisData(analysisId);
-  //       allAnalyses.push(analysisData);
-  //     }
-  //   }
-
-  //   console.log(`✅ ${allAnalyses.length} analyses récupérées pour ${nodeData.label}`);
-  //   return allAnalyses;
-  // }
-
-  // async getAnalysisData(analysisId) {
-  //   console.log(`🔍 Récupération données pour analyse: ${analysisId}`);
-
-  //   if (!window.csvLoader?.isCSVLoaded()) {
-  //     console.log("🔄 Forçage du chargement Excel...");
-  //     return await this.loadExcelAndGetAnalysis(analysisId);
-  //   }
-
-  //   // Chercher dans le CSV
-  //   const csvRow = window.csvLoader.findAnalysisById(analysisId);
-
-  //   if (csvRow) {
-  //     console.log(`✅ Données trouvées pour analyse ${analysisId}:`, csvRow);
-
-  //     return {
-  //       id: analysisId,
-  //       title: csvRow['Title'] || `Analyse ${analysisId}`,
-  //       vi: csvRow['VI'] || 'N/A',
-  //       vd: csvRow['VD'] || csvRow['ACADS'] || 'N/A',
-  //       relation: csvRow['Resultat_de_relation'] || csvRow['Degre_de_relation'] || 'N/A',
-  //       moderator: csvRow['Moderator'] || 'N/A',
-  //       mediator: csvRow['Mediator'] || 'N/A',
-  //       categoryVI: csvRow['sub-class_Final_VI'] || 'N/A',
-  //       categoryVD: csvRow['sub-class_Final_VD'] || 'N/A',
-  //       rawData: csvRow 
-  //     };
-  //   } else {
-  //     console.log(`⚠️ Données non trouvées pour analyse ${analysisId}`);
-  //     return this.createErrorAnalysis(analysisId, 'Données non trouvées');
-  //   }
-  // }
-
-  // async loadExcelAndGetAnalysis(analysisId) {
-  //   try {
-  //     console.log("⏳ Chargement Excel en cours...");
-
-  //     // Tester différents chemins
-  //     const paths = [
-  //       './data/IA-DAS-Data1.xlsx',
-  //       'data/IA-DAS-Data1.xlsx',
-  //       '../data/IA-DAS-Data1.xlsx'
-  //     ];
-
-  //     let data = null;
-  //     for (const path of paths) {
-  //       try {
-  //         console.log(`🔍 Test chemin Excel: ${path}`);
-  //         data = await window.excelLoader.loadExcelData(path);
-  //         if (data && data.length > 0) {
-  //           console.log(`✅ Excel chargé avec succès: ${data.length} analyses depuis ${path}`);
-  //           break;
-  //         }
-  //       } catch (pathError) {
-  //         console.log(`❌ Échec ${path}:`, pathError.message);
-  //       }
-  //     }
-
-  //     if (data && data.length > 0) {
-  //       // Maintenant chercher l'analyse
-  //       const csvRow = window.csvLoader.findAnalysisById(analysisId);
-
-  //       if (csvRow) {
-  //         console.log(`✅ Analyse ${analysisId} trouvée après chargement Excel:`, csvRow);
-  //         return {
-  //           id: analysisId,
-  //           title: csvRow['Title'] || `Analyse ${analysisId}`,
-  //           vi: csvRow['VI'] || 'N/A',
-  //           vd: csvRow['VD'] || csvRow['ACADS'] || 'N/A',
-  //           relation: csvRow['Resultat_de_relation'] || 'N/A',
-  //           moderator: csvRow['Moderator'] || 'N/A',
-  //           mediator: csvRow['Mediator'] || 'N/A',
-  //           rawData: csvRow
-  //         };
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("❌ Erreur chargement Excel:", error);
-  //   }
-
-  //   return this.createErrorAnalysis(analysisId, 'Chargement Excel échoué');
-  // }
+ 
 
   // Méthode utilitaire pour créer une analyse d'erreur
   createErrorAnalysis(analysisId, errorMessage) {
@@ -912,7 +786,6 @@ class GraphRenderer {
   }
 
   startLongClickTimer(event, nodeData) {
-    console.log(`⏳ Début clic prolongé sur: ${nodeData.label}`);
 
     this.cancelLongClickTimer();
     this.longClickNode = nodeData;
@@ -920,7 +793,6 @@ class GraphRenderer {
     this.showLongClickProgress(nodeData);
 
     this.longClickTimer = setTimeout(() => {
-      console.log(`🌳 Clic prolongé déclenché pour: ${nodeData.label}`);
       this.hideLongClickProgress();
       this.handleHierarchyRequest(event, nodeData);
       this.longClickTimer = null;
@@ -929,7 +801,6 @@ class GraphRenderer {
 
   cancelLongClickTimer() {
     if (this.longClickTimer) {
-      console.log(`🚫 Annulation clic prolongé`);
       clearTimeout(this.longClickTimer);
       this.longClickTimer = null;
       this.hideLongClickProgress();
@@ -971,10 +842,7 @@ class GraphRenderer {
   }
 
   async handleHierarchyRequest(event, nodeData) {
-    console.log(`🌳 === DEMANDE HIÉRARCHIE ===`);
-    console.log(`📝 Nœud: ${nodeData.label}`);
-    console.log(`🏷️ Type: ${nodeData.type}`);
-    console.log(`📂 Catégorie: ${nodeData.category}`);
+  
 
     try {
       // Cacher la hiérarchie actuelle si visible
@@ -984,7 +852,7 @@ class GraphRenderer {
 
       // Vérifier que le service hiérarchie est disponible
       if (typeof window.hierarchyService === 'undefined') {
-        console.error('❌ HierarchyService non disponible !');
+        console.error('HierarchyService non disponible !');
         this.showHierarchyError(nodeData, 'Service hiérarchie non disponible');
         return;
       }
@@ -993,14 +861,14 @@ class GraphRenderer {
       this.showHierarchyLoading(nodeData);
 
       // Récupérer la hiérarchie
-      console.log(`🔍 Récupération hiérarchie pour: "${nodeData.label}"`);
+      console.log(`Récupération hiérarchie pour: "${nodeData.label}"`);
       const hierarchyData = await window.hierarchyService.getHierarchy(nodeData.label);
 
       // Cacher l'indicateur de chargement
       this.hideHierarchyLoading();
 
       if (!hierarchyData.success) {
-        console.warn(`⚠️ Pas de hiérarchie trouvée pour: ${nodeData.label}`);
+        console.warn(`Pas de hiérarchie trouvée pour: ${nodeData.label}`);
         this.showHierarchyError(nodeData, 'Aucune hiérarchie trouvée');
         return;
       }
@@ -1008,17 +876,17 @@ class GraphRenderer {
       // Vérifier s'il y a des données hiérarchiques
       const stats = window.hierarchyService.getHierarchyStats(hierarchyData);
       if (stats.isEmpty) {
-        console.log(`ℹ️ Concept sans hiérarchie: ${nodeData.label}`);
+        console.log(` Concept sans hiérarchie: ${nodeData.label}`);
         this.showHierarchyError(nodeData, 'Concept sans hiérarchie parent/enfant');
         return;
       }
 
       // Afficher la hiérarchie
-      console.log(`✅ Affichage hiérarchie: ${stats.parentCount} parents, ${stats.childCount} enfants`);
+      console.log(` Affichage hiérarchie: ${stats.parentCount} parents, ${stats.childCount} enfants`);
       this.showHierarchy(nodeData, hierarchyData);
 
     } catch (error) {
-      console.error(`❌ Erreur lors de la récupération hiérarchie:`, error);
+      console.error(` Erreur lors de la récupération hiérarchie:`, error);
       this.hideHierarchyLoading();
       this.showHierarchyError(nodeData, error.message);
     }
@@ -1028,7 +896,6 @@ class GraphRenderer {
   // 4. FONCTION: Afficher indicateur de chargement
   // ========================================
   showHierarchyLoading(centerNode) {
-    console.log(`⏳ Affichage indicateur chargement pour: ${centerNode.label}`);
 
     // Créer un nœud de chargement temporaire
     const loadingNode = {
@@ -1089,7 +956,6 @@ class GraphRenderer {
   // 5. FONCTION: Cacher indicateur de chargement
   // ========================================
   hideHierarchyLoading() {
-    console.log(`🚫 Suppression indicateur chargement`);
     this.g.selectAll('.hierarchy-loading').remove();
   }
 
@@ -1097,11 +963,7 @@ class GraphRenderer {
   // 6. FONCTION: Afficher la hiérarchie
   // ========================================
   showHierarchy(centerNode, hierarchyData) {
-    console.log(`🌳 === AFFICHAGE HIÉRARCHIE ===`);
-    console.log(`🎯 Nœud central: ${centerNode.label}`);
-    console.log(`👨‍👩‍👧‍👦 Parents: ${hierarchyData.parents.length}`);
-    console.log(`👶 Enfants: ${hierarchyData.children.length}`);
-
+    
     this.hierarchyVisible = true;
     this.currentHierarchyConcept = centerNode.label;
 
@@ -1140,7 +1002,6 @@ class GraphRenderer {
         id: `hierarchy_parent_link_${index}`
       });
 
-      console.log(`↗️ Parent ${index + 1}: ${parent.label} à (${x.toFixed(1)}, ${y.toFixed(1)})`);
     });
 
     // === CRÉER LES NŒUDS ENFANTS ===
@@ -1173,7 +1034,6 @@ class GraphRenderer {
         id: `hierarchy_child_link_${index}`
       });
 
-      console.log(`↘️ Enfant ${index + 1}: ${child.label} à (${x.toFixed(1)}, ${y.toFixed(1)})`);
     });
 
     // Stocker pour nettoyage ultérieur
@@ -1187,14 +1047,12 @@ class GraphRenderer {
     // === GESTIONNAIRE DE FERMETURE ===
     this.setupHierarchyCloseHandlers();
 
-    console.log(`✅ Hiérarchie affichée: ${allHierarchyNodes.length} nœuds, ${allHierarchyLinks.length} liens`);
   }
 
   // ========================================
   // 7. FONCTION: Rendu visuel des nœuds hiérarchiques
   // ========================================
   renderHierarchyNodes(hierarchyNodes) {
-    console.log(`🎨 Rendu de ${hierarchyNodes.length} nœuds hiérarchiques`);
 
     const hierarchyGroup = this.g.append('g').attr('class', 'hierarchy-nodes');
 
@@ -1256,9 +1114,7 @@ class GraphRenderer {
     });
   }
 
-  // ========================================
-  // 8. FONCTION: Rendu des liens hiérarchiques
-  // ========================================
+
   renderHierarchyLinks(hierarchyLinks) {
     console.log(` Rendu de ${hierarchyLinks.length} liens hiérarchiques`);
 
@@ -1288,7 +1144,6 @@ class GraphRenderer {
   // 9. FONCTIONS: Gestion des erreurs et nettoyage
   // ========================================
   showHierarchyError(nodeData, errorMessage) {
-    console.log(`⚠️ Affichage erreur hiérarchie: ${errorMessage}`);
 
     // Afficher temporairement un message d'erreur
     const errorGroup = this.g.append('g')
@@ -1324,7 +1179,6 @@ class GraphRenderer {
   }
 
   hideHierarchy() {
-    console.log(`🚫 Masquage hiérarchie pour: ${this.currentHierarchyConcept}`);
     this.cleanupHierarchy();
     this.hierarchyVisible = false;
     this.currentHierarchyConcept = null;

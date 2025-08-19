@@ -7,12 +7,10 @@ class PageInitializer {
 
     async initializePage() {
         if (this.isInitialized) {
-            console.log('✅ Page déjà initialisée');
             return true;
         }
 
         if (this.initPromise) {
-            console.log('🔄 Initialisation en cours...');
             return this.initPromise;
         }
 
@@ -22,7 +20,6 @@ class PageInitializer {
 
     async performInitialization() {
         try {
-            console.log('🚀 Début de l\'initialisation de la page');
             
             // Afficher le loading d'initialisation
             window.loadingManager.show("Initialisation de IA-DAS...");
@@ -49,11 +46,11 @@ class PageInitializer {
             // Fermer le loading
             window.loadingManager.completeAll();
             
-            console.log('✅ Page initialisée avec succès');
+            console.log(' Page initialisée avec succès');
             return true;
             
         } catch (error) {
-            console.error('❌ Erreur lors de l\'initialisation:', error);
+            console.error(' Erreur lors de l\'initialisation:', error);
             
             window.loadingManager.showError(
                 'Erreur d\'initialisation', 
@@ -73,14 +70,12 @@ class PageInitializer {
     }
 
     async wakeupFuseki() {
-        console.log('🔥 Réveil de Fuseki...');
         
         // Détection de l'environnement
         const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://localhost:8003/' 
             : 'http://51.44.188.162:8003/';
         
-        console.log(`🌐 Utilisation de l'URL: ${apiUrl}`);
         
         const warmupQuery = {
             queryType: 'generated',
@@ -99,13 +94,11 @@ class PageInitializer {
         }
         
         const data = await response.json();
-        console.log(`✅ Fuseki réveillé (${data.results?.bindings?.length || 0} résultats)`);
         
         return data;
     }
 
     async testFusekiStability() {
-        console.log('🧪 Test de stabilité...');
         
         // Détection de l'environnement
         const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
@@ -130,22 +123,18 @@ class PageInitializer {
         }
         
         const data = await response.json();
-        console.log(`✅ Test réussi (${data.results?.bindings?.length || 0} résultats)`);
         
         return data;
     }
 
     async prepareInterface() {
-        console.log('🎨 Préparation de l\'interface...');
         
         // Simuler la préparation de l'interface
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        console.log('✅ Interface prête');
     }
 
     enableUserInterface() {
-        console.log('🎯 Activation de l\'interface utilisateur');
         
         // Activer tous les boutons et inputs
         const disabledElements = document.querySelectorAll('[disabled]');
@@ -217,7 +206,6 @@ class PageInitializer {
     // Méthode pour vérifier si la page est prête avant une recherche
     async ensureReady() {
         if (!this.isInitialized) {
-            console.log('⚠️ Page pas encore initialisée, initialisation en cours...');
             return this.initializePage();
         }
         return true;
@@ -227,4 +215,3 @@ class PageInitializer {
 // Instance globale
 window.pageInitializer = new PageInitializer();
 
-console.log('📦 PageInitializer chargé');

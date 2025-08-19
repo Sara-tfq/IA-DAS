@@ -18,9 +18,9 @@ class AnalysisPanel {
       await this.loadTemplate();
       this.createPanelElements();
       this.attachEventListeners();
-      console.log("📋 AnalysisPanel initialisé avec succès");
+      console.log(" AnalysisPanel initialisé avec succès");
     } catch (error) {
-      console.error("❌ Erreur lors de l'initialisation d'AnalysisPanel:", error);
+      console.error(" Erreur lors de l'initialisation d'AnalysisPanel:", error);
     }
   }
 
@@ -32,7 +32,7 @@ class AnalysisPanel {
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
       script.onload = () => {
         this.pdfExportEnabled = true;
-        console.log("✅ jsPDF chargé avec succès");
+        console.log(" jsPDF chargé avec succès");
       };
       document.head.appendChild(script);
     } else {
@@ -60,16 +60,16 @@ class AnalysisPanel {
       this.templateCache.set('content', tempDiv.querySelector('#analysis-content-template').innerHTML);
       this.templateCache.set('loading', tempDiv.querySelector('#analysis-loading-template').innerHTML);
       
-      console.log("✅ Templates HTML chargés");
+      console.log(" Templates HTML chargés");
       
     } catch (error) {
-      console.error("❌ Erreur lors du chargement du template:", error);
+      console.error(" Erreur lors du chargement du template:", error);
       this.createFallbackTemplate();
     }
   }
 
   createFallbackTemplate() {
-    console.log("⚠️ Utilisation du template de secours");
+    console.log(" Utilisation du template de secours");
     
     this.templateCache.set('main', `
       <div class="analysis-panel-content">
@@ -109,9 +109,7 @@ class AnalysisPanel {
   }
 
   openMultipleAnalyses(nodeName, analysesData) {
-    console.log(`📋 Ouverture panneau multi-analyses pour: ${nodeName}`);
-    console.log(`📊 Nombre d'analyses: ${analysesData.length}`);
-    
+   
     this.currentNodeName = nodeName;
     this.currentAnalysesData = analysesData;
     this.isOpen = true;
@@ -123,7 +121,6 @@ class AnalysisPanel {
   }
 
   open(analysisId, analysisData = null) {
-    console.log(`📋 Ouverture panneau pour analyse: ${analysisId}`);
     
     this.currentAnalysisId = analysisId;
     this.isOpen = true;
@@ -140,7 +137,6 @@ class AnalysisPanel {
   }
 
   close() {
-    console.log("📋 Fermeture panneau analyse");
     
     this.isOpen = false;
     this.currentAnalysisId = null;
@@ -170,7 +166,6 @@ class AnalysisPanel {
   }
 
   renderAnalysesList(nodeName, analysesData) {
-  console.log("📋 Rendu liste des analyses:", analysesData);
 
   const contentDiv = this.panelElement.querySelector('#analysis-content');
   
@@ -268,7 +263,6 @@ exportAnalysesToPDF() {
   }
 
   try {
-    console.log("📄 Génération PDF pour", this.currentAnalysesData.length, "analyses");
     const doc = new window.jspdf.jsPDF();
     
     // Configuration
@@ -289,9 +283,8 @@ exportAnalysesToPDF() {
     // Sous-titre - Centré et élégant
     doc.setFontSize(14);
     doc.setFont(undefined, 'italic');
-    const subtitle = `Revue systématique des études empiriques`;
     const subtitleWidth = doc.getTextWidth(subtitle);
-    doc.text(subtitle, (pageWidth - subtitleWidth) / 2, y);
+    doc.text((pageWidth - subtitleWidth) / 2, y);
     y += lineHeight * 2.5;
     
     // Informations générales - Dans un encadré
@@ -446,11 +439,9 @@ exportAnalysesToPDF() {
     const fileName = `Analyses_${this.currentNodeName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
     doc.save(fileName);
     
-    console.log("✅ PDF généré avec succès:", fileName);
     this.showExportSuccess(fileName);
     
   } catch (error) {
-    console.error("❌ Erreur lors de la génération PDF:", error);
     alert("Erreur lors de la génération du PDF. Consultez la console pour plus de détails.");
   }
 }
@@ -576,7 +567,6 @@ async showAnalysisDetail(analysisId) {
     this.renderDetailedAnalysis(completeAnalysis);
     
   } catch (error) {
-    console.error(`❌ Erreur lors du chargement détaillé de ${analysisId}:`, error);
     this.showAnalysisError(analysisId, error.message);
   }
 }
@@ -823,7 +813,6 @@ showAnalysisError(analysisId, errorMessage) {
   }
 
   renderContent(analysisData) {
-    console.log("📋 Rendu contenu panneau:", analysisData);
 
     const contentDiv = this.panelElement.querySelector('#analysis-content');
     const contentTemplate = this.templateCache.get('content');
@@ -883,7 +872,6 @@ showAnalysisError(analysisId, errorMessage) {
   }
 
   loadContentFromId(analysisId) {
-    console.log(`📋 Simulation chargement pour: ${analysisId}`);
     
     const mockData = {
       id: analysisId,

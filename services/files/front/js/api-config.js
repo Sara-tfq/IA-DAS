@@ -2,7 +2,6 @@
 class ApiConfigManager {
     constructor() {
         this.config = this.detectEnvironment();
-        console.log('🌍 Environnement détecté:', this.config);
     }
 
     detectEnvironment() {
@@ -66,7 +65,7 @@ class ApiConfigManager {
 
         for (const url of fallbackUrls) {
             try {
-                console.log(`🔄 Tentative avec: ${url}`);
+                console.log(` Tentative avec: ${url}`);
                 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -78,14 +77,13 @@ class ApiConfigManager {
                 });
 
                 if (response.ok) {
-                    console.log(`✅ Succès avec: ${url}`);
                     return response;
                 } else {
-                    console.warn(`⚠️ ${url} a retourné ${response.status}`);
+                    console.warn(` ${url} a retourné ${response.status}`);
                     lastError = new Error(`HTTP ${response.status}`);
                 }
             } catch (error) {
-                console.warn(`❌ Échec avec ${url}:`, error.message);
+                console.warn(` Échec avec ${url}:`, error.message);
                 lastError = error;
                 continue;
             }
@@ -113,9 +111,7 @@ window.apiConfig = new ApiConfigManager();
 
 // Pour remplacer votre code de compétence
 async function rechercherCompetenceFixed(data) {
-    console.log("🚀 === RECHERCHE COMPÉTENCE CÔTÉ CLIENT DÉMARRÉE ===");
-    console.log("🌍 Configuration API:", window.apiConfig.getDebugInfo());
-    
+   
     try {
         if (!data.questionId) {
             throw new Error("Question ID manquant");
@@ -130,23 +126,20 @@ async function rechercherCompetenceFixed(data) {
             description: data.description
         };
 
-        console.log("📤 Envoi vers:", window.apiConfig.getSparqlEndpoint());
-        console.log("📤 Payload:", payload);
-
-        // 🔥 NOUVEAU : Utilisation du gestionnaire avec fallback
+      
         const response = await window.apiConfig.fetchWithFallback('sparql', '', {
             method: 'POST',
             body: JSON.stringify(payload)
         });
 
         const responseData = await response.json();
-        console.log("📥 Réponse reçue:", responseData);
+        console.log(" Réponse reçue:", responseData);
 
         hideSimpleLoading();
         displayCompetenceResults(responseData, data);
 
     } catch (error) {
-        console.error('💥 Erreur recherche compétence:', error);
+        console.error(' Erreur recherche compétence:', error);
         hideSimpleLoading();
         showError('Erreur de recherche compétence', error.message, data);
     }
@@ -154,19 +147,13 @@ async function rechercherCompetenceFixed(data) {
 
 // Pour remplacer votre code d'update-analysis
 async function updateAnalysisFixed(formData, sparqlQueries) {
-    console.log("🔄 === UPDATE ANALYSIS DÉMARRÉ ===");
-    console.log("🌍 Configuration API:", window.apiConfig.getDebugInfo());
-
+    
     const payload = {
         formData: formData,
         sparqlQueries: sparqlQueries
     };
     
-    console.log('📤 Payload à envoyer:', {
-        formDataKeys: Object.keys(formData),
-        queryCount: Object.keys(sparqlQueries).length,
-        queryNames: Object.keys(sparqlQueries)
-    });
+  
     
     try {
         // 🔥 NOUVEAU : URL dynamique avec fallback
@@ -177,16 +164,10 @@ async function updateAnalysisFixed(formData, sparqlQueries) {
         
         const responseData = await response.json();
         
-        console.log('📨 Réponse serveur:', {
-            status: response.status,
-            success: responseData.success,
-            message: responseData.message
-        });
-
+      
         return responseData;
 
     } catch (error) {
-        console.error('💥 Erreur update analysis:', error);
         throw error;
     }
 }
@@ -195,7 +176,6 @@ async function updateAnalysisFixed(formData, sparqlQueries) {
 
 // Fonction pour remplacer automatiquement les URLs hardcodées
 function migrateExistingCode() {
-    console.log('🔄 Migration des URLs hardcodées...');
     
     // Remplace window.fetch pour intercepter les calls hardcodés (temporaire)
     const originalFetch = window.fetch;
@@ -205,7 +185,7 @@ function migrateExistingCode() {
         if (typeof url === 'string') {
             if (url.includes('localhost:8003')) {
                 const newUrl = url.replace('http://localhost:8003', window.apiConfig.getSparqlEndpoint());
-                console.log(`🔄 URL migrée: ${url} → ${newUrl}`);
+                console.log(` URL migrée: ${url} → ${newUrl}`);
                 url = newUrl;
             }
         }
@@ -213,12 +193,10 @@ function migrateExistingCode() {
         return originalFetch(url, options);
     };
     
-    console.log('✅ Migration temporaire activée');
 }
 
 // 🚀 Initialisation automatique
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🌍 API Config Manager initialisé:', window.apiConfig.getDebugInfo());
     
     // Activer la migration temporaire si nécessaire
     // migrateExistingCode(); // Décommentez pour migration automatique
