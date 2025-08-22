@@ -22,10 +22,22 @@
         <input-competence-component></input-competence-component>
        
         <div id="results">
-            <div id="result-controls" style="display: none; margin-bottom: 20px;">
-                <button id="viewTable" class="view-btn active">Tableau</button>
-                <button id="viewGraph" class="view-btn">Graphique</button>
-                <button id="viewSparql" class="view-btn">SPARQL</button>
+            <div id="result-controls" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button id="viewTable" class="view-btn active" disabled>Tableau</button>
+                <button id="viewGraph" class="view-btn" disabled>Graphique</button>
+                <button id="viewSparql" class="view-btn" disabled>SPARQL</button>
+                
+                <div style="margin-left: 20px; display: flex; gap: 10px; align-items: center;">
+                    <!-- <button id="exportPNG" class="view-btn" style="background: #17a2b8;" disabled>
+                        Export PNG
+                    </button> -->
+                    <button id="exportExcel" class="view-btn" style="background: #28a745;" disabled>
+                        Export Excel
+                    </button>
+                    <button id="exportTurtle" class="view-btn" style="background: #6f42c1;" disabled>
+                        Export Turtle
+                    </button>
+                </div>
             </div>
             
             <div id="result-display"></div>
@@ -46,6 +58,25 @@
     <script src="./graph-component/graph-renderer.js"></script>
     <script src="./input-competence-component/input-competence-component.js"></script>
     <script src="./competence-page/competence-page.js"></script>
+
+    <!-- Templates pour les exports -->
+    <template id="export-image-template">
+        <button id="exportGraph" class="view-btn" style="background: #28a745;">
+            Export PNG
+        </button>
+    </template>
+
+    <template id="export-data-template">
+        <div class="export-data-controls" style="display: flex; gap: 10px; align-items: center;">
+            <select id="dataExportFormat" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                <option value="csv">CSV (Tableaux)</option>
+                <option value="turtle">Turtle (RDF)</option>
+            </select>
+            <button id="exportDataBtn" class="view-btn" style="background: #17a2b8;">
+                Export Données
+            </button>
+        </div>
+    </template>
 
 </body>
 

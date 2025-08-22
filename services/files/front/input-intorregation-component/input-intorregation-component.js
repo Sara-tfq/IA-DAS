@@ -610,7 +610,27 @@ class InputInterrogationComponent extends HTMLElement {
                         if (maxAge && maxAge.trim() !== '') searchData.maxAge = parseInt(maxAge);
                     }
                 } else {
-                    searchData.ageCategory = ageCategory.value;
+                    // Conversion des valeurs prédéfinies - ajustées selon les données réelles
+                    const ageRanges = {
+                        'adolescent': { minAge: 15, maxAge: 19 },     // Ajusté car peu d'ados dans les données
+                        'jeune-adulte': { minAge: 18, maxAge: 26 },   // Zone principale des données  
+                        'adulte': { minAge: 26, maxAge: 35 },         // Zone populaire (28-30)
+                        'adulte-mature': { minAge: 35, maxAge: 50 },  // Plus réaliste
+                        'senior': { minAge: 50, maxAge: 80 }          // Plus réaliste
+                    };
+                    
+                    const range = ageRanges[ageCategory.value];
+                    if (range) {
+                        // Envoyer à la fois min/max pour les plages qui chevauchent
+                        // ET la plage pour capturer les moyennes qui tombent dedans
+                        searchData.minAge = range.minAge;
+                        searchData.maxAge = range.maxAge;
+                        // Flag pour indiquer qu'on veut aussi les moyennes dans cette plage
+                        searchData.includeMeanInRange = true;
+                        // Vérifier si l'utilisateur veut les chevauchements
+                        const includeOverlap = this.querySelector('#includeOverlap');
+                        searchData.allowOverlap = includeOverlap ? includeOverlap.checked : true;
+                    }
                 }
             }
 
@@ -635,7 +655,25 @@ class InputInterrogationComponent extends HTMLElement {
                         if (maxExFR && maxExFR.trim() !== '') searchData.maxExFR = parseInt(maxExFR);
                     }
                 } else {
-                    searchData.exerciseFrequency = exerciseFrequency.value;
+                    // Conversion des valeurs prédéfinies en plages numériques
+                    // Le système récupérera à la fois les plages qui chevauchent ET les moyennes dans la plage
+                    const frequencyRanges = {
+                        'faible': { minExFR: 0, maxExFR: 4.9 },
+                        'moderee': { minExFR: 5, maxExFR: 10 },
+                        'elevee': { minExFR: 10.1, maxExFR: 15 },
+                        'intensive': { minExFR: 15.1, maxExFR: 50 }
+                    };
+                    
+                    const range = frequencyRanges[exerciseFrequency.value];
+                    if (range) {
+                        searchData.minExFR = range.minExFR;
+                        searchData.maxExFR = range.maxExFR;
+                        // Flag pour indiquer qu'on veut aussi les moyennes dans cette plage
+                        searchData.includeMeanFreqInRange = true;
+                        // Vérifier si l'utilisateur veut les chevauchements
+                        const includeOverlap = this.querySelector('#includeOverlap');
+                        searchData.allowOverlap = includeOverlap ? includeOverlap.checked : true;
+                    }
                 }
             }
 
@@ -660,7 +698,25 @@ class InputInterrogationComponent extends HTMLElement {
                         if (maxYOE && maxYOE.trim() !== '') searchData.maxYOE = parseInt(maxYOE);
                     }
                 } else {
-                    searchData.experienceCategory = experienceCategory.value;
+                    // Conversion des valeurs prédéfinies en plages numériques
+                    // Le système récupérera à la fois les plages qui chevauchent ET les moyennes dans la plage
+                    const experienceRanges = {
+                        'debutant': { minYOE: 0, maxYOE: 1.9 },
+                        'intermediaire': { minYOE: 2, maxYOE: 7 },
+                        'experimente': { minYOE: 7.1, maxYOE: 15 },
+                        'expert': { minYOE: 15.1, maxYOE: 50 }
+                    };
+                    
+                    const range = experienceRanges[experienceCategory.value];
+                    if (range) {
+                        searchData.minYOE = range.minYOE;
+                        searchData.maxYOE = range.maxYOE;
+                        // Flag pour indiquer qu'on veut aussi les moyennes dans cette plage
+                        searchData.includeMeanExpInRange = true;
+                        // Vérifier si l'utilisateur veut les chevauchements
+                        const includeOverlap = this.querySelector('#includeOverlap');
+                        searchData.allowOverlap = includeOverlap ? includeOverlap.checked : true;
+                    }
                 }
             }
 

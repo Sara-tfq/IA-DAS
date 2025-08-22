@@ -219,3 +219,106 @@ footer {
 #EnSavoirPlus:hover {
     background-color: #1a2f3a;
 }
+
+/* Styles pour la modal d'authentification */
+.modal {
+    position: fixed !important;
+    z-index: 9999 !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.modal[style*="flex"] {
+    display: flex !important;
+}
+
+.modal-content {
+    background-color: white !important;
+    padding: 30px !important;
+    border-radius: 12px !important;
+    width: 400px !important;
+    max-width: 90% !important;
+    position: relative !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    margin: auto !important;
+}
+
+.close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.modal-content h2 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.modal-content p {
+    color: #34495e;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.modal-content p small {
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+#authForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#adminPassword {
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+}
+
+#adminPassword:focus {
+    border-color: #2980b9;
+    box-shadow: 0 0 5px rgba(41, 128, 185, 0.3);
+}
+
+#authForm button {
+    padding: 12px;
+    font-size: 16px;
+    background-color: #2980b9;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#authForm button:hover {
+    background-color: #1c5980;
+}
+
+.error-message {
+    color: #e74c3c;
+    background-color: #fdf2f2;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #e74c3c;
+    text-align: center;
+    margin-top: 10px;
+}

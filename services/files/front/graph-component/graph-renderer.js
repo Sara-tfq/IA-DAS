@@ -193,7 +193,7 @@ class GraphRenderer {
 
     console.log(' TOUS les gestionnaires d\'événements attachés aux nœuds');
 
-    // Animation tick
+    // Animation tick avec synchronisation hiérarchie
     this.simulation.on('tick', () => {
       // Mettre à jour les chemins courbés
       link.attr('d', d => this.createCurvedPath(d));
@@ -206,6 +206,9 @@ class GraphRenderer {
       // Mettre à jour les nœuds
       node.attr('transform', d => `translate(${d.x},${d.y})`);
       nodeLabels.attr('transform', d => `translate(${d.x},${d.y + d.size + 15})`);
+
+      // ✅ SYNCHRONISER LA HIÉRARCHIE
+      this.updateHierarchyPositions();
     });
 
     console.log(' === FIN RENDERNETWORKGRAPH - TOUT EST PRÊT ===');
@@ -963,77 +966,91 @@ class GraphRenderer {
   // 6. FONCTION: Afficher la hiérarchie
   // ========================================
   showHierarchy(centerNode, hierarchyData) {
-    
+    console.log('🌳 Affichage hiérarchie diagonale pour:', centerNode.label);
     this.hierarchyVisible = true;
     this.currentHierarchyConcept = centerNode.label;
+    this.hierarchyCenterNode = centerNode; // Stocker pour synchronisation
 
     // Nettoyer les éléments hiérarchiques précédents
     this.cleanupHierarchy();
 
-    const hierarchyRadius = 80; // Rayon du cercle autour du nœud central
     const allHierarchyNodes = [];
     const allHierarchyLinks = [];
 
-    // === CRÉER LES NŒUDS PARENTS ===
+    // === CRÉER LES NŒUDS PARENTS (DIAGONAL HAUT-DROITE - OPPOSÉ AUX ENFANTS) ===
+    const parentLevelDistance = 70; // Distance entre niveaux
+    
     hierarchyData.parents.forEach((parent, index) => {
-      const angle = (index / hierarchyData.parents.length) * Math.PI * 2 - Math.PI / 2; // Commencer en haut
-      const x = centerNode.x + Math.cos(angle) * hierarchyRadius;
-      const y = centerNode.y + Math.sin(angle) * hierarchyRadius;
+      const level = index + 1; // Niveau de profondeur
+      const distance = parentLevelDistance * level;
+      
+      // Position diagonale haut-droite (opposé aux enfants)
+      const angleRad = (315 * Math.PI) / 180; // 315° = haut-droite
+      const x = centerNode.x + Math.cos(angleRad) * distance;
+      const y = centerNode.y + Math.sin(angleRad) * distance;
 
       const parentNode = {
         id: `hierarchy_parent_${index}`,
         label: parent.label,
         uri: parent.uri,
         type: 'hierarchy_parent',
+        level: level,
+        relativeX: Math.cos(angleRad) * distance, // Position relative au centre
+        relativeY: Math.sin(angleRad) * distance,
         x: x,
         y: y,
-        fx: x, // Fixer la position
-        fy: y,
         originalData: parent
       };
 
       allHierarchyNodes.push(parentNode);
 
-      // Lien vers le parent
+      // Lien avec flèche vers le nœud central
       allHierarchyLinks.push({
-        source: centerNode,
-        target: parentNode,
+        source: parentNode,
+        target: centerNode,
         type: 'hierarchy_parent_link',
-        id: `hierarchy_parent_link_${index}`
+        id: `hierarchy_parent_link_${index}`,
+        direction: 'to_center',
+        level: level
       });
-
     });
 
-    // === CRÉER LES NŒUDS ENFANTS ===
-    const childStartAngle = hierarchyData.parents.length > 0 ? Math.PI : 0; // Éviter superposition avec parents
+    // === CRÉER LES NŒUDS ENFANTS (DIAGONAL BAS-GAUCHE - OPPOSÉ AUX PARENTS) ===
+    const childLevelDistance = 70;
+    
     hierarchyData.children.forEach((child, index) => {
-      const totalChildren = hierarchyData.children.length;
-      const angle = childStartAngle + (index / totalChildren) * Math.PI * 2;
-      const x = centerNode.x + Math.cos(angle) * hierarchyRadius;
-      const y = centerNode.y + Math.sin(angle) * hierarchyRadius;
+      const level = index + 1;
+      const distance = childLevelDistance * level;
+      
+      // Position diagonale bas-gauche (opposé aux parents)
+      const angleRad = (225 * Math.PI) / 180; // 225° = bas-gauche
+      const x = centerNode.x + Math.cos(angleRad) * distance;
+      const y = centerNode.y + Math.sin(angleRad) * distance;
 
       const childNode = {
         id: `hierarchy_child_${index}`,
         label: child.label,
         uri: child.uri,
         type: 'hierarchy_child',
+        level: level,
+        relativeX: Math.cos(angleRad) * distance,
+        relativeY: Math.sin(angleRad) * distance,
         x: x,
         y: y,
-        fx: x, // Fixer la position
-        fy: y,
         originalData: child
       };
 
       allHierarchyNodes.push(childNode);
 
-      // Lien vers l'enfant
+      // Lien avec flèche depuis le nœud central
       allHierarchyLinks.push({
         source: centerNode,
         target: childNode,
         type: 'hierarchy_child_link',
-        id: `hierarchy_child_link_${index}`
+        id: `hierarchy_child_link_${index}`,
+        direction: 'from_center',
+        level: level
       });
-
     });
 
     // Stocker pour nettoyage ultérieur
@@ -1041,18 +1058,21 @@ class GraphRenderer {
     this.hierarchyLinks = allHierarchyLinks;
 
     // === AFFICHAGE VISUEL ===
-    this.renderHierarchyNodes(allHierarchyNodes);
-    this.renderHierarchyLinks(allHierarchyLinks);
+    this.renderHierarchyNodesDiagonal(allHierarchyNodes);
+    this.renderHierarchyLinksDiagonal(allHierarchyLinks);
+    this.addArrowMarkers(); // Ajouter les définitions de flèches
 
-    // === GESTIONNAIRE DE FERMETURE ===
-    this.setupHierarchyCloseHandlers();
+    // === SYNCHRONISATION AVEC SIMULATION ===
+    this.setupHierarchySync();
 
+    console.log(`✅ Hiérarchie diagonale: ${hierarchyData.parents.length} parents, ${hierarchyData.children.length} enfants`);
   }
 
   // ========================================
   // 7. FONCTION: Rendu visuel des nœuds hiérarchiques
   // ========================================
-  renderHierarchyNodes(hierarchyNodes) {
+  renderHierarchyNodesDiagonal(hierarchyNodes) {
+    console.log('📐 Rendu nœuds diagonaux:', hierarchyNodes.length);
 
     const hierarchyGroup = this.g.append('g').attr('class', 'hierarchy-nodes');
 
@@ -1062,61 +1082,72 @@ class GraphRenderer {
       .attr('class', 'hierarchy-node')
       .attr('transform', d => `translate(${d.x}, ${d.y})`);
 
-    // Cercles des nœuds hiérarchiques
+    // Cercles des nœuds avec couleurs vertes pour toute la hiérarchie
     nodeGroups.append('circle')
-      .attr('r', 18)
-      .style('fill', d => d.type === 'hierarchy_parent' ? '#4CAF50' : '#8BC34A') // Vert foncé pour parents, vert clair pour enfants
+      .attr('r', d => Math.max(12, 20 - d.level * 2)) // Plus petit à mesure qu'on s'éloigne
+      .style('fill', d => {
+        // Dégradé de vert pour toute la hiérarchie
+        const intensity = Math.max(0.4, 1 - d.level * 0.15);
+        if (d.type === 'hierarchy_parent') {
+          return `rgba(46, 125, 50, ${intensity})`; // Vert foncé pour parents
+        } else {
+          return `rgba(76, 175, 80, ${intensity})`; // Vert clair pour enfants
+        }
+      })
       .style('stroke', '#2E7D32')
       .style('stroke-width', 2)
       .style('opacity', 0.9)
       .style('cursor', 'pointer');
 
-    // Labels des nœuds hiérarchiques
+    // Labels dans les cercles
     nodeGroups.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '0.35em')
-      .style('font-size', '10px')
+      .style('font-size', d => Math.max(8, 12 - d.level))
       .style('font-weight', 'bold')
       .style('fill', 'white')
       .style('pointer-events', 'none')
-      .text(d => this.truncateLabel(d.label, 8)); // Texte court
+      .text(d => this.truncateLabel(d.label, Math.max(4, 8 - d.level)));
 
-    // Labels complets en dessous
+    // Labels complets à côté avec position adaptée
     nodeGroups.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('dy', '32px')
+      .attr('text-anchor', d => d.type === 'hierarchy_parent' ? 'end' : 'start')
+      .attr('dx', d => d.type === 'hierarchy_parent' ? -25 : 25)
+      .attr('dy', '0.35em')
       .style('font-size', '11px')
-      .style('fill', '#2E7D32')
+      .style('fill', '#2E7D32') // Vert pour tous les labels
       .style('font-weight', 'bold')
       .style('pointer-events', 'none')
-      .text(d => this.truncateLabel(d.label, 15));
+      .text(d => d.label);
 
-    // Icônes pour distinguer parents/enfants
+    // Indicateur de niveau
     nodeGroups.append('text')
       .attr('text-anchor', 'middle')
-      .attr('dy', '-25px')
-      .style('font-size', '14px')
-      .style('fill', '#2E7D32')
+      .attr('dy', d => d.type === 'hierarchy_parent' ? '-25px' : '25px')
+      .style('font-size', '10px')
+      .style('fill', '#666')
+      .style('font-weight', 'bold')
       .style('pointer-events', 'none')
+      .text(d => `N${d.level}`);
 
-    // Animation d'apparition
+    // Animation d'apparition en cascade
     nodeGroups.style('opacity', 0)
       .transition()
-      .duration(500)
-      .delay((d, i) => i * 100)
+      .duration(400)
+      .delay((d, i) => i * 150)
       .style('opacity', 1);
 
-    // Tooltip au survol
+    // Tooltip amélioré
     nodeGroups.on('mouseover', (event, d) => {
-      this.showHierarchyTooltip(event, d);
+      this.showHierarchyTooltipDiagonal(event, d);
     }).on('mouseout', () => {
       this.hideTooltip();
     });
   }
 
 
-  renderHierarchyLinks(hierarchyLinks) {
-    console.log(` Rendu de ${hierarchyLinks.length} liens hiérarchiques`);
+  renderHierarchyLinksDiagonal(hierarchyLinks) {
+    console.log('🏹 Rendu liens diagonaux avec flèches:', hierarchyLinks.length);
 
     const linksGroup = this.g.append('g').attr('class', 'hierarchy-links');
 
@@ -1128,16 +1159,58 @@ class GraphRenderer {
       .attr('y1', d => d.source.y)
       .attr('x2', d => d.target.x)
       .attr('y2', d => d.target.y)
-      .style('stroke', d => d.type === 'hierarchy_parent_link' ? '#4CAF50' : '#8BC34A')
-      .style('stroke-width', 3)
-      .style('opacity', 0.7)
-      .style('stroke-dasharray', '5,5'); // Lignes pointillées
+      .style('stroke', d => {
+        // Couleur verte pour tous les liens
+        const intensity = Math.max(0.6, 1 - d.level * 0.1);
+        return `rgba(46, 125, 50, ${intensity})`;
+      })
+      .style('stroke-width', d => Math.max(2, 4 - d.level * 0.5))
+      .style('opacity', 0.8)
+      .attr('marker-end', d => d.direction === 'from_center' ? 'url(#arrow-child)' : 'url(#arrow-parent)')
+      .style('stroke-dasharray', d => d.level > 1 ? '4,2' : 'none'); // Pointillés pour niveaux éloignés
 
-    // Animation d'apparition
+    // Animation d'apparition en cascade
     links.style('opacity', 0)
       .transition()
       .duration(300)
-      .style('opacity', 0.7);
+      .delay((d, i) => i * 100)
+      .style('opacity', 0.8);
+  }
+
+  // Ajouter les définitions de flèches SVG
+  addArrowMarkers() {
+    // Supprimer les anciens marqueurs s'ils existent
+    this.svg.select('defs').remove();
+    
+    const defs = this.svg.append('defs');
+
+    // Flèche pour parents (vers le centre) - Verte
+    defs.append('marker')
+      .attr('id', 'arrow-parent')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 8)
+      .attr('refY', 0)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .style('fill', '#2E7D32')
+      .style('opacity', 0.8);
+
+    // Flèche pour enfants (depuis le centre) - Verte
+    defs.append('marker')
+      .attr('id', 'arrow-child')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 8)
+      .attr('refY', 0)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .style('fill', '#2E7D32')
+      .style('opacity', 0.8);
   }
 
   // ========================================
@@ -1207,6 +1280,61 @@ class GraphRenderer {
         this.hideHierarchy();
       }
     });
+  }
+
+  // Fonction de synchronisation des positions hiérarchiques
+  setupHierarchySync() {
+    // Cette fonction sera appelée dans le tick de simulation
+  }
+
+  updateHierarchyPositions() {
+    if (!this.hierarchyVisible || !this.hierarchyCenterNode || !this.hierarchyNodes.length) {
+      return;
+    }
+
+    // Mettre à jour les positions des nœuds hiérarchiques
+    this.hierarchyNodes.forEach(node => {
+      node.x = this.hierarchyCenterNode.x + node.relativeX;
+      node.y = this.hierarchyCenterNode.y + node.relativeY;
+    });
+
+    // Appliquer visuellement les nouvelles positions
+    this.g.selectAll('.hierarchy-node')
+      .attr('transform', d => `translate(${d.x}, ${d.y})`);
+
+    // Mettre à jour les liens
+    this.g.selectAll('.hierarchy-link')
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+  }
+
+  showHierarchyTooltipDiagonal(event, d) {
+    d3.selectAll('.tooltip').remove();
+
+    const tooltip = d3.select('body').append('div')
+      .attr('class', 'tooltip')
+      .style('position', 'absolute')
+      .style('background', d => d.type === 'hierarchy_parent' ? 'rgba(25, 118, 210, 0.95)' : 'rgba(56, 142, 60, 0.95)')
+      .style('color', 'white')
+      .style('padding', '8px 12px')
+      .style('border-radius', '5px')
+      .style('pointer-events', 'none')
+      .style('font-size', '12px')
+      .style('opacity', 0);
+
+    const relationText = d.type === 'hierarchy_parent' 
+      ? `Parent (niveau ${d.level})` 
+      : `Enfant (niveau ${d.level})`;
+    const tooltipText = `<strong>${d.label}</strong><br/>${relationText} de "${this.currentHierarchyConcept}"<br/><em>Hiérarchie ontologique</em>`;
+
+    tooltip.html(tooltipText)
+      .style('left', (event.pageX + 10) + 'px')
+      .style('top', (event.pageY - 10) + 'px')
+      .transition()
+      .duration(200)
+      .style('opacity', 1);
   }
 
   showHierarchyTooltip(event, d) {

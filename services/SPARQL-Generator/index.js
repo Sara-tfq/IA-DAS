@@ -2,6 +2,69 @@
 const http = require('http');
 const fetch = require('node-fetch');
 
+// Fonction de conversion SPARQL vers Turtle
+function convertSparqlToTurtle(sparqlResults, metadata = {}) {
+  if (!sparqlResults.results || !sparqlResults.results.bindings) {
+    throw new Error('Format SPARQL invalide');
+  }
+  
+  const bindings = sparqlResults.results.bindings;
+  const timestamp = new Date().toISOString();
+  
+  // En-tête Turtle avec préfixes
+  let turtle = `@prefix iadas: <http://ia-das.org/onto#> .
+@prefix iadas-data: <http://ia-das.org/data#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix export: <http://ia-das.org/export#> .
+
+# Export généré le ${timestamp}
+# Type: ${metadata.exportType || 'sparql_query'}
+`;
+
+  if (metadata.questionId) {
+    turtle += `# Question ID: ${metadata.questionId}\n`;
+  }
+  if (metadata.questionText) {
+    turtle += `# Question: ${metadata.questionText}\n`;
+  }
+  
+  turtle += `\n`;
+  
+  // Convertir chaque binding en triples Turtle
+  bindings.forEach((binding, index) => {
+    const exportId = `export:result_${index + 1}`;
+    turtle += `${exportId} rdf:type export:SparqlResult ;\n`;
+    
+    Object.keys(binding).forEach(variable => {
+      const value = binding[variable];
+      if (value && value.value) {
+        const turtleValue = value.type === 'uri' 
+          ? `<${value.value}>` 
+          : `"${value.value.replace(/"/g, '\\"')}"`;
+        turtle += `    export:${variable} ${turtleValue} ;\n`;
+      }
+    });
+    
+    turtle += `    export:resultIndex ${index + 1} .\n\n`;
+  });
+  
+  // Métadonnées d'export
+  turtle += `export:metadata rdf:type export:ExportMetadata ;
+    export:timestamp "${timestamp}"^^xsd:dateTime ;
+    export:resultCount ${bindings.length} ;
+    export:exportFormat "turtle" `;
+    
+  if (metadata.questionId) {
+    turtle += `;\n    export:sourceQuestion "${metadata.questionId}" `;
+  }
+  
+  turtle += `.\n`;
+  
+  return turtle;
+}
+
 // Configuration
 const FUSEKI_TIMEOUT = 60000; // 60 secondes
 const WARMUP_TIMEOUT = 15000; // 15 secondes pour warmup
@@ -491,16 +554,64 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
 
 
   } else if (filters.minAge !== undefined || filters.maxAge !== undefined) {
-    // Cas normal : filtrer sur les VRAIES propriétés minAge/maxAge
-    query += `
+    
+    if (filters.includeMeanInRange) {
+      // CAS SPÉCIAL : Catégories prédéfinies avec option chevauchement
+      if (filters.allowOverlap === false) {
+        // Mode strict : seulement les moyennes
+        query += `
+    
+    # Mode strict : seulement les âges moyens dans la plage
+    ?analysis iadas:hasPopulation ?population .
+    ?population iadas:ageStats ?ageStats .
+    ?ageStats iadas:meanAge ?meanAgeStr .
+    FILTER(?meanAgeStr != "" && xsd:decimal(?meanAgeStr) >= ${filters.minAge} && xsd:decimal(?meanAgeStr) <= ${filters.maxAge})`;
+        
+        console.log(` Filtre âge strict: seulement moyennes ${filters.minAge}-${filters.maxAge}`);
+        
+      } else {
+        // Mode inclusif : moyennes + chevauchements
+        query += `
+    
+    # Mode inclusif : moyennes + chevauchements de plages
+    ?analysis iadas:hasPopulation ?population .
+    ?population iadas:ageStats ?ageStats .
+    
+    {
+      # Option 1 (PRIORITAIRE): Âges moyens dans la plage
+      ?ageStats iadas:meanAge ?meanAgeStr .
+      FILTER(?meanAgeStr != "" && xsd:decimal(?meanAgeStr) >= ${filters.minAge} && xsd:decimal(?meanAgeStr) <= ${filters.maxAge})
+    }
+    UNION
+    {
+      # Option 2 (INCLUSIF): Plages qui chevauchent
+      ?ageStats iadas:minAge ?minAgeStr .
+      ?ageStats iadas:maxAge ?maxAgeStr .
+      FILTER(?minAgeStr != "" && ?maxAgeStr != "")
+      BIND(xsd:decimal(?minAgeStr) AS ?minAge)
+      BIND(xsd:decimal(?maxAgeStr) AS ?maxAge)
+      FILTER(?maxAge >= ${filters.minAge} && ?minAge <= ${filters.maxAge})
+      # Éviter doublons avec les moyennes
+      FILTER NOT EXISTS {
+        ?ageStats iadas:meanAge ?meanCheck .
+        FILTER(?meanCheck != "" && xsd:decimal(?meanCheck) >= ${filters.minAge} && xsd:decimal(?meanCheck) <= ${filters.maxAge})
+      }
+    }`;
+        
+        console.log(` Filtre âge inclusif: moyennes ${filters.minAge}-${filters.maxAge} + chevauchements`);
+      }
+      
+    } else {
+      // Cas normal : filtrer sur les VRAIES propriétés minAge/maxAge
+      query += `
     
     # Filtrer sur les vraies propriétés minAge et maxAge
     ?analysis iadas:hasPopulation ?population .
     ?population iadas:ageStats ?ageStats .`;
 
-    if (filters.minAge !== undefined && filters.maxAge !== undefined) {
-      // Les deux : minAge ET maxAge
-      query += `
+      if (filters.minAge !== undefined && filters.maxAge !== undefined) {
+        // Les deux : minAge ET maxAge
+        query += `
     ?ageStats iadas:minAge ?minAgeStr .
     ?ageStats iadas:maxAge ?maxAgeStr .
     BIND(xsd:decimal(?minAgeStr) AS ?minAge)
@@ -508,21 +619,22 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     FILTER(?minAge >= ${filters.minAge} && ?maxAge <= ${filters.maxAge})`;
 
 
-    } else if (filters.minAge !== undefined) {
-      // Seulement minAge
-      query += `
+      } else if (filters.minAge !== undefined) {
+        // Seulement minAge
+        query += `
     ?ageStats iadas:minAge ?minAgeStr .
     BIND(xsd:decimal(?minAgeStr) AS ?minAge)
     FILTER(?minAge >= ${filters.minAge})`;
 
 
-    } else if (filters.maxAge !== undefined) {
-      // Seulement maxAge
-      query += `
+      } else if (filters.maxAge !== undefined) {
+        // Seulement maxAge
+        query += `
     ?ageStats iadas:maxAge ?maxAgeStr .
     BIND(xsd:decimal(?maxAgeStr) AS ?maxAge)
     FILTER(?maxAge <= ${filters.maxAge})`;
 
+      }
     }
   }
 
@@ -548,44 +660,149 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
 
 
   } else if (filters.minExFR !== undefined || filters.maxExFR !== undefined) {
-    // Cas normal : filtrer sur les VRAIES propriétés minExFR/maxExFR
-    if (!query.includes('?analysis iadas:hasPopulation ?population')) {
-      query += `
+    
+    if (filters.includeMeanFreqInRange) {
+      // CAS SPÉCIAL : Catégories prédéfinies avec option chevauchement
+      if (!query.includes('?analysis iadas:hasPopulation ?population')) {
+        query += `
+    
+    # Filtrer populations par fréquence
+    ?analysis iadas:hasPopulation ?population .`;
+      }
+      
+      if (filters.allowOverlap === false) {
+        // Mode strict : seulement les moyennes avec normalisation d'unités
+        query += `
+    ?population iadas:exerciseFreqStats ?freqStats .
+    ?freqStats iadas:meanExFR ?meanExFRStr .
+    OPTIONAL { ?freqStats iadas:freqUnit ?freqUnit }
+    OPTIONAL { ?freqStats iadas:freqBase ?freqBase }
+    FILTER(?meanExFRStr != "")
+    
+    # Normalisation vers heures/semaine
+    BIND(
+      IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?meanExFRStr) / 60,
+      IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?meanExFRStr) * 24, 
+      IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?meanExFRStr) < 50), xsd:decimal(?meanExFRStr),
+      xsd:decimal(?meanExFRStr))))
+      AS ?normalizedFreq
+    )
+    
+    FILTER(?normalizedFreq >= ${filters.minExFR} && ?normalizedFreq <= ${filters.maxExFR})`;
+        
+        console.log(` Filtre fréquence strict normalisé: moyennes ${filters.minExFR}-${filters.maxExFR}h/sem`);
+        
+      } else {
+        // Mode inclusif : moyennes + chevauchements avec normalisation
+        query += `
+    ?population iadas:exerciseFreqStats ?freqStats .
+    
+    {
+      # Option 1: Fréquences moyennes normalisées
+      ?freqStats iadas:meanExFR ?meanExFRStr .
+      OPTIONAL { ?freqStats iadas:freqUnit ?freqUnit }
+      OPTIONAL { ?freqStats iadas:freqBase ?freqBase }
+      FILTER(?meanExFRStr != "")
+      
+      # Normalisation vers heures/semaine
+      BIND(
+        IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?meanExFRStr) / 60,
+        IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?meanExFRStr) * 24, 
+        IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?meanExFRStr) < 50), xsd:decimal(?meanExFRStr),
+        xsd:decimal(?meanExFRStr))))
+        AS ?normalizedMeanFreq
+      )
+      
+      FILTER(?normalizedMeanFreq >= ${filters.minExFR} && ?normalizedMeanFreq <= ${filters.maxExFR})
+    }
+    UNION
+    {
+      # Option 2: Plages qui chevauchent (normalisées)
+      ?freqStats iadas:minExFR ?minExFRStr .
+      ?freqStats iadas:maxExFR ?maxExFRStr .
+      OPTIONAL { ?freqStats iadas:freqUnit ?freqUnit }
+      OPTIONAL { ?freqStats iadas:freqBase ?freqBase }
+      FILTER(?minExFRStr != "" && ?maxExFRStr != "")
+      
+      # Normalisation des bornes
+      BIND(
+        IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?minExFRStr) / 60,
+        IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?minExFRStr) * 24, 
+        IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?minExFRStr) < 50), xsd:decimal(?minExFRStr),
+        xsd:decimal(?minExFRStr))))
+        AS ?normalizedMinFreq
+      )
+      
+      BIND(
+        IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?maxExFRStr) / 60,
+        IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?maxExFRStr) * 24, 
+        IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?maxExFRStr) < 50), xsd:decimal(?maxExFRStr),
+        xsd:decimal(?maxExFRStr))))
+        AS ?normalizedMaxFreq
+      )
+      
+      FILTER(?normalizedMaxFreq >= ${filters.minExFR} && ?normalizedMinFreq <= ${filters.maxExFR})
+      
+      # Éviter doublons avec moyennes
+      FILTER NOT EXISTS {
+        ?freqStats iadas:meanExFR ?meanCheck .
+        OPTIONAL { ?freqStats iadas:freqUnit ?freqUnitCheck }
+        OPTIONAL { ?freqStats iadas:freqBase ?freqBaseCheck }
+        FILTER(?meanCheck != "")
+        BIND(
+          IF(?freqUnitCheck = "minutes" && ?freqBaseCheck = "week", xsd:decimal(?meanCheck) / 60,
+          IF(?freqUnitCheck = "days" && ?freqBaseCheck = "week", xsd:decimal(?meanCheck) * 24, 
+          IF(?freqUnitCheck = "hours" || (?freqUnitCheck = "" && xsd:decimal(?meanCheck) < 50), xsd:decimal(?meanCheck),
+          xsd:decimal(?meanCheck))))
+          AS ?normalizedMeanCheck
+        )
+        FILTER(?normalizedMeanCheck >= ${filters.minExFR} && ?normalizedMeanCheck <= ${filters.maxExFR})
+      }
+    }`;
+        
+        console.log(` Filtre fréquence inclusif normalisé: moyennes + chevauchements ${filters.minExFR}-${filters.maxExFR}h/sem`);
+      }
+      
+    } else {
+      // Cas normal : filtrer sur les VRAIES propriétés minExFR/maxExFR
+      if (!query.includes('?analysis iadas:hasPopulation ?population')) {
+        query += `
     
     # Filtrer sur les vraies propriétés minExFR et maxExFR
     ?analysis iadas:hasPopulation ?population .`;
-    }
-    query += `
+      }
+      query += `
     ?population iadas:exerciseFreqStats ?freqStats .`;
 
-    if (filters.minExFR !== undefined && filters.maxExFR !== undefined) {
-      // Les deux : minExFR ET maxExFR
-      query += `
+      if (filters.minExFR !== undefined && filters.maxExFR !== undefined) {
+        // Les deux : minExFR ET maxExFR
+        query += `
     ?freqStats iadas:minExFR ?minExFRStr .
     ?freqStats iadas:maxExFR ?maxExFRStr .
     BIND(xsd:decimal(?minExFRStr) AS ?minExFR)
     BIND(xsd:decimal(?maxExFRStr) AS ?maxExFR)
     FILTER(?minExFR >= ${filters.minExFR} && ?maxExFR <= ${filters.maxExFR})`;
 
-      console.log(` Filtre plage fréquence: population dans [${filters.minExFR}, ${filters.maxExFR}] h/sem`);
+        console.log(` Filtre plage fréquence: population dans [${filters.minExFR}, ${filters.maxExFR}] h/sem`);
 
-    } else if (filters.minExFR !== undefined) {
-      // Seulement minExFR
-      query += `
+      } else if (filters.minExFR !== undefined) {
+        // Seulement minExFR
+        query += `
     ?freqStats iadas:minExFR ?minExFRStr .
     BIND(xsd:decimal(?minExFRStr) AS ?minExFR)
     FILTER(?minExFR >= ${filters.minExFR})`;
 
-      console.log(` Filtre fréquence minimum: minExFR >= ${filters.minExFR}`);
+        console.log(` Filtre fréquence minimum: minExFR >= ${filters.minExFR}`);
 
-    } else if (filters.maxExFR !== undefined) {
-      // Seulement maxExFR
-      query += `
+      } else if (filters.maxExFR !== undefined) {
+        // Seulement maxExFR
+        query += `
     ?freqStats iadas:maxExFR ?maxExFRStr .
     BIND(xsd:decimal(?maxExFRStr) AS ?maxExFR)
     FILTER(?maxExFR <= ${filters.maxExFR})`;
 
-      console.log(` Filtre fréquence maximum: maxExFR <= ${filters.maxExFR}`);
+        console.log(` Filtre fréquence maximum: maxExFR <= ${filters.maxExFR}`);
+      }
     }
   }
 
@@ -611,44 +828,129 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     console.log(` Filtre expérience moyenne: ${moyenne} ± 1 = [${minExp}, ${maxExp}]`);
 
   } else if (filters.minYOE !== undefined || filters.maxYOE !== undefined) {
-    // Cas normal : filtrer sur les VRAIES propriétés minYOE/maxYOE
-    if (!query.includes('?analysis iadas:hasPopulation ?population')) {
-      query += `
+    
+    if (filters.includeMeanExpInRange) {
+      // CAS SPÉCIAL : Catégories prédéfinies avec option chevauchement
+      if (!query.includes('?analysis iadas:hasPopulation ?population')) {
+        query += `
+    
+    # Filtrer populations par expérience
+    ?analysis iadas:hasPopulation ?population .`;
+      }
+      
+      if (filters.allowOverlap === false) {
+        // Mode strict : seulement les moyennes (expérience plus simple, majoritairement en années)
+        query += `
+    ?population iadas:experienceStats ?expStats .
+    ?expStats iadas:meanYOE ?meanYOEStr .
+    OPTIONAL { ?expStats iadas:expUnit ?expUnit }
+    FILTER(?meanYOEStr != "")
+    # Normalisation simple : si pas d'unité ou "years", utiliser direct
+    BIND(
+      IF(?expUnit = "years" || ?expUnit = "", xsd:decimal(?meanYOEStr), 
+      xsd:decimal(?meanYOEStr))
+      AS ?normalizedExp
+    )
+    FILTER(?normalizedExp >= ${filters.minYOE} && ?normalizedExp <= ${filters.maxYOE})`;
+        
+        console.log(` Filtre expérience strict: seulement moyennes ${filters.minYOE}-${filters.maxYOE} ans`);
+        
+      } else {
+        // Mode inclusif : moyennes + chevauchements avec gestion unités
+        query += `
+    ?population iadas:experienceStats ?expStats .
+    
+    {
+      # Option 1: Expériences moyennes normalisées
+      ?expStats iadas:meanYOE ?meanYOEStr .
+      OPTIONAL { ?expStats iadas:expUnit ?expUnit }
+      FILTER(?meanYOEStr != "")
+      BIND(
+        IF(?expUnit = "years" || ?expUnit = "", xsd:decimal(?meanYOEStr), 
+        xsd:decimal(?meanYOEStr))
+        AS ?normalizedMeanExp
+      )
+      FILTER(?normalizedMeanExp >= ${filters.minYOE} && ?normalizedMeanExp <= ${filters.maxYOE})
+    }
+    UNION
+    {
+      # Option 2: Plages qui chevauchent (normalisées)
+      ?expStats iadas:minYOE ?minYOEStr .
+      ?expStats iadas:maxYOE ?maxYOEStr .
+      OPTIONAL { ?expStats iadas:expUnit ?expUnit }
+      FILTER(?minYOEStr != "" && ?maxYOEStr != "")
+      
+      BIND(
+        IF(?expUnit = "years" || ?expUnit = "", xsd:decimal(?minYOEStr), 
+        xsd:decimal(?minYOEStr))
+        AS ?normalizedMinExp
+      )
+      
+      BIND(
+        IF(?expUnit = "years" || ?expUnit = "", xsd:decimal(?maxYOEStr), 
+        xsd:decimal(?maxYOEStr))
+        AS ?normalizedMaxExp
+      )
+      
+      FILTER(?normalizedMaxExp >= ${filters.minYOE} && ?normalizedMinExp <= ${filters.maxYOE})
+      
+      # Éviter doublons avec moyennes
+      FILTER NOT EXISTS {
+        ?expStats iadas:meanYOE ?meanCheck .
+        OPTIONAL { ?expStats iadas:expUnit ?expUnitCheck }
+        FILTER(?meanCheck != "")
+        BIND(
+          IF(?expUnitCheck = "years" || ?expUnitCheck = "", xsd:decimal(?meanCheck), 
+          xsd:decimal(?meanCheck))
+          AS ?normalizedMeanExpCheck
+        )
+        FILTER(?normalizedMeanExpCheck >= ${filters.minYOE} && ?normalizedMeanExpCheck <= ${filters.maxYOE})
+      }
+    }`;
+        
+        console.log(` Filtre expérience inclusif normalisé: moyennes + chevauchements ${filters.minYOE}-${filters.maxYOE} ans`);
+      }
+      
+    } else {
+      // Cas normal : filtrer sur les VRAIES propriétés minYOE/maxYOE
+      if (!query.includes('?analysis iadas:hasPopulation ?population')) {
+        query += `
     
     # Filtrer sur les vraies propriétés minYOE et maxYOE
     ?analysis iadas:hasPopulation ?population .`;
-    }
-    query += `
+      }
+      query += `
     ?population iadas:experienceStats ?expStats .`;
 
-    if (filters.minYOE !== undefined && filters.maxYOE !== undefined) {
-      // Les deux : minYOE ET maxYOE
-      query += `
+      if (filters.minYOE !== undefined && filters.maxYOE !== undefined) {
+        // Les deux : minYOE ET maxYOE
+        query += `
     ?expStats iadas:minYOE ?minYOEStr .
     ?expStats iadas:maxYOE ?maxYOEStr .
     BIND(xsd:decimal(?minYOEStr) AS ?minYOE)
     BIND(xsd:decimal(?maxYOEStr) AS ?maxYOE)
     FILTER(?minYOE >= ${filters.minYOE} && ?maxYOE <= ${filters.maxYOE})`;
 
-      console.log(` Filtre plage expérience: population dans [${filters.minYOE}, ${filters.maxYOE}] ans`);
+        console.log(` Filtre plage expérience: population dans [${filters.minYOE}, ${filters.maxYOE}] ans`);
 
-    } else if (filters.minYOE !== undefined) {
-      // Seulement minYOE
-      query += `
+      } else if (filters.minYOE !== undefined) {
+        // Seulement minYOE
+        query += `
     ?expStats iadas:minYOE ?minYOEStr .
     BIND(xsd:decimal(?minYOEStr) AS ?minYOE)
     FILTER(?minYOE >= ${filters.minYOE})`;
 
-      console.log(` Filtre expérience minimum: minYOE >= ${filters.minYOE}`);
+        console.log(` Filtre expérience minimum: minYOE >= ${filters.minYOE}`);
 
-    } else if (filters.maxYOE !== undefined) {
-      // Seulement maxYOE
-      query += `
+      } else if (filters.maxYOE !== undefined) {
+        // Seulement maxYOE
+        query += `
     ?expStats iadas:maxYOE ?maxYOEStr .
     BIND(xsd:decimal(?maxYOEStr) AS ?maxYOE)
     FILTER(?maxYOE <= ${filters.maxYOE})`;
 
-      console.log(` Filtre expérience maximum: maxYOE <= ${filters.maxYOE}`);
+        console.log(` Filtre expérience maximum: maxYOE <= ${filters.maxYOE}`);
+      }
     }
   }
 
@@ -1135,6 +1437,35 @@ http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
     res.end();
+    return;
+  }
+
+  if (req.url === '/api/export/turtle' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', async () => {
+      try {
+        console.log('\n=== EXPORT TURTLE DEMANDÉ ===');
+        const requestData = JSON.parse(body);
+        
+        if (!requestData.sparqlResults) {
+          throw new Error('Données SPARQL manquantes');
+        }
+        
+        const turtleData = convertSparqlToTurtle(requestData.sparqlResults, requestData.metadata || {});
+        
+        res.writeHead(200, { 'Content-Type': 'text/turtle; charset=utf-8' });
+        res.end(turtleData);
+        
+      } catch (error) {
+        console.error('Erreur export Turtle:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Erreur lors de l\'export Turtle',
+          message: error.message
+        }));
+      }
+    });
     return;
   }
 

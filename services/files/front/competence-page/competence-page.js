@@ -33,11 +33,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         console.error(" Aucun fichier Excel trouvé !");
     }
 
+    // Configurer les boutons d'export au chargement
+    setupInitialExportButtons();
+
     // Attendre que le composant soit initialisé
     setTimeout(() => {
         console.log(" Recherche du composant compétence...");
-
-
 
         const competenceComponent = document.querySelector('input-competence-component');
         if (competenceComponent) {
@@ -53,6 +54,24 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }, 500);
 });
+
+function setupInitialExportButtons() {
+    // Configurer les événements des boutons d'export
+    const exportPNGBtn = document.getElementById('exportPNG');
+    if (exportPNGBtn) {
+        exportPNGBtn.onclick = () => exportGraphToPNG();
+    }
+    
+    const exportExcelBtn = document.getElementById('exportExcel');
+    if (exportExcelBtn) {
+        exportExcelBtn.onclick = () => exportToExcel();
+    }
+    
+    const exportTurtleBtn = document.getElementById('exportTurtle');
+    if (exportTurtleBtn) {
+        exportTurtleBtn.onclick = () => exportToTurtle();
+    }
+}
 
 async function rechercherCompetence(data) {
     console.log(" ===============================================");
@@ -349,34 +368,24 @@ function displayCompetenceResults(data, questionContext) {
     currentData = data;
     currentQuery = questionContext;
 
-    const resultsDiv = document.getElementById('results');
-
-    
-   
-
-    // Créer la structure avec header compétence
-    resultsDiv.innerHTML = `
-        <div id="result-controls" style="margin-bottom: 20px;">
-            <button id="viewTable" class="view-btn active">Tableau détaillé</button>
-            <button id="viewGraph" class="view-btn">Graphique réseau</button>
-            <button id="viewSparql" class="view-btn">SPARQL</button>
-            <button id="exportCompetence" class="view-btn" style="background: #28a745; color: white;">Exporter analyse</button>
-        </div>
-        <div id="result-display"></div>
-    `;
-
-    // Afficher les contrôles
-    const controlsDiv = document.getElementById('result-controls');
-    controlsDiv.style.display = 'block';
-
-    // Configurer les événements
-    setupViewButtons();
-
-    // Événement export spécifique compétence
-    document.getElementById('exportCompetence').onclick = () => exportCompetenceAnalysis(data, questionContext);
+    // Activer les boutons de contrôle et d'export
+    enableResultControls();
 
     // Afficher en mode tableau par défaut
     displayTableView();
+}
+
+function enableResultControls() {
+    // Activer tous les boutons de contrôle
+    document.getElementById('viewTable').disabled = false;
+    document.getElementById('viewGraph').disabled = false;
+    document.getElementById('viewSparql').disabled = false;
+    document.getElementById('exportPNG').disabled = false;
+    document.getElementById('exportExcel').disabled = false;
+    document.getElementById('exportTurtle').disabled = false;
+    
+    // Configurer les événements si pas déjà fait
+    setupViewButtons();
 }
 
 // Fonctions d'affichage (inchangées)
@@ -384,6 +393,22 @@ function setupViewButtons() {
     document.getElementById('viewTable').onclick = () => switchView('table');
     document.getElementById('viewGraph').onclick = () => switchView('graph');
     document.getElementById('viewSparql').onclick = () => switchView('sparql');
+    
+    // Event handlers pour les boutons d'export
+    const exportPNGBtn = document.getElementById('exportPNG');
+    if (exportPNGBtn) {
+        exportPNGBtn.onclick = () => exportGraphToPNG();
+    }
+    
+    const exportExcelBtn = document.getElementById('exportExcel');
+    if (exportExcelBtn) {
+        exportExcelBtn.onclick = () => exportToExcel();
+    }
+    
+    const exportTurtleBtn = document.getElementById('exportTurtle');
+    if (exportTurtleBtn) {
+        exportTurtleBtn.onclick = () => exportToTurtle();
+    }
 }
 
 function switchView(mode) {
@@ -450,13 +475,23 @@ function displayTableView() {
         variables.forEach(variable => {
             const value = binding[variable];
             const displayValue = value ? (value.value || value) : '';
+            
+            // Détecter si c'est un ID d'analyse et le rendre cliquable
+            let cellContent = displayValue;
+            if (isAnalysisId(variable, displayValue)) {
+                cellContent = `<a href="#" onclick="openAnalysisPanelFromTable('${displayValue}', event)" 
+                    style="color: #2980b9; text-decoration: underline; cursor: pointer;">
+                    ${displayValue}
+                </a>`;
+            }
+            
             tableHTML += `<td style="
                 border: 1px solid #ddd; 
                 padding: 4px 8px;
                 vertical-align: top;
                 word-break: break-word;
                 max-width: 200px;
-            ">${displayValue}</td>`;
+            ">${cellContent}</td>`;
         });
 
         tableHTML += '</tr>';
@@ -474,6 +509,74 @@ function displayTableView() {
     displayDiv.innerHTML = tableHTML;
 }
 
+// Fonction pour détecter si une valeur est un ID d'analyse
+function isAnalysisId(variableName, value) {
+    if (!value) return false;
+    
+    // Détecter par nom de variable
+    const analysisVarNames = ['analysis', 'analysisId', 'analysis_id', 'id', 'Analysis_ID'];
+    if (analysisVarNames.some(name => variableName.toLowerCase().includes(name.toLowerCase()))) {
+        return true;
+    }
+    
+    // Détecter par format de valeur (ex: A001, A123, Analysis_1, etc.)
+    if (typeof value === 'string') {
+        return /^(A\d+|Analysis_?\d+|\d+)$/i.test(value.trim());
+    }
+    
+    return false;
+}
+
+// Fonction pour ouvrir le panneau d'analyse depuis le tableau
+async function openAnalysisPanelFromTable(analysisId, event) {
+    event.preventDefault();
+    console.log('🔍 Ouverture panneau pour analyse:', analysisId);
+    
+    try {
+        // Vérifier que les services sont disponibles
+        if (typeof window.analysisPanel === 'undefined') {
+            console.error('AnalysisPanel non disponible !');
+            alert('Erreur: Le panneau d\'analyse n\'est pas disponible.');
+            return;
+        }
+        
+        if (typeof window.fusekiRetriever === 'undefined') {
+            console.error('FusekiAnalysisRetriever non disponible !');
+            alert('Erreur: Le système de récupération des données n\'est pas disponible.');
+            return;
+        }
+        
+        // Nettoyer l'ID d'analyse (extraire depuis URI si nécessaire)
+        let cleanAnalysisId = analysisId;
+        if (analysisId.includes('#')) {
+            cleanAnalysisId = analysisId.split('#').pop();
+        } else if (analysisId.includes('/')) {
+            cleanAnalysisId = analysisId.split('/').pop();
+        }
+        
+        console.log('🔍 DEBUG: ID nettoyé:', cleanAnalysisId);
+        
+        // Créer un objet nodeData factice avec l'ID d'analyse
+        const nodeData = {
+            label: `Analyse ${cleanAnalysisId}`,
+            analyses: [cleanAnalysisId],
+            type: 'analysis_link'
+        };
+        
+        // Récupérer les données d'analyse via Fuseki
+        const analysisData = await window.fusekiRetriever.getAllAnalysesData(nodeData);
+        
+        // Ouvrir le panneau avec les données
+        window.analysisPanel.openMultipleAnalyses(`Analyse ${analysisId}`, analysisData);
+        
+        console.log('✅ Panneau ouvert avec succès');
+        
+    } catch (error) {
+        console.error('❌ Erreur ouverture panneau:', error);
+        alert(`Erreur lors de l'ouverture du panneau d'analyse: ${error.message}`);
+    }
+}
+
 function displayGraphView() {
     const displayDiv = document.getElementById('result-display');
 
@@ -487,31 +590,17 @@ function displayGraphView() {
         return;
     }
 
-    // Bouton d'export
-    const exportButton = `
-        <div style="margin-bottom: 15px;">
-            <button id="exportGraph" style="
-                background: #007bff; 
-                color: white; 
-                border: none; 
-                padding: 10px 20px; 
-                border-radius: 5px; 
-                cursor: pointer;
-                font-size: 14px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            ">
-                Exporter PNG
-            </button>
-            <span style="margin-left: 15px; color: #666;">
-                ${currentData.results.bindings.length} relations • 
-                ${currentQuery?.questionText?.substring(0, 50)}...
-            </span>
+    // Info sur les données seulement
+    const dataInfo = `
+        <div style="margin-bottom: 15px; color: #666;">
+            ${currentData.results.bindings.length} relations • 
+            ${currentQuery?.questionText?.substring(0, 50)}...
         </div>
     `;
 
     try {
         // Afficher le loading pendant le parsing
-        displayDiv.innerHTML = exportButton + `
+        displayDiv.innerHTML = dataInfo + `
             <div id="graph-container">
                 <div style="text-align: center; padding: 40px;">
                     <div style="
@@ -586,6 +675,7 @@ function displayGraphView() {
             if (exportBtn) {
                 exportBtn.onclick = () => exportGraphToPNG();
             }
+            
         }, 200);
 
     } catch (error) {
@@ -813,6 +903,131 @@ function exportCompetenceAnalysis(data, questionContext) {
     URL.revokeObjectURL(url);
 
     console.log(`Analyse de compétence exportée: ${filename}`);
+}
+
+// Fonctions d'export simplifiées
+function exportToExcel() {
+    if (!currentData || !currentData.results || !currentData.results.bindings) {
+        alert('Aucune donnée à exporter');
+        return;
+    }
+    
+    try {
+        const excelData = convertToExcel(currentData);
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `competence_data_${currentQuery?.questionId || 'unknown'}_${timestamp}.xlsx`;
+        downloadExcelFile(excelData, filename);
+        console.log('Export Excel réussi:', filename);
+    } catch (error) {
+        console.error('Erreur export Excel:', error);
+        alert(`Erreur lors de l'export Excel: ${error.message}`);
+    }
+}
+
+function exportToTurtle() {
+    if (!currentData || !currentData.results || !currentData.results.bindings) {
+        alert('Aucune donnée à exporter');
+        return;
+    }
+    
+    try {
+        convertToTurtle(currentData);
+        console.log('Export Turtle lancé');
+    } catch (error) {
+        console.error('Erreur export Turtle:', error);
+        alert(`Erreur lors de l'export Turtle: ${error.message}`);
+    }
+}
+
+function convertToExcel(data) {
+    if (!data.results || !data.results.bindings || data.results.bindings.length === 0) {
+        // Retourner un workbook vide avec message
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.aoa_to_sheet([['Aucune donnée disponible']]);
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Pas de données");
+        return workbook;
+    }
+    
+    const bindings = data.results.bindings;
+    const variables = data.head.vars;
+    
+    // Préparer les données pour XLSX
+    const worksheetData = [];
+    
+    // En-têtes
+    worksheetData.push(variables);
+    
+    // Données
+    bindings.forEach(binding => {
+        const row = variables.map(variable => {
+            const value = binding[variable];
+            return value ? (value.value || value) : '';
+        });
+        worksheetData.push(row);
+    });
+    
+    // Créer le workbook et la worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    
+    // Ajouter la worksheet au workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Compétences Export");
+    
+    return workbook;
+}
+
+async function convertToTurtle(data) {
+    try {
+        // Déterminer l'URL API
+        const hostname = window.location.hostname;
+        const apiUrl = hostname === 'localhost' || hostname === '127.0.0.1' 
+            ? 'http://localhost:8003' 
+            : `http://${hostname}:8003`;
+        
+        const response = await fetch(`${apiUrl}/api/export/turtle`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                sparqlResults: data,
+                metadata: {
+                    questionId: currentQuery?.questionId,
+                    questionText: currentQuery?.questionText,
+                    exportType: 'competence_query'
+                }
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erreur serveur: ${response.status}`);
+        }
+        
+        const turtleData = await response.text();
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `competence_data_${currentQuery?.questionId || 'unknown'}_${timestamp}.ttl`;
+        downloadFile(turtleData, filename, 'text/turtle');
+        
+    } catch (error) {
+        console.error('Erreur export Turtle:', error);
+        alert(`Erreur lors de l'export Turtle: ${error.message}`);
+    }
+}
+
+function downloadExcelFile(workbook, filename) {
+    XLSX.writeFile(workbook, filename);
+}
+
+function downloadFile(content, filename, contentType) {
+    const blob = new Blob([content], { type: contentType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 // Debug global

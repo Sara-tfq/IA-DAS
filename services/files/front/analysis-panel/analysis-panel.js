@@ -257,13 +257,20 @@ class AnalysisPanel {
 }
 
 exportAnalysesToPDF() {
+  console.log('🔍 DEBUG: Début exportAnalysesToPDF');
+  console.log('🔍 window.jspdf exists:', !!window.jspdf);
+  console.log('🔍 window.jspdf value:', window.jspdf);
+  
   if (!window.jspdf) {
+    console.error('❌ jsPDF non disponible');
     alert("PDF non disponible. Rechargez la page.");
     return;
   }
 
   try {
+    console.log('✅ Tentative création jsPDF...');
     const doc = new window.jspdf.jsPDF();
+    console.log('✅ jsPDF créé avec succès:', doc);
     
     // Configuration
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -280,12 +287,7 @@ exportAnalysesToPDF() {
     doc.text(mainTitle, (pageWidth - titleWidth) / 2, y);
     y += lineHeight * 2;
     
-    // Sous-titre - Centré et élégant
-    doc.setFontSize(14);
-    doc.setFont(undefined, 'italic');
-    const subtitleWidth = doc.getTextWidth(subtitle);
-    doc.text((pageWidth - subtitleWidth) / 2, y);
-    y += lineHeight * 2.5;
+    y += lineHeight * 1.5;
     
     // Informations générales - Dans un encadré
     doc.setDrawColor(52, 152, 219); // Bleu
@@ -436,12 +438,20 @@ exportAnalysesToPDF() {
     doc.text(footerText, (pageWidth - footerWidth) / 2, footerY);
     
     // Sauvegarder le PDF
+    console.log('💾 Tentative sauvegarde PDF...');
     const fileName = `Analyses_${this.currentNodeName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    console.log('💾 Nom fichier:', fileName);
+    
     doc.save(fileName);
+    console.log('✅ PDF sauvegardé avec succès');
     
     this.showExportSuccess(fileName);
     
   } catch (error) {
+    console.error("❌ ERREUR EXPORT PDF:", error);
+    console.error("❌ Stack trace:", error.stack);
+    console.error("❌ Message:", error.message);
+    console.error("❌ Type:", error.name);
     alert("Erreur lors de la génération du PDF. Consultez la console pour plus de détails.");
   }
 }

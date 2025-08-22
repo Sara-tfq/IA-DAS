@@ -44,6 +44,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         console.error("Aucun fichier Excel trouvé !");
     }
 
+    // Configurer les boutons d'export au chargement
+    setupInitialExportButtons();
+
     setTimeout(() => {
         const component = document.querySelector('input-intorregation-component');
         if (component) {
@@ -55,6 +58,24 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }, 100);
 });
+
+function setupInitialExportButtons() {
+    // Configurer les événements des boutons d'export
+    const exportPNGBtn = document.getElementById('exportPNG');
+    if (exportPNGBtn) {
+        exportPNGBtn.onclick = () => exportGraphToPNG();
+    }
+    
+    const exportExcelBtn = document.getElementById('exportExcel');
+    if (exportExcelBtn) {
+        exportExcelBtn.onclick = () => exportToExcel();
+    }
+    
+    const exportTurtleBtn = document.getElementById('exportTurtle');
+    if (exportTurtleBtn) {
+        exportTurtleBtn.onclick = () => exportToTurtle();
+    }
+}
 
 
 async function rechercher(data) {
@@ -167,31 +188,47 @@ async function rechercher(data) {
 function displayResults(data, query = null) {
     currentData = data;
     currentQuery = query;
-    const resultsDiv = document.getElementById('results');
+    
+    // Activer les boutons de contrôle et d'export
+    enableResultControls();
 
-    if (!resultsDiv.querySelector('#result-controls')) {
-        const template = document.getElementById('result-controls-template');
-        const clone = template.content.cloneNode(true);
-        resultsDiv.appendChild(clone);
-    }
-
-    const controlsDiv = document.getElementById('result-controls');
-    const displayDiv = document.getElementById('result-display');
-
-
-    controlsDiv.style.display = 'block';
-
-
-    setupViewButtons();
-
-
+    // Afficher en mode tableau par défaut
     displayTableView();
+}
+
+function enableResultControls() {
+    // Activer tous les boutons de contrôle
+    document.getElementById('viewTable').disabled = false;
+    document.getElementById('viewGraph').disabled = false;
+    document.getElementById('viewSparql').disabled = false;
+    document.getElementById('exportPNG').disabled = false;
+    document.getElementById('exportExcel').disabled = false;
+    document.getElementById('exportTurtle').disabled = false;
+    
+    // Configurer les événements si pas déjà fait
+    setupViewButtons();
 }
 
 function setupViewButtons() {
     document.getElementById('viewTable').onclick = () => switchView('table');
     document.getElementById('viewGraph').onclick = () => switchView('graph');
     document.getElementById('viewSparql').onclick = () => switchView('sparql');
+    
+    // Event handlers pour les boutons d'export
+    const exportPNGBtn = document.getElementById('exportPNG');
+    if (exportPNGBtn) {
+        exportPNGBtn.onclick = () => exportGraphToPNG();
+    }
+    
+    const exportExcelBtn = document.getElementById('exportExcel');
+    if (exportExcelBtn) {
+        exportExcelBtn.onclick = () => exportToExcel();
+    }
+    
+    const exportTurtleBtn = document.getElementById('exportTurtle');
+    if (exportTurtleBtn) {
+        exportTurtleBtn.onclick = () => exportToTurtle();
+    }
 }
 
 function switchView(mode) {
@@ -265,13 +302,23 @@ function displayTableView() {
         variables.forEach(variable => {
             const value = binding[variable];
             const displayValue = value ? (value.value || value) : '';
+            
+            // Détecter si c'est un ID d'analyse et le rendre cliquable
+            let cellContent = displayValue;
+            if (isAnalysisId(variable, displayValue)) {
+                cellContent = `<a href="#" onclick="openAnalysisPanelFromTable('${displayValue}', event)" 
+                    style="color: #2980b9; text-decoration: underline; cursor: pointer;">
+                    ${displayValue}
+                </a>`;
+            }
+            
             tableHTML += `<td style="
                 border: 1px solid #ddd; 
                 padding: 4px 8px;
                 vertical-align: top;
                 word-break: break-word;
                 max-width: 200px;
-            ">${displayValue}</td>`;
+            ">${cellContent}</td>`;
         });
 
         tableHTML += '</tr>';
@@ -288,6 +335,246 @@ function displayTableView() {
 
     displayDiv.innerHTML = tableHTML;
 }
+
+// Fonction pour détecter si une valeur est un ID d'analyse
+function isAnalysisId(variableName, value) {
+    if (!value) return false;
+    
+    // Détecter par nom de variable
+    const analysisVarNames = ['analysis', 'analysisId', 'analysis_id', 'id', 'Analysis_ID'];
+    if (analysisVarNames.some(name => variableName.toLowerCase().includes(name.toLowerCase()))) {
+        return true;
+    }
+    
+    // Détecter par format de valeur (ex: A001, A123, Analysis_1, etc.)
+    if (typeof value === 'string') {
+        return /^(A\d+|Analysis_?\d+|\d+)$/i.test(value.trim());
+    }
+    
+    return false;
+}
+
+// Fonction pour ouvrir le panneau d'analyse depuis le tableau
+async function openAnalysisPanelFromTable(analysisId, event) {
+    event.preventDefault();
+    console.log('🔍 DEBUG: Ouverture panneau pour analyse:', analysisId);
+    
+    try {
+        // Vérifier que les services sont disponibles
+        if (typeof window.analysisPanel === 'undefined') {
+            console.error('❌ AnalysisPanel non disponible !');
+            alert('Erreur: Le panneau d\'analyse n\'est pas disponible.');
+            return;
+        }
+        
+        if (typeof window.fusekiRetriever === 'undefined') {
+            console.error('❌ FusekiAnalysisRetriever non disponible !');
+            alert('Erreur: Le système de récupération des données n\'est pas disponible.');
+            return;
+        }
+        
+        // Nettoyer l'ID d'analyse (extraire depuis URI si nécessaire)
+        let cleanAnalysisId = analysisId;
+        if (analysisId.includes('#')) {
+            cleanAnalysisId = analysisId.split('#').pop();
+        } else if (analysisId.includes('/')) {
+            cleanAnalysisId = analysisId.split('/').pop();
+        }
+        
+        // Enlever le préfixe "Analysis_" s'il existe déjà
+        if (cleanAnalysisId.startsWith('Analysis_')) {
+            cleanAnalysisId = cleanAnalysisId.replace('Analysis_', '');
+        }
+        
+        console.log('🔍 DEBUG: ID final:', cleanAnalysisId);
+        
+        // Créer un objet nodeData factice avec l'ID d'analyse
+        const nodeData = {
+            label: `Analyse ${cleanAnalysisId}`,
+            analyses: [cleanAnalysisId],
+            type: 'analysis_link'
+        };
+        
+        console.log('🔍 DEBUG: nodeData créé:', nodeData);
+        
+        // Récupérer les données d'analyse via Fuseki
+        console.log('🔍 DEBUG: Appel getAllAnalysesData...');
+        const analysisData = await window.fusekiRetriever.getAllAnalysesData(nodeData);
+        console.log('🔍 DEBUG: analysisData reçu:', analysisData);
+        console.log('🔍 DEBUG: Nombre d\'analyses:', analysisData.length);
+        
+        if (!analysisData || analysisData.length === 0) {
+            console.warn('⚠️ Aucune donnée d\'analyse récupérée');
+            alert('Aucune donnée trouvée pour cette analyse.');
+            return;
+        }
+        
+        // Ouvrir le panneau avec les données
+        console.log('🔍 DEBUG: Ouverture du panneau...');
+        window.analysisPanel.openMultipleAnalyses(`Analyse ${analysisId}`, analysisData);
+        
+        console.log('✅ Panneau ouvert avec succès');
+        
+    } catch (error) {
+        console.error('❌ ERREUR ouverture panneau:', error);
+        console.error('❌ Stack:', error.stack);
+        alert(`Erreur lors de l'ouverture du panneau d'analyse: ${error.message}`);
+    }
+}
+
+// Fonctions d'export simplifiées
+function exportToExcel() {
+    if (!currentData || !currentData.results || !currentData.results.bindings) {
+        alert('Aucune donnée à exporter');
+        return;
+    }
+    
+    try {
+        console.log('Export Excel...');
+        const excelData = convertToExcel(currentData.results.bindings, currentData.head.vars);
+        const timestamp = new Date().toISOString().slice(0, 16).replace(/[:-]/g, '');
+        downloadExcelFile(excelData, `IA-DAS-Export-${timestamp}.xlsx`);
+        console.log('Export Excel réussi');
+    } catch (error) {
+        console.error('Erreur export Excel:', error);
+        alert(`Erreur lors de l'export Excel: ${error.message}`);
+    }
+}
+
+async function exportToTurtle() {
+    if (!currentData || !currentData.results || !currentData.results.bindings) {
+        alert('Aucune donnée à exporter');
+        return;
+    }
+    
+    try {
+        console.log('Export Turtle...');
+        const turtleContent = await convertToTurtle(currentData);
+        const timestamp = new Date().toISOString().slice(0, 16).replace(/[:-]/g, '');
+        downloadFile(turtleContent, `IA-DAS-Export-${timestamp}.ttl`, 'text/turtle');
+        console.log('Export Turtle réussi');
+    } catch (error) {
+        console.error('Erreur export Turtle:', error);
+        alert(`Erreur lors de l'export Turtle: ${error.message}`);
+    }
+}
+
+// Convertir les données SPARQL en Excel
+function convertToExcel(bindings, variables) {
+    // Préparer les données pour XLSX
+    const worksheetData = [];
+    
+    // En-têtes
+    worksheetData.push(variables);
+    
+    // Données
+    bindings.forEach(binding => {
+        const row = variables.map(variable => {
+            const value = binding[variable];
+            return value ? (value.value || value) : '';
+        });
+        worksheetData.push(row);
+    });
+    
+    // Créer le workbook et la worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    
+    // Ajouter la worksheet au workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "IA-DAS Export");
+    
+    return workbook;
+}
+
+// Télécharger un fichier Excel
+function downloadExcelFile(workbook, filename) {
+    XLSX.writeFile(workbook, filename);
+}
+
+// Convertir les données SPARQL en Turtle (via backend)
+async function convertToTurtle(sparqlData) {
+    const response = await fetch('/api/export/turtle', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(sparqlData)
+    });
+
+    if (!response.ok) {
+        throw new Error(`Erreur serveur: ${response.status}`);
+    }
+
+    return await response.text();
+}
+
+// Télécharger un fichier
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    console.log(`Fichier téléchargé: ${filename}`);
+}
+
+function exportGraphToPNG() {
+    try {
+        const graphContainer = document.getElementById('graph-container');
+        const svg = graphContainer.querySelector('svg');
+
+        if (svg) {
+            // Créer un canvas pour l'export
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Définir la taille
+            canvas.width = svg.getAttribute('width') || 800;
+            canvas.height = svg.getAttribute('height') || 600;
+
+            // Fond blanc
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Convertir SVG en image
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const svgUrl = URL.createObjectURL(svgBlob);
+
+            const img = new Image();
+            img.onload = function () {
+                ctx.drawImage(img, 0, 0);
+
+                // Télécharger
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                const filename = `graph_export_${timestamp}.png`;
+
+                canvas.toBlob(function (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    URL.revokeObjectURL(svgUrl);
+                    console.log('Export PNG réussi:', filename);
+                });
+            };
+            img.src = svgUrl;
+
+        } else {
+            throw new Error("Aucun SVG trouvé à exporter");
+        }
+
+    } catch (error) {
+        console.error('Erreur export PNG:', error);
+        alert(`Erreur lors de l'export PNG: ${error.message}`);
+    }
+}
 function displayGraphView() {
     const displayDiv = document.getElementById('result-display');
 
@@ -299,10 +586,11 @@ function displayGraphView() {
         displayDiv.appendChild(clone);
 
         const controls = document.getElementById('result-controls');
+        // Ajouter export PNG (image) seulement pour la vue graphique
         if (controls && !document.getElementById('exportGraph')) {
-            const exportTemplate = document.getElementById('export-button-template');
-            const exportClone = exportTemplate.content.cloneNode(true);
-            controls.appendChild(exportClone);
+            const imageExportTemplate = document.getElementById('export-image-template');
+            const imageExportClone = imageExportTemplate.content.cloneNode(true);
+            controls.appendChild(imageExportClone);
             document.getElementById('exportGraph').onclick = () => exportGraphToPNG();
         }
 
