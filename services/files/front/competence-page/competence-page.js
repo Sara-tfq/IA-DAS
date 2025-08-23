@@ -253,7 +253,21 @@ async function rechercherCompetence(data) {
         hideSimpleLoading();
         console.log("    Loading masqué");
         
-        displayCompetenceResults(parsedData, data);
+        // Récupérer la requête SPARQL depuis la réponse du serveur
+        console.log("Clés disponibles dans responseData:", Object.keys(responseData));
+        let sparqlQuery = responseData.query || responseData.sparqlQuery || responseData.generatedQuery || responseData.sparql || null;
+        
+        // Fallback : chercher dans des structures imbriquées
+        if (!sparqlQuery && responseData.metadata) {
+            sparqlQuery = responseData.metadata.query || responseData.metadata.sparql || null;
+        }
+        if (!sparqlQuery && responseData.debug) {
+            sparqlQuery = responseData.debug.query || responseData.debug.sparql || null;
+        }
+        
+        console.log("Requête SPARQL récupérée:", sparqlQuery);
+        
+        displayCompetenceResults(parsedData, sparqlQuery);
         console.log("    Résultats affichés");
         
         // ===== SUCCÈS FINAL =====
@@ -364,9 +378,9 @@ function showError(title, message, data) {
     }
 }
 
-function displayCompetenceResults(data, questionContext) {
+function displayCompetenceResults(data, sparqlQuery) {
     currentData = data;
-    currentQuery = questionContext;
+    currentQuery = sparqlQuery;
 
     // Activer les boutons de contrôle et d'export
     enableResultControls();
@@ -376,13 +390,20 @@ function displayCompetenceResults(data, questionContext) {
 }
 
 function enableResultControls() {
-    // Activer tous les boutons de contrôle
-    document.getElementById('viewTable').disabled = false;
-    document.getElementById('viewGraph').disabled = false;
-    document.getElementById('viewSparql').disabled = false;
-    document.getElementById('exportPNG').disabled = false;
-    document.getElementById('exportExcel').disabled = false;
-    document.getElementById('exportTurtle').disabled = false;
+    // Activer tous les boutons de contrôle (avec vérification d'existence)
+    const viewTable = document.getElementById('viewTable');
+    const viewGraph = document.getElementById('viewGraph');
+    const viewSparql = document.getElementById('viewSparql');
+    const exportPNG = document.getElementById('exportPNG');
+    const exportExcel = document.getElementById('exportExcel');
+    const exportTurtle = document.getElementById('exportTurtle');
+    
+    if (viewTable) viewTable.disabled = false;
+    if (viewGraph) viewGraph.disabled = false;
+    if (viewSparql) viewSparql.disabled = false;
+    if (exportPNG) exportPNG.disabled = false;
+    if (exportExcel) exportExcel.disabled = false;
+    if (exportTurtle) exportTurtle.disabled = false;
     
     // Configurer les événements si pas déjà fait
     setupViewButtons();
@@ -390,9 +411,13 @@ function enableResultControls() {
 
 // Fonctions d'affichage (inchangées)
 function setupViewButtons() {
-    document.getElementById('viewTable').onclick = () => switchView('table');
-    document.getElementById('viewGraph').onclick = () => switchView('graph');
-    document.getElementById('viewSparql').onclick = () => switchView('sparql');
+    const viewTable = document.getElementById('viewTable');
+    const viewGraph = document.getElementById('viewGraph');
+    const viewSparql = document.getElementById('viewSparql');
+    
+    if (viewTable) viewTable.onclick = () => switchView('table');
+    if (viewGraph) viewGraph.onclick = () => switchView('graph');
+    if (viewSparql) viewSparql.onclick = () => switchView('sparql');
     
     // Event handlers pour les boutons d'export
     const exportPNGBtn = document.getElementById('exportPNG');
@@ -695,7 +720,7 @@ Variables SPARQL: ${JSON.stringify(currentData.head?.vars, null, 2)}
                 </details>
                 <div style="margin-top: 15px;">
                     <button onclick="displayTableView()" style="
-                        background: #28a745; color: white; border: none; 
+                        background: #2980b9; color: white; border: none; 
                         padding: 8px 16px; border-radius: 4px; cursor: pointer;
                     ">📊 Voir en tableau</button>
                 </div>
@@ -800,55 +825,139 @@ function createSimpleD3Graph(container, data) {
 
 }
 
-function exportGraphToPNG() {
+async function loadHtml2Canvas() {
+    return new Promise((resolve, reject) => {
+        if (window.html2canvas) {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
 
+async function addLogoToCanvas(originalCanvas) {
+    return new Promise((resolve, reject) => {
+        const logoPath = './../assets/logo_IA-DAS-No-Background.png'; 
+        const logoImg = new Image();
+        
+        logoImg.onload = () => {
+            try {
+                const finalCanvas = document.createElement('canvas');
+                const ctx = finalCanvas.getContext('2d');
+                
+                const margin = 40;
+                const maxLogoSize = 300; 
+                const padding = 150;
+                
+                // Calculer les dimensions du logo en respectant les proportions
+                const logoRatio = logoImg.width / logoImg.height;
+                let logoWidth, logoHeight;
+                
+                if (logoRatio > 1) {
+                    // Logo plus large que haut
+                    logoWidth = maxLogoSize;
+                    logoHeight = maxLogoSize / logoRatio;
+                } else {
+                    // Logo plus haut que large
+                    logoHeight = maxLogoSize;
+                    logoWidth = maxLogoSize * logoRatio;
+                }
+                
+                finalCanvas.width = originalCanvas.width + margin;
+                finalCanvas.height = originalCanvas.height + margin;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+                
+                ctx.drawImage(originalCanvas, margin/2, margin/2);
+                
+                const logoX = finalCanvas.width - logoWidth - padding;
+                const logoY = padding;
+                
+                const logoBgPadding = 15;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(
+                    logoX - logoBgPadding, 
+                    logoY - logoBgPadding, 
+                    logoWidth + (logoBgPadding * 2), 
+                    logoHeight + (logoBgPadding * 2)
+                );
+                
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(
+                    logoX - logoBgPadding, 
+                    logoY - logoBgPadding, 
+                    logoWidth + (logoBgPadding * 2), 
+                    logoHeight + (logoBgPadding * 2)
+                );
+                
+                ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+                
+                resolve(finalCanvas);
+                
+            } catch (err) {
+                reject(err);
+            }
+        };
+        
+        logoImg.onerror = () => {
+            console.warn('Logo non trouvé, export sans logo');
+            resolve(originalCanvas);
+        };
+        
+        logoImg.src = logoPath;
+    });
+}
+
+function downloadCanvas(canvas, filename) {
+    canvas.toBlob(function(blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}
+
+async function exportGraphToPNG() {
     try {
         const graphContainer = document.getElementById('graph-container');
-        const svg = graphContainer.querySelector('svg');
-
-        if (svg) {
-            // Créer un canvas pour l'export
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-
-            // Définir la taille
-            canvas.width = svg.getAttribute('width') || 800;
-            canvas.height = svg.getAttribute('height') || 600;
-
-            // Fond blanc
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Convertir SVG en image
-            const svgData = new XMLSerializer().serializeToString(svg);
-            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-            const svgUrl = URL.createObjectURL(svgBlob);
-
-            const img = new Image();
-            img.onload = function () {
-                ctx.drawImage(img, 0, 0);
-
-                // Télécharger
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                const filename = `competence_graph_${currentQuery?.questionId || 'unknown'}_${timestamp}.png`;
-
-                canvas.toBlob(function (blob) {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    URL.revokeObjectURL(svgUrl);
-
-                });
-            };
-            img.src = svgUrl;
-
-        } else {
-            throw new Error("Aucun SVG trouvé à exporter");
+        if (!graphContainer) {
+            alert('Aucun graphique à exporter');
+            return;
         }
 
+        console.log('Début de l\'export PNG...');
+        
+        await loadHtml2Canvas();
+        
+        const canvas = await html2canvas(graphContainer, {
+            scale: 6, 
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            width: graphContainer.scrollWidth,
+            height: graphContainer.scrollHeight
+        });
+
+        console.log('Graphique capturé, ajout du logo...');
+        
+        const finalCanvas = await addLogoToCanvas(canvas);
+        
+        console.log('Logo ajouté, téléchargement...');
+        
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `competence_graph_${currentQuery?.questionId || 'unknown'}_${timestamp}.png`;
+        
+        downloadCanvas(finalCanvas, filename);
+        
     } catch (error) {
         console.error(' Erreur export PNG:', error);
         alert(`Erreur lors de l'export : ${error.message}`);
@@ -861,13 +970,10 @@ function displaySparqlView() {
 
     const sparqlHTML = `
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 10px;">
-            <div style="margin-bottom: 20px; padding: 15px; background: #e8f4fd; border-radius: 5px;">
-                <h4 style="margin: 0 0 10px 0; color: #2c3e50;">Question analysée :</h4>
-                <p style="margin: 0; font-weight: 500; color: #34495e;">${currentQuery?.questionText || 'Question non spécifiée'}</p>
-                <p style="margin: 5px 0 0 0; font-style: italic; color: #666;">${currentQuery?.description || ''}</p>
-            </div>
+            <h4>Requête SPARQL générée :</h4>
+            <pre style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap;">${currentQuery || 'Requête non disponible'}</pre>
             
-            <h4>Résultats JSON :</h4>
+            <h4 style="margin-top: 20px;">Résultats JSON :</h4>
             <pre style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 400px; white-space: pre-wrap;">${JSON.stringify(currentData, null, 2)}</pre>
         </div>
     `;

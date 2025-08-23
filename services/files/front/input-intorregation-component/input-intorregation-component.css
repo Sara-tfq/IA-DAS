@@ -249,6 +249,10 @@
     box-sizing: border-box;
 }
 
+.demographics-grid > .autocomplete-container {
+    overflow: visible;         /* Permet au dropdown d'être visible */
+}
+
 .demographics-grid select,
 .demographics-grid input {
     width: 100%;

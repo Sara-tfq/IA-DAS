@@ -237,8 +237,23 @@ async function addLogoToCanvas(originalCanvas) {
                 
             
                 const margin = 40;
-                const logoSize = 400; 
-                const padding = 200;
+                const maxLogoSize = 300; 
+                const padding = 150;
+                
+                // Calculer les dimensions du logo en respectant les proportions
+                const logoRatio = logoImg.width / logoImg.height;
+                let logoWidth, logoHeight;
+                
+                if (logoRatio > 1) {
+                    // Logo plus large que haut
+                    logoWidth = maxLogoSize;
+                    logoHeight = maxLogoSize / logoRatio;
+                } else {
+                    // Logo plus haut que large
+                    logoHeight = maxLogoSize;
+                    logoWidth = maxLogoSize * logoRatio;
+                }
+                
                 finalCanvas.width = originalCanvas.width + margin;
                 finalCanvas.height = originalCanvas.height + margin;
                 ctx.fillStyle = '#ffffff';
@@ -247,7 +262,7 @@ async function addLogoToCanvas(originalCanvas) {
                 ctx.drawImage(originalCanvas, margin/2, margin/2);
                 
                 
-                const logoX = finalCanvas.width - logoSize - padding;
+                const logoX = finalCanvas.width - logoWidth - padding;
                 const logoY = padding;
                 
               
@@ -256,8 +271,8 @@ async function addLogoToCanvas(originalCanvas) {
                 ctx.fillRect(
                     logoX - logoBgPadding, 
                     logoY - logoBgPadding, 
-                    logoSize + (logoBgPadding * 2), 
-                    logoSize + (logoBgPadding * 2)
+                    logoWidth + (logoBgPadding * 2), 
+                    logoHeight + (logoBgPadding * 2)
                 );
                 
                 
@@ -266,11 +281,11 @@ async function addLogoToCanvas(originalCanvas) {
                 ctx.strokeRect(
                     logoX - logoBgPadding, 
                     logoY - logoBgPadding, 
-                    logoSize + (logoBgPadding * 2), 
-                    logoSize + (logoBgPadding * 2)
+                    logoWidth + (logoBgPadding * 2), 
+                    logoHeight + (logoBgPadding * 2)
                 );
                 
-                ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+                ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
                 
                 console.log(`Logo ajouté à la position (${logoX}, ${logoY}) avec fond protecteur`);
                 resolve(finalCanvas);

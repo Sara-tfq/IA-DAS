@@ -166,7 +166,21 @@ async function rechercher(data) {
 
         window.loadingManager.completeParsing();
 
-        displayResults(parsedData);
+        // Récupérer la requête SPARQL depuis la réponse du serveur
+        console.log("Clés disponibles dans responseData:", Object.keys(responseData));
+        let sparqlQuery = responseData.query || responseData.sparqlQuery || responseData.generatedQuery || responseData.sparql || null;
+        
+        // Fallback : chercher dans des structures imbriquées
+        if (!sparqlQuery && responseData.metadata) {
+            sparqlQuery = responseData.metadata.query || responseData.metadata.sparql || null;
+        }
+        if (!sparqlQuery && responseData.debug) {
+            sparqlQuery = responseData.debug.query || responseData.debug.sparql || null;
+        }
+        
+        console.log("Requête SPARQL récupérée:", sparqlQuery);
+        
+        displayResults(parsedData, sparqlQuery);
         window.loadingManager.completeAll();
 
     } catch (error) {
@@ -197,22 +211,33 @@ function displayResults(data, query = null) {
 }
 
 function enableResultControls() {
-    // Activer tous les boutons de contrôle
-    document.getElementById('viewTable').disabled = false;
-    document.getElementById('viewGraph').disabled = false;
-    document.getElementById('viewSparql').disabled = false;
-    document.getElementById('exportPNG').disabled = false;
-    document.getElementById('exportExcel').disabled = false;
-    document.getElementById('exportTurtle').disabled = false;
+    // Activer tous les boutons de contrôle (avec vérification d'existence)
+    const viewTable = document.getElementById('viewTable');
+    const viewGraph = document.getElementById('viewGraph');
+    const viewSparql = document.getElementById('viewSparql');
+    const exportPNG = document.getElementById('exportPNG');
+    const exportExcel = document.getElementById('exportExcel');
+    const exportTurtle = document.getElementById('exportTurtle');
+    
+    if (viewTable) viewTable.disabled = false;
+    if (viewGraph) viewGraph.disabled = false;
+    if (viewSparql) viewSparql.disabled = false;
+    if (exportPNG) exportPNG.disabled = false;
+    if (exportExcel) exportExcel.disabled = false;
+    if (exportTurtle) exportTurtle.disabled = false;
     
     // Configurer les événements si pas déjà fait
     setupViewButtons();
 }
 
 function setupViewButtons() {
-    document.getElementById('viewTable').onclick = () => switchView('table');
-    document.getElementById('viewGraph').onclick = () => switchView('graph');
-    document.getElementById('viewSparql').onclick = () => switchView('sparql');
+    const viewTable = document.getElementById('viewTable');
+    const viewGraph = document.getElementById('viewGraph');
+    const viewSparql = document.getElementById('viewSparql');
+    
+    if (viewTable) viewTable.onclick = () => switchView('table');
+    if (viewGraph) viewGraph.onclick = () => switchView('graph');
+    if (viewSparql) viewSparql.onclick = () => switchView('sparql');
     
     // Event handlers pour les boutons d'export
     const exportPNGBtn = document.getElementById('exportPNG');
@@ -522,54 +547,139 @@ function downloadFile(content, filename, mimeType) {
     console.log(`Fichier téléchargé: ${filename}`);
 }
 
-function exportGraphToPNG() {
+async function loadHtml2Canvas() {
+    return new Promise((resolve, reject) => {
+        if (window.html2canvas) {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+async function addLogoToCanvas(originalCanvas) {
+    return new Promise((resolve, reject) => {
+        const logoPath = './../assets/logo_IA-DAS-No-Background.png'; 
+        const logoImg = new Image();
+        
+        logoImg.onload = () => {
+            try {
+                const finalCanvas = document.createElement('canvas');
+                const ctx = finalCanvas.getContext('2d');
+                
+                const margin = 40;
+                const maxLogoSize = 300; 
+                const padding = 150;
+                
+                // Calculer les dimensions du logo en respectant les proportions
+                const logoRatio = logoImg.width / logoImg.height;
+                let logoWidth, logoHeight;
+                
+                if (logoRatio > 1) {
+                    // Logo plus large que haut
+                    logoWidth = maxLogoSize;
+                    logoHeight = maxLogoSize / logoRatio;
+                } else {
+                    // Logo plus haut que large
+                    logoHeight = maxLogoSize;
+                    logoWidth = maxLogoSize * logoRatio;
+                }
+                
+                finalCanvas.width = originalCanvas.width + margin;
+                finalCanvas.height = originalCanvas.height + margin;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+                
+                ctx.drawImage(originalCanvas, margin/2, margin/2);
+                
+                const logoX = finalCanvas.width - logoWidth - padding;
+                const logoY = padding;
+                
+                const logoBgPadding = 15;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(
+                    logoX - logoBgPadding, 
+                    logoY - logoBgPadding, 
+                    logoWidth + (logoBgPadding * 2), 
+                    logoHeight + (logoBgPadding * 2)
+                );
+                
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(
+                    logoX - logoBgPadding, 
+                    logoY - logoBgPadding, 
+                    logoWidth + (logoBgPadding * 2), 
+                    logoHeight + (logoBgPadding * 2)
+                );
+                
+                ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+                
+                resolve(finalCanvas);
+                
+            } catch (err) {
+                reject(err);
+            }
+        };
+        
+        logoImg.onerror = () => {
+            console.warn('Logo non trouvé, export sans logo');
+            resolve(originalCanvas);
+        };
+        
+        logoImg.src = logoPath;
+    });
+}
+
+function downloadCanvas(canvas, filename) {
+    canvas.toBlob(function(blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}
+
+async function exportGraphToPNG() {
     try {
         const graphContainer = document.getElementById('graph-container');
-        const svg = graphContainer.querySelector('svg');
-
-        if (svg) {
-            // Créer un canvas pour l'export
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-
-            // Définir la taille
-            canvas.width = svg.getAttribute('width') || 800;
-            canvas.height = svg.getAttribute('height') || 600;
-
-            // Fond blanc
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Convertir SVG en image
-            const svgData = new XMLSerializer().serializeToString(svg);
-            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-            const svgUrl = URL.createObjectURL(svgBlob);
-
-            const img = new Image();
-            img.onload = function () {
-                ctx.drawImage(img, 0, 0);
-
-                // Télécharger
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                const filename = `graph_export_${timestamp}.png`;
-
-                canvas.toBlob(function (blob) {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    URL.revokeObjectURL(svgUrl);
-                    console.log('Export PNG réussi:', filename);
-                });
-            };
-            img.src = svgUrl;
-
-        } else {
-            throw new Error("Aucun SVG trouvé à exporter");
+        if (!graphContainer) {
+            alert('Aucun graphique à exporter');
+            return;
         }
 
+        console.log('Début de l\'export PNG...');
+        
+        await loadHtml2Canvas();
+        
+        const canvas = await html2canvas(graphContainer, {
+            scale: 6, 
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            width: graphContainer.scrollWidth,
+            height: graphContainer.scrollHeight
+        });
+
+        console.log('Graphique capturé, ajout du logo...');
+        
+        const finalCanvas = await addLogoToCanvas(canvas);
+        
+        console.log('Logo ajouté, téléchargement...');
+        
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `graph_export_${timestamp}.png`;
+        
+        downloadCanvas(finalCanvas, filename);
+        
     } catch (error) {
         console.error('Erreur export PNG:', error);
         alert(`Erreur lors de l'export PNG: ${error.message}`);

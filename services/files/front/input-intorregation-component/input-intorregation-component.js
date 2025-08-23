@@ -57,13 +57,26 @@ class InputInterrogationComponent extends HTMLElement {
 
 
     setupAutocomplete(inputId, getDataFn) {
+        console.log(`🔧 Setup autocomplétion pour: ${inputId}`);
         const input = this.querySelector(`#${inputId}`);
         const dropdown = this.querySelector(`#${inputId}-dropdown`);
+        
+        console.log(`🏃 Input ${inputId} trouvé:`, !!input);
+        console.log(`🏃 Dropdown ${inputId} trouvé:`, !!dropdown);
+        
+        if (!input || !dropdown) {
+            console.error(`❌ Éléments manquants pour ${inputId}:`, { input: !!input, dropdown: !!dropdown });
+            return;
+        }
+        
         let currentSelection = -1;
 
         input.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
-            this.showAutocompleteResults(inputId, query, getDataFn());
+            console.log(`⌨️ Input event sur ${inputId}:`, query);
+            const data = getDataFn();
+            console.log(`📊 Données disponibles pour ${inputId}:`, data?.length || 0);
+            this.showAutocompleteResults(inputId, query, data);
             currentSelection = -1;
         });
 
@@ -105,7 +118,15 @@ class InputInterrogationComponent extends HTMLElement {
     }
 
     showAutocompleteResults(inputId, query, data) {
+        console.log(`🔍 showAutocompleteResults appelée pour ${inputId}, query: "${query}"`);
         const dropdown = this.querySelector(`#${inputId}-dropdown`);
+        
+        if (!dropdown) {
+            console.error(`❌ Dropdown ${inputId}-dropdown non trouvé !`);
+            return;
+        }
+        
+        console.log(`📋 Dropdown trouvé pour ${inputId}`);
 
         // Hide other dropdowns
         this.hideAllDropdowns();
@@ -129,15 +150,20 @@ class InputInterrogationComponent extends HTMLElement {
 
                 return a.localeCompare(b);
             });
+            console.log(`🔍 Résultats filtrés pour "${query}":`, filteredData.length);
+        } else {
+            console.log(`📋 Affichage de tous les résultats:`, filteredData.length);
         }
 
         if (filteredData.length === 0) {
             dropdown.innerHTML = '<div class="no-results">Aucun résultat trouvé</div>';
+            console.log(`❌ Aucun résultat pour ${inputId}`);
         } else {
             dropdown.innerHTML = filteredData
                 // .slice(0, 10) // pas de limite je prefere
                 .map(item => `<div class="autocomplete-item">${item}</div>`)
                 .join('');
+            console.log(`✅ Dropdown rempli pour ${inputId} avec ${filteredData.length} éléments`);
         }
 
         // Add click listeners to items
@@ -149,6 +175,19 @@ class InputInterrogationComponent extends HTMLElement {
         });
 
         dropdown.classList.add('show');
+        console.log(`👁️ Classe 'show' ajoutée au dropdown ${inputId}`);
+        console.log(`🎨 Classes CSS finales:`, dropdown.className);
+        
+        // Vérifier après ajout de la classe
+        setTimeout(() => {
+            console.log(`👀 Dropdown visible après show?`, dropdown.offsetHeight > 0);
+            console.log(`📐 Dimensions du dropdown:`, {
+                offsetHeight: dropdown.offsetHeight,
+                offsetWidth: dropdown.offsetWidth,
+                display: getComputedStyle(dropdown).display,
+                visibility: getComputedStyle(dropdown).visibility
+            });
+        }, 10);
     }
 
     resetCustomFields(fieldIds) {
@@ -353,17 +392,21 @@ class InputInterrogationComponent extends HTMLElement {
             });
            
 
+            console.log("🏃 Chargement du fichier Sport.csv...");
             const response2 = await fetch('/data/Sport.csv');
             if (!response2.ok) {
+                console.error("❌ Erreur chargement Sport.csv:", response2.status);
                 throw new Error(`Erreur HTTP Sport: ${response2.status}`);
             }
             const csvText2 = await response2.text();
+            console.log("✅ Sport.csv chargé, taille:", csvText2.length);
             const result2 = Papa.parse(csvText2, {
                 header: true,
                 dynamicTyping: true,
                 skipEmptyLines: true,
                 delimitersToGuess: [',', '\t', '|', ';']
             });
+            console.log("📊 Sport.csv parsé, lignes:", result2.data.length);
             this.sportsData = result2.data;
 
             this.csvData = result.data;
@@ -537,18 +580,25 @@ class InputInterrogationComponent extends HTMLElement {
                 .filter(val => val !== null) // Eliminer les lignes sans sport
         )].sort();
 
+        console.log("🏃 Sports extraits:", this.allSports.length);
         // Initialiser avec tous les sports
         this.availableSports = [...this.allSports];
+        console.log("✅ AvailableSports initialisé:", this.availableSports.length);
 
         // Peupler les sélecteurs de catégories
         this.populateCategorySelectors();
     }
 
     enableInputs() {
+        console.log("🔧 Activation des inputs...");
         const variableVIInput = this.querySelector('#variableVI');
         const variableVDInput = this.querySelector('#variableVD');
         const searchBtn = this.querySelector('#searchBtn');
         const sportTypeInput = this.querySelector('#sportType');
+        
+        console.log("🏃 SportType input trouvé:", !!sportTypeInput);
+        console.log("🏃 Nombre de sports disponibles:", this.availableSports?.length || 0);
+        
         sportTypeInput.placeholder = `Rechercher parmi ${this.availableSports.length} sports...`;
         sportTypeInput.disabled = false;
 
