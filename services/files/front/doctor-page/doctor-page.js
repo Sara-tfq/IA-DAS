@@ -178,6 +178,28 @@ async function rechercher(data) {
             sparqlQuery = responseData.debug.query || responseData.debug.sparql || null;
         }
         
+        // Fallback : créer une requête approximative à partir du payload
+        if (!sparqlQuery && payload) {
+            sparqlQuery = `# Requête générée à partir des critères :
+# ${payload.gender ? `Sexe: ${payload.gender}` : ''}
+# ${payload.minAge || payload.maxAge || payload.meanAge ? `Âge: ${payload.minAge || 'min'}-${payload.maxAge || 'max'} (moyenne: ${payload.meanAge || 'N/A'})` : ''}
+# ${payload.factorType ? `Facteur: ${payload.factorType}` : ''}
+
+# La requête SPARQL exacte n'est pas retournée par le serveur.
+# Voici une représentation approximative basée sur vos critères :
+
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX : <http://example.org/ontology#>
+
+SELECT * WHERE {
+  ?analysis rdf:type :Analysis .
+  ${payload.gender ? `?analysis :hasGender "${payload.gender}" .` : '# Pas de filtre sur le sexe'}
+  ${payload.factorType ? `?analysis :hasFactor "${payload.factorType}" .` : '# Pas de filtre sur le facteur'}
+  # Filtres d'âge et autres critères appliqués par le serveur
+}`;
+        }
+        
         console.log("Requête SPARQL récupérée:", sparqlQuery);
         
         displayResults(parsedData, sparqlQuery);
