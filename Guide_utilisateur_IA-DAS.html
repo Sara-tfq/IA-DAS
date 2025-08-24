@@ -134,9 +134,13 @@
 
 
         <h3>Version locale avec Docker</h3>
+        <p>Lien vers la video tutoriel pour télécharger docker : <a href="https://www.youtube.com/watch?v=example"
+                target="_blank">ici</a>.</p>
 
         <h4>Prérequis :</h4>
         <ul>
+            <li>Lien d'installation : <a href="https://www.docker.com/products/docker-desktop" target="_blank">Docker
+                    Desktop</a></li>
             <li>Docker et Docker Compose installés (<a href="https://docs.docker.com/get-docker/">Guide d'installation
                     Docker</a>)</li>
             <li>Ports 8000, 8002, 8003, 3030 disponibles</li>
@@ -169,9 +173,12 @@ cd IA-DAS
         </ol>
 
         <h5>Option 2 : Sans Git (téléchargement direct)</h5>
+        <p>Video pour télécharger et lancer le projet dans un environnement local : <a
+                href="https://www.youtube.com/watch?v=example" target="_blank">ici</a>.</p>
         <ol>
             <li><strong>Télécharger le projet :</strong>
-                <p>Une vidéo explicative est disponible ici : <a href="https://www.youtube.com/watch?v=example" target="_blank">ici</a>.</p>
+                <p>Une vidéo explicative est disponible ici : <a href="https://www.youtube.com/watch?v=example"
+                        target="_blank">ici</a>.</p>
                 <ul>
                     <li>Aller sur la page GitHub du projet : https://github.com/Sara-tfq/IA-DAS.git</li>
                     <li>Cliquer sur le bouton vert <strong>"Code"</strong></li>
@@ -179,12 +186,14 @@ cd IA-DAS
                     <li>Extraire le fichier ZIP dans le dossier de votre choix</li>
                 </ul>
             </li>
+            <p> Clique droit sur le dossier extrait et sélectionnez "Ouvrir un terminal ici" (ou une option similaire).
+            </p>
+
             <li><strong>Lancer l'application :</strong>
                 <pre># Naviguer dans le dossier extrait
-cd IA-DAS  
-
+cd IA-DAS-main
 # Lancer les services
-docker-compose up -d</pre>
+docker compose up -d</pre>
             </li>
         </ol>
 
@@ -251,9 +260,10 @@ node index.js</pre>
             dépendances.
         </div>
 
-        <h2>Scénarios d'utilisation</h2>
+        <h2>Présentation générale</h2>
 
-        <p>La suite de ce document présente le site de manière générale , pour prendre en main l'interface IA-DAS je vous invite à suivre les étapes dans le fichier "Scénario-utilisateurs.pdf"</p>
+        <p>La suite de ce document présente le site de manière générale , pour prendre en main l'interface IA-DAS je
+            vous invite à suivre les étapes dans le fichier "Scénario-utilisateurs.pdf"</p>
 
         <h2>Navigation simple et présentation globale du site</h2>
 
@@ -428,10 +438,127 @@ node index.js</pre>
 
         <hr>
 
+        <h2>Utilisation de l'ontologie avec Protégé</h2>
+
+        <p>Protégé est un éditeur d'ontologie open-source qui permet de visualiser et manipuler l'ontologie IA-DAS.</p>
+
+        <h3>Installation de Protégé</h3>
+        <ol>
+            <li>Télécharger Protégé depuis : <a href="https://protege.stanford.edu/products.php"
+                    target="_blank">https://protege.stanford.edu/products.php</a></li>
+            <li>Installer la version appropriée pour votre système d'exploitation</li>
+            <li>Lancer l'application</li>
+        </ol>
+
+        <h3>Chargement de l'ontologie</h3>
+        <ol>
+            <li><strong>Récupérer l'ontologie :</strong>
+                <ul>
+                    <li>Via l'interface IA-DAS : Utiliser le bouton "Export Turtle" pour récupérer l'ontologie</li>
+                    <li>Via le serveur Fuseki : <a href="http://localhost:3030"
+                            target="_blank">http://localhost:3030</a> → Sélectionner le dataset → Export</li>
+                </ul>
+            </li>
+            <li><strong>Ouvrir dans Protégé :</strong>
+                <ul>
+                    <li>File → Open → Sélectionner le fichier .ttl (Turtle) exporté</li>
+                    <li>L'ontologie se charge avec toutes ses classes, propriétés et instances</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>Fonctionnalités disponibles</h3>
+        <ul>
+            <li><strong>Visualisation :</strong> Explorer la hiérarchie des classes et propriétés</li>
+            <li><strong>Requêtes SPARQL :</strong> Onglet "SPARQL Query" pour exécuter des requêtes personnalisées</li>
+            <li><strong>Validation :</strong> Vérifier la cohérence logique de l'ontologie</li>
+            <li><strong>Edition :</strong> Modifier les classes, propriétés et relations (pour les administrateurs)</li>
+        </ul>
+
+        <div class="info">
+            <strong>Conseil :</strong> Utilisez l'onglet "DL Query" pour effectuer des recherches rapides sur les
+            concepts.
+        </div>
+
+        <hr>
+
+        <h2>Utilisation de l'ontologie avec GraphDB</h2>
+
+        <p>GraphDB est une base de données de graphes sémantiques qui offre des fonctionnalités avancées pour l'analyse
+            d'ontologies.</p>
+
+        <h3>Installation de GraphDB</h3>
+        <ol>
+            <li>Télécharger GraphDB Free depuis : <a href="https://www.ontotext.com/products/graphdb/"
+                    target="_blank">https://www.ontotext.com/products/graphdb/</a></li>
+            <li>Créer un compte Ontotext (gratuit pour GraphDB Free)</li>
+            <li>Installer et lancer GraphDB</li>
+            <li>Accéder à l'interface web : <a href="http://localhost:7200" target="_blank">http://localhost:7200</a>
+            </li>
+        </ol>
+
+        <h3>Configuration du repository</h3>
+        <ol>
+            <li><strong>Créer un nouveau repository :</strong>
+                <ul>
+                    <li>Setup → Repositories → Create new repository</li>
+                    <li>Choisir "GraphDB Repository"</li>
+                    <li>Nommer le repository (ex: "IA-DAS-Ontology")</li>
+                    <li>Cliquer "Create"</li>
+                </ul>
+            </li>
+            <li><strong>Importer l'ontologie :</strong>
+                <ul>
+                    <li>Import → RDF → Upload RDF files</li>
+                    <li>Sélectionner le fichier .ttl exporté depuis IA-DAS</li>
+                    <li>Cliquer "Import"</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>Requêtes SPARQL avancées</h3>
+        <p>GraphDB offre un éditeur SPARQL puissant avec auto-complétion :</p>
+
+        <pre># Exemple : Trouver toutes les analyses avec leurs variables
+PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
+PREFIX rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+SELECT ?analyse ?vi ?vd WHERE {
+    ?analyse rdf:type :Analyse .
+    ?analyse :hasVI ?vi .
+    ?analyse :hasVD ?vd .
+}</pre>
+
+        <h3>Fonctionnalités avancées</h3>
+        <ul>
+            <li><strong>Visualisation de graphes :</strong> Onglet "Visual graph" pour explorer visuellement</li>
+            <li><strong>Analytics :</strong> Statistiques détaillées sur l'ontologie</li>
+            <li><strong>Reasoning :</strong> Inférence automatique de nouvelles connaissances</li>
+            <li><strong>API REST :</strong> Accès programmatique aux données via HTTP</li>
+        </ul>
+
+        <h3>Synchronisation avec IA-DAS</h3>
+        <div class="warning">
+            <strong>Important :</strong> Les modifications dans GraphDB ne sont pas automatiquement synchronisées avec
+            IA-DAS. Pour mettre à jour IA-DAS, exportez les données modifiées et réimportez-les via l'interface
+            d'administration.
+        </div>
+
+        <h4>Export depuis GraphDB vers IA-DAS :</h4>
+        <ol>
+            <li>Export → Export repository → Format Turtle (.ttl)</li>
+            <li>Utiliser l'interface d'administration IA-DAS pour réimporter</li>
+            <li>Ou remplacer directement dans le serveur Fuseki (avancé)</li>
+        </ol>
+
+        <hr>
+
         <footer style="text-align: center; margin-top: 30px; font-style: italic; color: #666;">
             Guide utilisateur IA-DAS - Version mise à jour
         </footer>
     </div>
+
+
 </body>
 
 </html>

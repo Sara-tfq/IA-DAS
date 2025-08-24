@@ -329,8 +329,7 @@ SELECT ?property ?value ?entity WHERE {
             'inclusionCriteria': 'inclusionCriteria',
             'hasSubgroup': 'hasSubgroup',
             'sportingPopulation': 'sportingPopulation',
-            'sousGroupeAnalyse1': 'sousGroupeAnalyse1',
-            'sousGroupeAnalyse2': 'sousGroupeAnalyse2'
+           
         };
         
         if (mapping[propName]) {

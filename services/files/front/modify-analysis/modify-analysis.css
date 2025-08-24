@@ -363,6 +363,44 @@ textarea {
     transform: translateY(0);
 }
 
+/* Actions des analyses */
+.analysis-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.btn-select {
+    background-color: #2980b9;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-select:hover {
+    background-color: #1c5980;
+}
+
+.btn-delete {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-delete:hover {
+    background-color: #c0392b;
+}
+
 /* Actions du formulaire */
 .form-actions {
     grid-column: 1 / -1;

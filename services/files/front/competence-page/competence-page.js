@@ -265,6 +265,26 @@ async function rechercherCompetence(data) {
             sparqlQuery = responseData.debug.query || responseData.debug.sparql || null;
         }
         
+        // Fallback : créer une requête approximative à partir des données de la question
+        if (!sparqlQuery && data) {
+            sparqlQuery = `# Requête générée pour la compétence :
+# Question: ${data.questionText || 'Question prédéfinie'}
+# Type: ${data.category || 'Recherche de compétences'}
+
+# La requête SPARQL exacte n'est pas retournée par le serveur.
+# Voici une représentation approximative :
+
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX : <http://example.org/ontology#>
+
+SELECT * WHERE {
+  ?competence rdf:type :Competence .
+  # Critères spécifiques à la question sélectionnée
+  # appliqués par le serveur
+}`;
+        }
+        
         console.log("Requête SPARQL récupérée:", sparqlQuery);
         
         displayCompetenceResults(parsedData, sparqlQuery);

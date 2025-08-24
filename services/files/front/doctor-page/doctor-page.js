@@ -167,7 +167,11 @@ async function rechercher(data) {
         window.loadingManager.completeParsing();
 
         // Récupérer la requête SPARQL depuis la réponse du serveur
-        console.log("Clés disponibles dans responseData:", Object.keys(responseData));
+        console.log("🔍 DEBUG: Clés disponibles dans responseData:", Object.keys(responseData));
+        console.log("🔍 DEBUG: responseData.query:", responseData.query ? "PRÉSENT" : "ABSENT");
+        console.log("🔍 DEBUG: responseData.generatedQuery:", responseData.generatedQuery ? "PRÉSENT" : "ABSENT");
+        console.log("🔍 DEBUG: responseData.sparqlQuery:", responseData.sparqlQuery ? "PRÉSENT" : "ABSENT");
+        
         let sparqlQuery = responseData.query || responseData.sparqlQuery || responseData.generatedQuery || responseData.sparql || null;
         
         // Fallback : chercher dans des structures imbriquées
@@ -743,8 +747,34 @@ function displaySparqlView() {
     const displayDiv = document.getElementById('result-display');
     const template = document.getElementById('sparql-view-template');
     const clone = template.content.cloneNode(true);
-    clone.getElementById('sparql-query').textContent = currentQuery || 'Requête non disponible';
-    clone.getElementById('sparql-results').textContent = JSON.stringify(currentData, null, 2);
+    
+    // Améliorer l'affichage de la requête SPARQL
+    const queryDisplay = clone.getElementById('sparql-query');
+    if (currentQuery && currentQuery !== 'Requête non disponible') {
+        queryDisplay.textContent = currentQuery;
+    } else {
+        queryDisplay.innerHTML = `<span style="color: #e74c3c; font-style: italic;">
+            Requête SPARQL non disponible
+            <br><br>
+            <small style="color: #7f8c8d;">
+            Note: Cela peut arriver avec des requêtes générées par le système.
+            Le tableau et le graphique contiennent les résultats corrects.
+            </small>
+        </span>`;
+    }
+    
+    // Améliorer l'affichage des résultats JSON
+    const resultsDisplay = clone.getElementById('sparql-results');
+    if (currentData) {
+        try {
+            resultsDisplay.textContent = JSON.stringify(currentData, null, 2);
+        } catch (error) {
+            resultsDisplay.textContent = 'Erreur lors de l\'affichage des résultats JSON';
+        }
+    } else {
+        resultsDisplay.textContent = 'Aucune donnée disponible';
+    }
+    
     displayDiv.innerHTML = '';
     displayDiv.appendChild(clone);
 }

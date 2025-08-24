@@ -162,9 +162,14 @@ LIMIT 10000`;
                     <strong>ID: ${analysisId}</strong>
                     <small>${analysisURI}</small>
                 </div>
-                <button class="btn-select" onclick="selectAnalysisForEditing('${analysisId}')">
-                     Modifier cette analyse
-                </button>
+                <div class="analysis-actions">
+                    <button class="btn-select" onclick="selectAnalysisForEditing('${analysisId}')">
+                         Modifier cette analyse
+                    </button>
+                    <button class="btn-delete" onclick="deleteAnalysis('${analysisId}')">
+                         Supprimer cette analyse
+                    </button>
+                </div>
             `;
 
             analysesList.appendChild(item);
@@ -361,8 +366,7 @@ SELECT ?property ?value ?entity WHERE {
             'inclusionCriteria': 'inclusionCriteria',
             'hasSubgroup': 'hasSubgroup',
             'sportingPopulation': 'sportingPopulation',
-            'sousGroupeAnalyse1': 'sousGroupeAnalyse1',
-            'sousGroupeAnalyse2': 'sousGroupeAnalyse2'
+            
         };
 
         if (mapping[propName]) {
@@ -575,6 +579,211 @@ WHERE {
                 // TODO: Ajouter d'autres entités (article, population, etc.)
             };
         }
+    }
+
+    // ================== SUPPRESSION D'ANALYSE ==================
+
+    // Fonction globale pour supprimer une analyse
+    window.deleteAnalysis = async function (analysisId) {
+        console.log('🗑️ Demande de suppression pour l\'analyse:', analysisId);
+
+        // Confirmation de suppression
+        const confirmMessage = `Êtes-vous sûr de vouloir supprimer définitivement l'analyse ${analysisId} ?\n\nCette action est irréversible et supprimera :\n- L'analyse elle-même\n- Toutes ses données associées\n- Les relations avec l'article\n- Les données de population et sport\n- Les variables et statistiques\n\nTapez "SUPPRIMER" pour confirmer :`;
+        
+        const userConfirmation = prompt(confirmMessage);
+        
+        if (userConfirmation !== 'SUPPRIMER') {
+            showMessage('info', 'Suppression annulée');
+            return;
+        }
+
+        if (isLoading) return;
+        isLoading = true;
+
+        try {
+            clearMessages();
+            showMessage('info', `Suppression de l'analyse ${analysisId} en cours...`);
+
+            // Générer la requête de suppression
+            const deleteQuery = generateDeleteQuery(analysisId);
+
+            // Envoyer au serveur - Utiliser l'endpoint /update-analysis pour la suppression
+            const response = await fetch(
+                window.location.hostname === 'localhost'
+                    ? 'http://localhost:8003/delete-analysis'
+                    : 'http://51.44.188.162:8003/delete-analysis',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        queryType: 'raw_sparql',
+                        rawSparqlQuery: deleteQuery,
+                        operation: 'delete',
+                        analysisId: analysisId
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Erreur serveur: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            
+            showMessage('success', `✅ Analyse ${analysisId} supprimée avec succès !`);
+            
+            // Rafraîchir la liste des analyses
+            const currentSearchTerm = searchInput.value.trim();
+            if (currentSearchTerm) {
+                // Rechercher à nouveau avec le même terme
+                const results = await searchAnalysesByIds(currentSearchTerm);
+                displaySearchResults(results);
+            } else {
+                // Recharger toutes les analyses
+                const results = await getAllAnalyses();
+                displaySearchResults(results);
+            }
+
+        } catch (error) {
+            console.error('💥 Erreur lors de la suppression:', error);
+            showMessage('error', `Erreur lors de la suppression: ${error.message}`);
+        } finally {
+            isLoading = false;
+        }
+    };
+
+    // Générer la requête SPARQL DELETE pour une analyse complète
+    function generateDeleteQuery(analysisId) {
+        const cleanedAnalysisId = analysisId.replace(/[^a-zA-Z0-9_-]/g, '_');
+        
+        return `
+PREFIX iadas: <http://ia-das.org/onto#>
+PREFIX iadas-data: <http://ia-das.org/data#>
+PREFIX bibo: <http://purl.org/ontology/bibo/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+DELETE {
+    # Supprimer l'analyse elle-même
+    iadas-data:Analysis_${cleanedAnalysisId} ?p1 ?o1 .
+    ?s1 ?p1b iadas-data:Analysis_${cleanedAnalysisId} .
+    
+    # Supprimer la population associée
+    iadas-data:Population_${cleanedAnalysisId} ?p2 ?o2 .
+    ?s2 ?p2b iadas-data:Population_${cleanedAnalysisId} .
+    
+    # Supprimer le sport associé
+    iadas-data:Sport_${cleanedAnalysisId} ?p3 ?o3 .
+    ?s3 ?p3b iadas-data:Sport_${cleanedAnalysisId} .
+    
+    # Supprimer les relations
+    iadas-data:Relations_${cleanedAnalysisId} ?p4 ?o4 .
+    ?s4 ?p4b iadas-data:Relations_${cleanedAnalysisId} .
+    
+    # Supprimer les variables VD et VI
+    iadas-data:Variable_VD_${cleanedAnalysisId} ?p5 ?o5 .
+    ?s5 ?p5b iadas-data:Variable_VD_${cleanedAnalysisId} .
+    iadas-data:Variable_VI_${cleanedAnalysisId} ?p6 ?o6 .
+    ?s6 ?p6b iadas-data:Variable_VI_${cleanedAnalysisId} .
+    
+    # Supprimer les statistiques d'âge
+    iadas-data:AgeStats_${cleanedAnalysisId} ?p7 ?o7 .
+    ?s7 ?p7b iadas-data:AgeStats_${cleanedAnalysisId} .
+    
+    # Supprimer les statistiques BMI
+    iadas-data:BMIStats_${cleanedAnalysisId} ?p8 ?o8 .
+    ?s8 ?p8b iadas-data:BMIStats_${cleanedAnalysisId} .
+    
+    # Supprimer les liens depuis l'article
+    ?article iadas:hasAnalysis iadas-data:Analysis_${cleanedAnalysisId} .
+}
+WHERE {
+    {
+        # Propriétés de l'analyse
+        iadas-data:Analysis_${cleanedAnalysisId} ?p1 ?o1 .
+    }
+    UNION
+    {
+        # Références vers l'analyse
+        ?s1 ?p1b iadas-data:Analysis_${cleanedAnalysisId} .
+    }
+    UNION
+    {
+        # Propriétés de la population
+        iadas-data:Population_${cleanedAnalysisId} ?p2 ?o2 .
+    }
+    UNION
+    {
+        # Références vers la population
+        ?s2 ?p2b iadas-data:Population_${cleanedAnalysisId} .
+    }
+    UNION
+    {
+        # Propriétés du sport
+        iadas-data:Sport_${cleanedAnalysisId} ?p3 ?o3 .
+    }
+    UNION
+    {
+        # Références vers le sport
+        ?s3 ?p3b iadas-data:Sport_${cleanedAnalysisId} .
+    }
+    UNION
+    {
+        # Propriétés des relations
+        iadas-data:Relations_${cleanedAnalysisId} ?p4 ?o4 .
+    }
+    UNION
+    {
+        # Références vers les relations
+        ?s4 ?p4b iadas-data:Relations_${cleanedAnalysisId} .
+    }
+    UNION
+    {
+        # Propriétés des variables VD
+        iadas-data:Variable_VD_${cleanedAnalysisId} ?p5 ?o5 .
+    }
+    UNION
+    {
+        # Références vers les variables VD
+        ?s5 ?p5b iadas-data:Variable_VD_${cleanedAnalysisId} .
+    }
+    UNION
+    {
+        # Propriétés des variables VI
+        iadas-data:Variable_VI_${cleanedAnalysisId} ?p6 ?o6 .
+    }
+    UNION
+    {
+        # Références vers les variables VI
+        ?s6 ?p6b iadas-data:Variable_VI_${cleanedAnalysisId} .
+    }
+    UNION
+    {
+        # Propriétés des stats d'âge
+        iadas-data:AgeStats_${cleanedAnalysisId} ?p7 ?o7 .
+    }
+    UNION
+    {
+        # Références vers les stats d'âge
+        ?s7 ?p7b iadas-data:AgeStats_${cleanedAnalysisId} .
+    }
+    UNION
+    {
+        # Propriétés des stats BMI
+        iadas-data:BMIStats_${cleanedAnalysisId} ?p8 ?o8 .
+    }
+    UNION
+    {
+        # Références vers les stats BMI
+        ?s8 ?p8b iadas-data:BMIStats_${cleanedAnalysisId} .
+    }
+    UNION
+    {
+        # Lien depuis l'article
+        ?article iadas:hasAnalysis iadas-data:Analysis_${cleanedAnalysisId} .
+    }
+}`;
     }
 
     // ================== GESTION DES ÉVÉNEMENTS ==================

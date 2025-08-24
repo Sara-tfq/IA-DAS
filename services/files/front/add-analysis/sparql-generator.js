@@ -96,8 +96,7 @@ INSERT DATA {
         iadas:inclusionCriteria ${this.literal(data.inclusionCriteria)} ;
         iadas:hasSubgroup ${this.literal(data.hasSubgroup)} ;
         iadas:sportingPopulation ${this.literal(data.sportingPopulation)} ;
-        iadas:sousGroupeAnalyse1 ${this.literal(data.sousGroupeAnalyse1)} ;
-        iadas:sousGroupeAnalyse2 ${this.literal(data.sousGroupeAnalyse2)} ;
+        
         iadas:ageStats iadas-data:AgeStats_${analysisId} ;
         iadas:bmiStats iadas-data:BmiStats_${analysisId} ;
         iadas:exerciseFreqStats iadas-data:ExFreqStats_${analysisId} ;
@@ -311,8 +310,7 @@ INSERT DATA {
         iadas:inclusionCriteria ${this.literal(data.inclusionCriteria)} ;
         iadas:hasSubgroup ${this.literal(data.hasSubgroup)} ;
         iadas:sportingPopulation ${this.literal(data.sportingPopulation)} ;
-        iadas:sousGroupeAnalyse1 ${this.literal(data.sousGroupeAnalyse1)} ;
-        iadas:sousGroupeAnalyse2 ${this.literal(data.sousGroupeAnalyse2)} ;
+        
         iadas:ageStats iadas-data:AgeStats_${analysisId} ;
         iadas:bmiStats iadas-data:BmiStats_${analysisId} ;
         iadas:exerciseFreqStats iadas-data:ExFreqStats_${analysisId} ;

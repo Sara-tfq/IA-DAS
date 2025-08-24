@@ -140,7 +140,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     OPTIONAL { ?analysis iadas:hasModerator ?moderator }
 }
 ORDER BY ?analysis
-LIMIT 500`,
+`,
       timeout: 30000
     },
     {
@@ -252,7 +252,7 @@ WHERE {
     OPTIONAL { ?analysis iadas:hasModerator ?moderator }
 }
 ORDER BY ?vd ?vi
-LIMIT 500`,
+`,
       timeout: 40000
     }
   ];
@@ -638,7 +638,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     }
   }
 
-  // === FILTRES DE FRÉQUENCE D'EXERCICE ===
+  // === FILTRES DE FRÉQUENCE D'EXERCICE AVEC NORMALISATION ===
   if (filters.meanExFR !== undefined) {
     // Cas spécial : moyenne de fréquence → recherche ± 1
     const moyenne = parseFloat(filters.meanExFR);
@@ -649,15 +649,31 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     if (!query.includes('?analysis iadas:hasPopulation ?population')) {
       query += `
     
-    # Filtrer sur la fréquence moyenne ± 1
+    # Filtrer sur la fréquence moyenne ± 1 (avec normalisation)
     ?analysis iadas:hasPopulation ?population .`;
     }
     query += `
     ?population iadas:exerciseFreqStats ?freqStats .
     ?freqStats iadas:meanExFR ?meanExFRStr .
-    BIND(xsd:decimal(?meanExFRStr) AS ?meanExFR)
-    FILTER(?meanExFR >= ${minFreq} && ?meanExFR <= ${maxFreq})`;
+    OPTIONAL { ?freqStats iadas:freqUnit ?freqUnit }
+    OPTIONAL { ?freqStats iadas:freqBase ?freqBase }
+    FILTER(?meanExFRStr != "" && ?meanExFRStr != "N.A.")
+    
+    # Normalisation automatique vers heures/semaine
+    BIND(
+      IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?meanExFRStr) / 60,
+      IF(?freqUnit = "minutes" && ?freqBase = "day", (xsd:decimal(?meanExFRStr) / 60) * 7,
+      IF(?freqUnit = "hours" && ?freqBase = "day", xsd:decimal(?meanExFRStr) * 7,
+      IF(?freqUnit = "hours" && ?freqBase = "week", xsd:decimal(?meanExFRStr),
+      IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?meanExFRStr) * 24,
+      IF(?freqUnit = "sessions" && ?freqBase = "week", xsd:decimal(?meanExFRStr) * 1.5,
+      IF(xsd:decimal(?meanExFRStr) < 50, xsd:decimal(?meanExFRStr), xsd:decimal(?meanExFRStr) / 60)))))))
+      AS ?normalizedFreq
+    )
+    
+    FILTER(?normalizedFreq >= ${minFreq} && ?normalizedFreq <= ${maxFreq})`;
 
+    console.log(` Filtre fréquence moyenne normalisé: ${moyenne} ± 1 = [${minFreq}, ${maxFreq}] h/sem`);
 
   } else if (filters.minExFR !== undefined || filters.maxExFR !== undefined) {
     
@@ -806,7 +822,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     }
   }
 
-  // === FILTRES D'EXPÉRIENCE ===
+  // === FILTRES D'EXPÉRIENCE AVEC NORMALISATION ===
   if (filters.meanYOE !== undefined) {
     // Cas spécial : moyenne d'expérience → recherche ± 1
     const moyenne = parseFloat(filters.meanYOE);
@@ -816,16 +832,28 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     if (!query.includes('?analysis iadas:hasPopulation ?population')) {
       query += `
     
-    # Filtrer sur l'expérience moyenne ± 1
+    # Filtrer sur l'expérience moyenne ± 1 (avec normalisation)
     ?analysis iadas:hasPopulation ?population .`;
     }
     query += `
     ?population iadas:experienceStats ?expStats .
     ?expStats iadas:meanYOE ?meanYOEStr .
-    BIND(xsd:decimal(?meanYOEStr) AS ?meanYOE)
-    FILTER(?meanYOE >= ${minExp} && ?meanYOE <= ${maxExp})`;
+    OPTIONAL { ?expStats iadas:expUnit ?expUnit }
+    FILTER(?meanYOEStr != "" && ?meanYOEStr != "N.A.")
+    
+    # Normalisation automatique vers années
+    BIND(
+      IF(?expUnit = "months", xsd:decimal(?meanYOEStr) / 12,
+      IF(?expUnit = "weeks", xsd:decimal(?meanYOEStr) / 52,
+      IF(?expUnit = "days", xsd:decimal(?meanYOEStr) / 365,
+      IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?meanYOEStr),
+      xsd:decimal(?meanYOEStr)))))
+      AS ?normalizedExp
+    )
+    
+    FILTER(?normalizedExp >= ${minExp} && ?normalizedExp <= ${maxExp})`;
 
-    console.log(` Filtre expérience moyenne: ${moyenne} ± 1 = [${minExp}, ${maxExp}]`);
+    console.log(` Filtre expérience moyenne normalisé: ${moyenne} ± 1 = [${minExp}, ${maxExp}] ans`);
 
   } else if (filters.minYOE !== undefined || filters.maxYOE !== undefined) {
     
@@ -839,24 +867,28 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
       }
       
       if (filters.allowOverlap === false) {
-        // Mode strict : seulement les moyennes (expérience plus simple, majoritairement en années)
+        // Mode strict : seulement les moyennes avec normalisation complète
         query += `
     ?population iadas:experienceStats ?expStats .
     ?expStats iadas:meanYOE ?meanYOEStr .
     OPTIONAL { ?expStats iadas:expUnit ?expUnit }
-    FILTER(?meanYOEStr != "")
-    # Normalisation simple : si pas d'unité ou "years", utiliser direct
+    FILTER(?meanYOEStr != "" && ?meanYOEStr != "N.A.")
+    
+    # Normalisation complète vers années
     BIND(
-      IF(?expUnit = "years" || ?expUnit = "", xsd:decimal(?meanYOEStr), 
-      xsd:decimal(?meanYOEStr))
+      IF(?expUnit = "months", xsd:decimal(?meanYOEStr) / 12,
+      IF(?expUnit = "weeks", xsd:decimal(?meanYOEStr) / 52,
+      IF(?expUnit = "days", xsd:decimal(?meanYOEStr) / 365,
+      IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?meanYOEStr),
+      xsd:decimal(?meanYOEStr)))))
       AS ?normalizedExp
     )
     FILTER(?normalizedExp >= ${filters.minYOE} && ?normalizedExp <= ${filters.maxYOE})`;
         
-        console.log(` Filtre expérience strict: seulement moyennes ${filters.minYOE}-${filters.maxYOE} ans`);
+        console.log(` Filtre expérience strict normalisé: seulement moyennes ${filters.minYOE}-${filters.maxYOE} ans`);
         
       } else {
-        // Mode inclusif : moyennes + chevauchements avec gestion unités
+        // Mode inclusif : moyennes + chevauchements avec normalisation complète
         query += `
     ?population iadas:experienceStats ?expStats .
     
@@ -864,10 +896,14 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
       # Option 1: Expériences moyennes normalisées
       ?expStats iadas:meanYOE ?meanYOEStr .
       OPTIONAL { ?expStats iadas:expUnit ?expUnit }
-      FILTER(?meanYOEStr != "")
+      FILTER(?meanYOEStr != "" && ?meanYOEStr != "N.A.")
+      
       BIND(
-        IF(?expUnit = "years" || ?expUnit = "", xsd:decimal(?meanYOEStr), 
-        xsd:decimal(?meanYOEStr))
+        IF(?expUnit = "months", xsd:decimal(?meanYOEStr) / 12,
+        IF(?expUnit = "weeks", xsd:decimal(?meanYOEStr) / 52,
+        IF(?expUnit = "days", xsd:decimal(?meanYOEStr) / 365,
+        IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?meanYOEStr),
+        xsd:decimal(?meanYOEStr)))))
         AS ?normalizedMeanExp
       )
       FILTER(?normalizedMeanExp >= ${filters.minYOE} && ?normalizedMeanExp <= ${filters.maxYOE})
@@ -878,17 +914,23 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
       ?expStats iadas:minYOE ?minYOEStr .
       ?expStats iadas:maxYOE ?maxYOEStr .
       OPTIONAL { ?expStats iadas:expUnit ?expUnit }
-      FILTER(?minYOEStr != "" && ?maxYOEStr != "")
+      FILTER(?minYOEStr != "" && ?maxYOEStr != "" && ?minYOEStr != "N.A." && ?maxYOEStr != "N.A.")
       
       BIND(
-        IF(?expUnit = "years" || ?expUnit = "", xsd:decimal(?minYOEStr), 
-        xsd:decimal(?minYOEStr))
+        IF(?expUnit = "months", xsd:decimal(?minYOEStr) / 12,
+        IF(?expUnit = "weeks", xsd:decimal(?minYOEStr) / 52,
+        IF(?expUnit = "days", xsd:decimal(?minYOEStr) / 365,
+        IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?minYOEStr),
+        xsd:decimal(?minYOEStr)))))
         AS ?normalizedMinExp
       )
       
       BIND(
-        IF(?expUnit = "years" || ?expUnit = "", xsd:decimal(?maxYOEStr), 
-        xsd:decimal(?maxYOEStr))
+        IF(?expUnit = "months", xsd:decimal(?maxYOEStr) / 12,
+        IF(?expUnit = "weeks", xsd:decimal(?maxYOEStr) / 52,
+        IF(?expUnit = "days", xsd:decimal(?maxYOEStr) / 365,
+        IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?maxYOEStr),
+        xsd:decimal(?maxYOEStr)))))
         AS ?normalizedMaxExp
       )
       
@@ -898,10 +940,13 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
       FILTER NOT EXISTS {
         ?expStats iadas:meanYOE ?meanCheck .
         OPTIONAL { ?expStats iadas:expUnit ?expUnitCheck }
-        FILTER(?meanCheck != "")
+        FILTER(?meanCheck != "" && ?meanCheck != "N.A.")
         BIND(
-          IF(?expUnitCheck = "years" || ?expUnitCheck = "", xsd:decimal(?meanCheck), 
-          xsd:decimal(?meanCheck))
+          IF(?expUnitCheck = "months", xsd:decimal(?meanCheck) / 12,
+          IF(?expUnitCheck = "weeks", xsd:decimal(?meanCheck) / 52,
+          IF(?expUnitCheck = "days", xsd:decimal(?meanCheck) / 365,
+          IF(?expUnitCheck = "years" || ?expUnitCheck = "" || !BOUND(?expUnitCheck), xsd:decimal(?meanCheck),
+          xsd:decimal(?meanCheck)))))
           AS ?normalizedMeanExpCheck
         )
         FILTER(?normalizedMeanExpCheck >= ${filters.minYOE} && ?normalizedMeanExpCheck <= ${filters.maxYOE})
@@ -1224,7 +1269,7 @@ WHERE {
     BIND("-" AS ?resultatRelation)
 }
 ORDER BY ?vi ?vd
-LIMIT 500`;
+`;
       break;
 
     case 'q2-risque':
@@ -1253,7 +1298,7 @@ WHERE {
     BIND("+" AS ?resultatRelation)
 }
 ORDER BY ?vi ?vd
-LIMIT 500`;
+`;
       break;
 
     case 'q2-ambigu':
@@ -1282,7 +1327,7 @@ WHERE {
     BIND("NS" AS ?resultatRelation)
 }
 ORDER BY ?vi ?vd
-LIMIT 500`;
+`;
       break;
 
     case 'q3-socioenvironnementaux':
@@ -1341,6 +1386,230 @@ WHERE {
 }
 ORDER BY ?vi ?vd
 LIMIT 300`;
+      break;
+
+    case 'q4-male':
+      console.log(" CASE Q4-MALE DÉTECTÉ: Relations ACAD-facteurs pour populations masculines");
+      selectedCase = 'q4-male - Populations masculines';
+      expectedResults = '300-600 relations pour populations masculines';
+
+      query = `${prefixes}
+
+SELECT DISTINCT ?vi ?vd ?categoryVI ?categoryVD ?resultatRelation ?analysis ?gender
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasRelation ?relation .
+    
+    ?relation iadas:hasIndependentVariable ?variableVI ;
+              iadas:hasDependentVariable ?variableVD .
+    
+    ?variableVI iadas:VI ?vi .
+    OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
+    
+    ?variableVD iadas:VD ?vd .
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # FILTRE SPÉCIFIQUE : Populations masculines uniquement
+    ?analysis iadas:hasPopulation ?population .
+    ?population iadas:gender "Male" .
+    
+    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
+    BIND("Male" AS ?gender)
+}
+ORDER BY ?vi ?vd
+`;
+      break;
+
+    case 'q4-female':
+      console.log(" CASE Q4-FEMALE DÉTECTÉ: Relations ACAD-facteurs pour populations féminines");
+      selectedCase = 'q4-female - Populations féminines';
+      expectedResults = '200-400 relations pour populations féminines';
+
+      query = `${prefixes}
+
+SELECT DISTINCT ?vi ?vd ?categoryVI ?categoryVD ?resultatRelation ?analysis ?gender
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasRelation ?relation .
+    
+    ?relation iadas:hasIndependentVariable ?variableVI ;
+              iadas:hasDependentVariable ?variableVD .
+    
+    ?variableVI iadas:VI ?vi .
+    OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
+    
+    ?variableVD iadas:VD ?vd .
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # FILTRE SPÉCIFIQUE : Populations féminines uniquement
+    ?analysis iadas:hasPopulation ?population .
+    ?population iadas:gender "Female" .
+    
+    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
+    BIND("Female" AS ?gender)
+}
+ORDER BY ?vi ?vd
+`;
+      break;
+
+    case 'q4-mixed':
+      console.log(" CASE Q4-MIXED DÉTECTÉ: Relations ACAD-facteurs pour populations mixtes");
+      selectedCase = 'q4-mixed - Populations mixtes';
+      expectedResults = '100-300 relations pour populations mixtes';
+
+      query = `${prefixes}
+
+SELECT DISTINCT ?vi ?vd ?categoryVI ?categoryVD ?resultatRelation ?analysis ?gender
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasRelation ?relation .
+    
+    ?relation iadas:hasIndependentVariable ?variableVI ;
+              iadas:hasDependentVariable ?variableVD .
+    
+    ?variableVI iadas:VI ?vi .
+    OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
+    
+    ?variableVD iadas:VD ?vd .
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # FILTRE SPÉCIFIQUE : Populations mixtes uniquement
+    ?analysis iadas:hasPopulation ?population .
+    ?population iadas:gender "Mixed" .
+    
+    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
+    BIND("Mixed" AS ?gender)
+}
+ORDER BY ?vi ?vd
+`;
+      break;
+
+    case 'q5-individual':
+      console.log(" CASE Q5-INDIVIDUAL DÉTECTÉ: Relations ACAD-facteurs pour sports individuels");
+      selectedCase = 'q5-individual - Sports individuels';
+      expectedResults = '400-800 relations pour sports individuels';
+
+      query = `${prefixes}
+
+SELECT DISTINCT ?vi ?vd ?categoryVI ?categoryVD ?resultatRelation ?analysis ?sportType
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasRelation ?relation .
+    
+    ?relation iadas:hasIndependentVariable ?variableVI ;
+              iadas:hasDependentVariable ?variableVD .
+    
+    ?variableVI iadas:VI ?vi .
+    OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
+    
+    ?variableVD iadas:VD ?vd .
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # FILTRE SPÉCIFIQUE : Sports individuels uniquement
+    ?analysis iadas:hasSport ?sport .
+    ?sport iadas:sportPracticeType "Individual sport" .
+    
+    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
+    BIND("Individual sport" AS ?sportType)
+}
+ORDER BY ?vi ?vd
+`;
+      break;
+
+    case 'q5-team':
+      console.log(" CASE Q5-TEAM DÉTECTÉ: Relations ACAD-facteurs pour sports d'équipe");
+      selectedCase = 'q5-team - Sports d\'équipe';
+      expectedResults = '100-200 relations pour sports d\'équipe';
+
+      query = `${prefixes}
+
+SELECT DISTINCT ?vi ?vd ?categoryVI ?categoryVD ?resultatRelation ?analysis ?sportType
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasRelation ?relation .
+    
+    ?relation iadas:hasIndependentVariable ?variableVI ;
+              iadas:hasDependentVariable ?variableVD .
+    
+    ?variableVI iadas:VI ?vi .
+    OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
+    
+    ?variableVD iadas:VD ?vd .
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # FILTRE SPÉCIFIQUE : Sports d'équipe uniquement
+    ?analysis iadas:hasSport ?sport .
+    ?sport iadas:sportPracticeType "Team sport" .
+    
+    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
+    BIND("Team sport" AS ?sportType)
+}
+ORDER BY ?vi ?vd
+`;
+      break;
+
+    case 'q5-mixed':
+      console.log(" CASE Q5-MIXED DÉTECTÉ: Relations ACAD-facteurs pour sports mixtes");
+      selectedCase = 'q5-mixed - Sports mixtes';
+      expectedResults = '300-600 relations pour sports mixtes';
+
+      query = `${prefixes}
+
+SELECT DISTINCT ?vi ?vd ?categoryVI ?categoryVD ?resultatRelation ?analysis ?sportType
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasRelation ?relation .
+    
+    ?relation iadas:hasIndependentVariable ?variableVI ;
+              iadas:hasDependentVariable ?variableVD .
+    
+    ?variableVI iadas:VI ?vi .
+    OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
+    
+    ?variableVD iadas:VD ?vd .
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # FILTRE SPÉCIFIQUE : Sports mixtes uniquement
+    ?analysis iadas:hasSport ?sport .
+    ?sport iadas:sportPracticeType "Mixed sport" .
+    
+    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
+    BIND("Mixed sport" AS ?sportType)
+}
+ORDER BY ?vi ?vd
+`;
+      break;
+
+    case 'q5-aesthetic':
+      console.log(" CASE Q5-AESTHETIC DÉTECTÉ: Relations ACAD-facteurs pour sports esthétiques");
+      selectedCase = 'q5-aesthetic - Sports esthétiques';
+      expectedResults = '50-100 relations pour sports esthétiques';
+
+      query = `${prefixes}
+
+SELECT DISTINCT ?vi ?vd ?categoryVI ?categoryVD ?resultatRelation ?analysis ?sportType
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasRelation ?relation .
+    
+    ?relation iadas:hasIndependentVariable ?variableVI ;
+              iadas:hasDependentVariable ?variableVD .
+    
+    ?variableVI iadas:VI ?vi .
+    OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
+    
+    ?variableVD iadas:VD ?vd .
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # FILTRE SPÉCIFIQUE : Sports esthétiques uniquement
+    ?analysis iadas:hasSport ?sport .
+    ?sport iadas:sportPracticeType "Aesthetic sport" .
+    
+    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
+    BIND("Aesthetic sport" AS ?sportType)
+}
+ORDER BY ?vi ?vd
+`;
       break;
 
     default:
@@ -1463,6 +1732,71 @@ http.createServer(async (req, res) => {
         res.end(JSON.stringify({
           error: 'Erreur lors de l\'export Turtle',
           message: error.message
+        }));
+      }
+    });
+    return;
+  }
+
+  if (req.url === '/delete-analysis' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', async () => {
+      const startTime = Date.now();
+
+      try {
+        console.log('\n=== DÉBUT DELETE ANALYSIS ===');
+        console.log('Timestamp:', new Date().toISOString());
+
+        const requestData = JSON.parse(body);
+        console.log('📋 Données reçues:', {
+          hasQuery: !!requestData.rawSparqlQuery,
+          operation: requestData.operation,
+          analysisId: requestData.analysisId
+        });
+
+        // Vérifier les données reçues
+        if (!requestData.rawSparqlQuery) {
+          throw new Error('Aucune requête SPARQL fournie');
+        }
+
+        if (requestData.operation !== 'delete') {
+          throw new Error('Opération de suppression non spécifiée');
+        }
+
+        // Exécuter la requête DELETE
+        console.log('🗑️ Exécution de la requête DELETE...');
+        const deleteResult = await executeSparqlUpdate(requestData.rawSparqlQuery);
+
+        const totalTime = Date.now() - startTime;
+
+        console.log(`✅ SUPPRESSION RÉUSSIE en ${totalTime}ms`);
+        console.log(`📊 Analyse ${requestData.analysisId} supprimée`);
+
+        // Réponse de succès
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: `Analyse ${requestData.analysisId} supprimée avec succès !`,
+          result: deleteResult,
+          executionTime: totalTime,
+          analysisId: requestData.analysisId,
+          timestamp: new Date().toISOString()
+        }));
+
+      } catch (error) {
+        const totalTime = Date.now() - startTime;
+        console.error('\n💥 ERREUR CRITIQUE DELETE ANALYSIS:');
+        console.error(`   Message: ${error.message}`);
+        console.error(`   Temps écoulé: ${totalTime}ms`);
+
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          message: 'Erreur serveur lors de la suppression de l\'analyse',
+          error: error.message,
+          executionTime: totalTime,
+          timestamp: new Date().toISOString()
         }));
       }
     });
@@ -1705,6 +2039,11 @@ http.createServer(async (req, res) => {
           availableVariables: resultCount > 0 ? Object.keys(data.results.bindings[0]) : [],
           fusekiWarmed: isFusekiWarmed
         };
+
+        // Ajouter la requête SPARQL générée dans la réponse
+        data.generatedQuery = sparqlQuery;
+        data.query = sparqlQuery; // Alias pour compatibilité
+        data.sparqlQuery = sparqlQuery; // Autre alias
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
