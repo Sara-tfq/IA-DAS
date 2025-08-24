@@ -10,7 +10,7 @@
 <body>
     <header>
         <h1>Projet IA-DAS</h1>
-        <img src="../assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
+        <img src="./assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
     </header>
 
     <div class="home-layout">
@@ -24,17 +24,38 @@
             </p>
             <div class="bottom-button">
                 <button id="EnSavoirPlus" onclick="window.location.href = './en-savoir-plus.html'">En savoir plus</button>
+                <button id="EnSavoirPlus" onclick="window.location.href = './contact.html'">Contact</button>
+
             </div>
         </section>
 
         <div class="center-box">
             <h2>Interagir avec l'ontologie</h2>
-            <button id="switchCoachPage" onclick="window.location.href = './coach-page.html'">Je suis coach</button>
-            <button id="switchDoctorPage" onclick="window.location.href = './doctor-page.html'">Je suis docteur</button>
+            <button id="switchDoctorPage" onclick="window.location.href = './doctor-page.html'">Intéraction personnalisée</button>
+            <button id="predefinedPage" onclick="window.location.href = './competence-page.html'">Intéraction prédéfinie</button>
+            <button id="updateButton" onclick="showAuthModal()">Mise à jour de l'ontologie</button>
+
+        </div>
+    </div>
+
+    <!-- Modal d'authentification -->
+    <div id="authModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeAuthModal()">&times;</span>
+            <h2>Authentification requise</h2>
+            <p>Veuillez saisir le mot de passe administrateur pour accéder à la mise à jour de l'ontologie.</p>
+            <p><small>Si vous n'avez pas le mot de passe, merci de contacter l'équipe de recherche.</small></p>
+            <form id="authForm">
+                <input type="password" id="adminPassword" placeholder="Mot de passe" required>
+                <button type="submit">Se connecter</button>
+            </form>
+            <div id="authError" class="error-message" style="display: none;"></div>
         </div>
     </div>
 
     <script src="home-page.js"></script>
+    <script src="./js/api-config.js"></script>
+    <script src="./js/auth.js"></script>
 
     <footer>
         <p>&copy; 2025 – IA-DAS. Tous droits réservés.</p>

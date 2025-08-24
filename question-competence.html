@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questions de Compétence IA-DAS avec Requêtes SPARQL</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 21cm;
+            margin: 0 auto;
+            padding: 2cm;
+            background: white;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #34495e;
+            font-size: 20px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+
+        h3 {
+            color: #2c3e50;
+            font-size: 16px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            color: #34495e;
+            font-size: 14px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        p {
+            text-align: justify;
+            margin-bottom: 12px;
+            line-height: 1.7;
+        }
+
+        .meta-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        .meta-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .warning-box {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .info-box {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .success-box {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .phase {
+            margin-bottom: 40px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            background: white;
+        }
+
+        .question-group {
+            margin-bottom: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 20px;
+            background: #f8f9fc;
+            border-radius: 0 5px 5px 0;
+            padding: 15px 20px;
+        }
+
+        .question {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .sparql-container {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .sparql-header {
+            background: #e9ecef;
+            color: #495057;
+            padding: 10px 15px;
+            font-size: 12px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sparql-header:hover {
+            background: #dee2e6;
+        }
+
+        .sparql-code {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            overflow-x: auto;
+            white-space: pre;
+            max-height: 0;
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+        }
+
+        .sparql-code.expanded {
+            max-height: 500px;
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .toggle-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        .copy-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: background 0.3s;
+            margin-right: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #2980b9;
+        }
+
+        .navigation {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin: 5px 10px 5px 0;
+            padding: 8px 15px;
+            background: white;
+            color: #495057;
+            text-decoration: none;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+
+        .nav-link:hover {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border: 1px solid;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+
+        .keyword {
+            color: #8e44ad;
+            font-weight: bold;
+        }
+
+        .string {
+            color: #27ae60;
+        }
+
+        .comment {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .variable {
+            color: #e74c3c;
+        }
+
+        .uri {
+            color: #3498db;
+        }
+
+        ul, ol {
+            margin-bottom: 15px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1cm;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .sparql-code {
+                font-size: 10px;
+            }
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                padding: 1cm;
+            }
+
+            .sparql-container {
+                page-break-inside: avoid;
+            }
+
+            h2 {
+                page-break-before: always;
+            }
+
+            h2:first-of-type {
+                page-break-before: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>IA-DAS Ontologie</h1>
+    
+    <div class="meta-info">
+        <p><strong>Titre :</strong> Questions de Compétence & Requêtes SPARQL pour l'Intelligence Artificielle et les Désordres Alimentaires Sportifs</p>
+        <p><strong>Domaine :</strong> Ontologie sémantique - Recherche en psychologie du sport</p>
+        <p><strong>Version :</strong> Document technique</p>
+    </div>
+
+    <div class="navigation">
+        <a href="#phase1" class="nav-link">Phase 1 - Ontologie de Base</a>
+        <a href="#phase2" class="nav-link">Phase 2 - Analyses Avancées</a>
+        <a href="#examples" class="nav-link">Exemples Spécialisés</a>
+    </div>
+
+    <div class="warning-box">
+        <strong>ATTENTION IMPORTANTE :</strong><br>
+        • Adaptez les préfixes selon votre ontologie<br>
+        • Vérifiez les valeurs exactes dans vos données (ACAD, facteurs, etc.)<br>
+        • Testez les requêtes sur un échantillon avant utilisation en production<br>
+        • Les propriétés peuvent varier selon votre mapping
+    </div>
+
+    <div class="info-box">
+        <strong>Préfixe utilisé dans ces exemples :</strong><br>
+        <code>PREFIX : &lt;http://example.org/onto#&gt;</code><br>
+        <em>Adaptez selon votre ontologie réelle</em>
+    </div>
+
+    <div id="phase1" class="phase">
+        <h2>Phase 1 - Questions de Compétence de Base</h2>
+        
+        <div class="question-group">
+            <div class="question">
+                1. Quels sont les facteurs psychosociaux associés aux ACAD ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query1')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query1')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query1">PREFIX : &lt;http://example.org/onto#&gt;
+
+SELECT DISTINCT ?acads ?vdLabel ?viLabel
+WHERE {
+  # Analyse contenant un ACAD
+  ?analysis a :Analysis ;
+            :acads ?acads ;
+            :hasRelation ?relation .
+  
+  FILTER(STRLEN(STR(?acads)) > 0)
+  
+  # Relation vers VD et VI
+  ?relation :hasDependentVariable ?vdURI ;
+            :hasIndependentVariable ?viURI .
+  
+  # Libellés de VI et VD
+  ?vdURI :VD ?vdLabel .
+  ?viURI :VI ?viLabel .
+}
+ORDER BY ?acads ?vdLabel ?viLabel</div>
+            </div>
+            <div class="alert alert-info">
+                <strong>Cette requête</strong> liste tous les ACADs avec leurs facteurs psychosociaux associés (VI) et variables dépendantes (VD)
+            </div>
+        </div>
+
+        <div class="question-group">
+            <div class="question">
+                2. Quelles sont les relations qui existent entre les ACAD, les facteurs et catégories de facteurs ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query2')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query2')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query2">PREFIX : &lt;http://example.org/onto#&gt;
+
+SELECT DISTINCT ?acad ?vi ?mainClass ?subClass ?subClass2 ?subClass3 ?subClass4
+WHERE {
+  ?analysis a :Analysis ;
+            :hasRelation ?relation .
+  {
+    ?analysis :acads ?acad .
+  }
+  UNION
+  {
+    ?relation :VD ?acad .
+  }
+  FILTER(STRLEN(STR(?acad)) > 0)
+  ?relation :hasIndependentVariable ?vi .
+  
+  OPTIONAL { ?vi :mainClass  ?mainClass  }
+  OPTIONAL { ?vi :subClass    ?subClass    }
+  OPTIONAL { ?vi :subClass2   ?subClass2   }
+  OPTIONAL { ?vi :subClass3   ?subClass3   }
+  OPTIONAL { ?vi :subClass4   ?subClass4   }
+}
+ORDER BY ?acad ?vi</div>
+            </div>
+            <div class="alert alert-info">
+                <strong>Cette requête</strong> identifie les relations entre ACADs et facteurs avec leurs classifications hiérarchiques
+            </div>
+        </div>
+
+        <div class="question-group">
+            <div class="question">
+                3. Quelle est la force des relations entre les ACAD et les facteurs identifiés ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query3')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query3')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query3">PREFIX : &lt;http://example.org/onto#&gt;
+
+# Force des relations ACAD (=VD) ↔ VI (coefficients statistiques)
+SELECT DISTINCT ?acad ?vi ?degreR ?degreP ?degreBeta ?degreR2
+WHERE {
+  # on part de chaque relation
+  ?analysis a :Analysis ;
+            :hasRelation   ?relation .
+  
+  ?relation :hasDependentVariable   ?acad ;
+            :hasIndependentVariable ?vi .
+  
+  OPTIONAL { ?relation :degreR    ?degreR    }
+  OPTIONAL { ?relation :degreP    ?degreP    }
+  OPTIONAL { ?relation :degreBeta ?degreBeta }
+  OPTIONAL { ?relation :degreR2   ?degreR2   }
+}
+ORDER BY ?acad ?vi</div>
+            </div>
+            <div class="alert alert-info">
+                <strong>Cette requête</strong> extrait les coefficients statistiques (R, p, Beta, R²) pour chaque relation ACAD-facteur
+            </div>
+        </div>
+
+        <div class="question-group">
+            <div class="question">
+                4. Avec quels types d'ACAD spécifiques sont reliés les facteurs protecteurs ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query4')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query4')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query4">PREFIX : &lt;http://example.org/onto#&gt;
+
+# ACAD spécifiques liés aux facteurs protecteurs (resultatRelation = "-")
+SELECT DISTINCT ?vdSubClass ?vdSubClass2 ?vdSubClass3 ?vdSubClass4
+WHERE {
+  ?analysis a :Analysis ;
+            :hasRelation ?relation .
+  ?relation :resultatRelation "-" ;
+            :hasDependentVariable ?vd .
+  
+  OPTIONAL { ?vd :subClass  ?vdSubClass  }
+  OPTIONAL { ?vd :subClass2 ?vdSubClass2 }
+  OPTIONAL { ?vd :subClass3 ?vdSubClass3 }
+  OPTIONAL { ?vd :subClass4 ?vdSubClass4 }
+}
+ORDER BY ?vdSubClass ?vdSubClass2 ?vdSubClass3 ?vdSubClass4</div>
+            </div>
+            <div class="alert alert-warning">
+                <strong>Facteurs protecteurs</strong> sont identifiés par resultatRelation = "-" (corrélation négative)
+            </div>
+        </div>
+
+        <div class="question-group">
+            <div class="question">
+                5. Avec quels types d'ACAD spécifiques sont reliés les facteurs à risques ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query5')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query5')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query5">PREFIX : &lt;http://example.org/onto#&gt;
+
+# ACAD spécifiques liés aux facteurs à risque (resultatRelation = "+")
+SELECT DISTINCT ?vdSubClass ?vdSubClass2 ?vdSubClass3 ?vdSubClass4
+WHERE {
+  ?analysis a :Analysis ;
+            :hasRelation ?relation .
+  ?relation :resultatRelation "+" ;
+            :hasDependentVariable ?vd .
+  
+  OPTIONAL { ?vd :subClass  ?vdSubClass  }
+  OPTIONAL { ?vd :subClass2 ?vdSubClass2 }
+  OPTIONAL { ?vd :subClass3 ?vdSubClass3 }
+  OPTIONAL { ?vd :subClass4 ?vdSubClass4 }
+}
+ORDER BY ?vdSubClass ?vdSubClass2 ?vdSubClass3 ?vdSubClass4</div>
+            </div>
+            <div class="alert alert-warning">
+                <strong>Facteurs à risques</strong> sont identifiés par resultatRelation = "+" (corrélation positive)
+            </div>
+        </div>
+
+        <div class="question-group">
+            <div class="question">
+                6. Avec quels types d'ACAD spécifiques sont reliés les facteurs ambigus ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query6')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query6')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query6">PREFIX : &lt;http://example.org/onto#&gt;
+
+# ACAD spécifiques liés aux facteurs ambigus (resultatRelation = "NS")
+SELECT DISTINCT ?vdSubClass ?vdSubClass2 ?vdSubClass3 ?vdSubClass4
+WHERE {
+  ?analysis a :Analysis ;
+            :hasRelation ?relation .
+  ?relation :resultatRelation "NS" ;
+            :hasDependentVariable ?vd .
+  
+  OPTIONAL { ?vd :subClass  ?vdSubClass  }
+  OPTIONAL { ?vd :subClass2 ?vdSubClass2 }
+  OPTIONAL { ?vd :subClass3 ?vdSubClass3 }
+  OPTIONAL { ?vd :subClass4 ?vdSubClass4 }
+}
+ORDER BY ?vdSubClass ?vdSubClass2 ?vdSubClass3 ?vdSubClass4</div>
+            </div>
+            <div class="alert alert-warning">
+                <strong>Facteurs ambigus</strong> sont identifiés par resultatRelation = "NS" (non significatif)
+            </div>
+        </div>
+
+        <div class="question-group">
+            <div class="question">
+                7. Avec quels types d'ACAD spécifiques sont reliés les facteurs intrapersonnels ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query7')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query7')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query7">PREFIX : &lt;http://example.org/onto#&gt;
+
+SELECT DISTINCT ?viLabel ?vdLabel
+WHERE {
+  ?analysis a :Analysis ;
+            :hasRelation ?relation .
+  ?relation :hasIndependentVariable ?vi ;
+            :hasDependentVariable   ?vd .
+  ?vi :mainClass "Intrapersonal factor related to DEAB" .
+  ?vi  :VI ?viLabel .
+  ?vd  :VD ?vdLabel .
+}
+ORDER BY ?viLabel ?vdLabel</div>
+            </div>
+            <div class="alert alert-warning">
+                <strong>Facteurs intrapersonnels</strong> sont identifiés par mainClass = "Intrapersonal factor related to DEAB"
+            </div>
+        </div>
+
+        <div class="question-group">
+            <div class="question">
+                8. Avec quels types d'ACAD spécifiques sont reliés les facteurs interpersonnels ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query8')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query8')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query8">PREFIX : &lt;http://example.org/onto#&gt;
+
+SELECT DISTINCT ?viLabel ?vdLabel
+WHERE {
+  ?analysis a :Analysis ;
+            :hasRelation ?relation .
+  ?relation :hasIndependentVariable ?vi ;
+            :hasDependentVariable   ?vd .
+  ?vi :mainClass "Interpersonal factor related to DEAB" .
+  ?vi  :VI ?viLabel .
+  ?vd  :VD ?vdLabel .
+}
+ORDER BY ?viLabel ?vdLabel</div>
+            </div>
+            <div class="alert alert-warning">
+                <strong>Adaptez</strong> la valeur de mainClass selon votre classification des facteurs interpersonnels
+            </div>
+        </div>
+
+        <div class="question-group">
+            <div class="question">
+                9. Avec quels types d'ACAD spécifiques sont reliés les facteurs socio-environnementaux ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query9')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query9')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query9">PREFIX : &lt;http://example.org/onto#&gt;
+
+SELECT DISTINCT ?viLabel ?vdLabel
+WHERE {
+  ?analysis a :Analysis ;
+            :hasRelation ?relation .
+  ?relation :hasIndependentVariable ?vi ;
+            :hasDependentVariable   ?vd .
+  ?vi :mainClass "Socio-environmental factor related to DEAB" .
+  ?vi  :VI ?viLabel .
+  ?vd  :VD ?vdLabel .
+}
+ORDER BY ?viLabel ?vdLabel</div>
+            </div>
+            <div class="alert alert-warning">
+                <strong>Adaptez</strong> la valeur de mainClass selon votre classification des facteurs socio-environnementaux
+            </div>
+        </div>
+
+        <div class="question-group">
+            <div class="question">
+                10. Avec quels types d'ACAD spécifiques sont reliés les autres comportements ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query10')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query10')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query10">PREFIX : &lt;http://example.org/onto#&gt;
+
+SELECT DISTINCT ?viLabel ?vdLabel
+WHERE {
+  ?analysis a :Analysis ;
+            :hasRelation ?relation .
+  ?relation :hasIndependentVariable ?vi ;
+            :hasDependentVariable   ?vd .
+  ?vi :mainClass "Other behaviors related to DEAB" .
+  ?vi  :VI ?viLabel .
+  ?vd  :VD ?vdLabel .
+}
+ORDER BY ?viLabel ?vdLabel</div>
+            </div>
+            <div class="alert alert-warning">
+                <strong>Adaptez</strong> la valeur de mainClass selon votre classification des autres comportements
+            </div>
+        </div>
+
+    </div>
+
+    <div id="phase2" class="phase">
+        <h2>Phase 2 - Analyses Contextuelles</h2>
+        
+        <div class="question-group">
+            <div class="question">
+                11. Quels sont les facteurs des ACAD selon le type de sport pratiqué ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query11')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query11')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query11">PREFIX : &lt;http://example.org/onto#&gt;
+
+SELECT DISTINCT ?sport ?facteur ?acad ?resultat_relation
+WHERE {
+  ?analysis a :Analysis ;
+            :hasSport ?sport_obj ;
+            :hasRelation ?relation .
+  
+  ?sport_obj :sportName ?sport .
+  
+  ?relation :hasDependentVariable ?vd ;
+            :hasIndependentVariable ?vi ;
+            :resultatRelation ?resultat_relation .
+  
+  ?vi :VI ?facteur .
+  ?vd :VD ?acad .
+}
+ORDER BY ?sport ?resultat_relation ?facteur</div>
+            </div>
+        </div>
+
+        <div class="question-group">
+            <div class="question">
+                12. Quels sont les facteurs des ACAD selon le genre des athlètes ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query12')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query12')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query12">PREFIX : &lt;http://example.org/onto#&gt;
+
+SELECT DISTINCT ?genre ?facteur ?acad ?resultat_relation
+WHERE {
+  ?analysis a :Analysis ;
+            :hasPopulation ?population ;
+            :hasRelation ?relation .
+  
+  ?population :gender ?genre .
+  
+  ?relation :hasDependentVariable ?vd ;
+            :hasIndependentVariable ?vi ;
+            :resultatRelation ?resultat_relation .
+  
+  ?vi :VI ?facteur .
+  ?vd :VD ?acad .
+}
+ORDER BY ?genre ?resultat_relation ?facteur</div>
+            </div>
+        </div>
+
+        <div class="question-group">
+            <div class="question">
+                13. Quels sont les facteurs des ACAD selon le niveau sportif des athlètes ?
+            </div>
+            <div class="sparql-container">
+                <div class="sparql-header" onclick="toggleSparql('query13')">
+                    <span>Cliquer pour voir la requête SPARQL</span>
+                    <div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('query13')">Copier</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="sparql-code" id="query13">PREFIX : &lt;http://example.org/onto#&gt;
+
+SELECT DISTINCT ?niveau_sport ?facteur ?acad ?resultat_relation
+WHERE {
+  ?analysis a :Analysis ;
+            :hasSport ?sport_obj ;
+            :hasRelation ?relation .
+  
+  ?sport_obj :sportLevel ?niveau_sport .
+  
+  ?relation :hasDependentVariable ?vd ;
+            :hasIndependentVariable ?vi ;

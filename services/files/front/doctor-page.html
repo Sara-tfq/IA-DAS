@@ -3,56 +3,170 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Interrogation de l'ontologie</title>
+    <title>Interrogation personnalisé de l'ontologie</title>
     <link rel="stylesheet" href="./doctor-page/doctor-page.css">
+    <link rel="stylesheet" href="./input-intorregation-component/input-intorregation-component.css">
+    <link rel="stylesheet" href="./graph-component/graph-component.css">
+    <link rel="stylesheet" href="./analysis-panel/analysis-panel.css">
+    <link rel="stylesheet" href="./components/loading-overlay.css">
 </head>
 
-<header>
-    <h1>Projet IA-DAS</h1>
-    <img src="./../assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
-    <button id="switchChercheur" onclick="window.location.href='./index.html'">Accueil</button>
-</header>
-
 <body>
-    <div class="prepared-queries">
-        <button id="query1" onclick="interrogerFuseki('query1')">Requête 1</button>
-        <button id="query2" onclick="interrogerFuseki('query2')">Requête 2</button>
-        <button id="query3" onclick="interrogerFuseki('query3')">Requête 3</button>
+    <div id="initialization-overlay" class="init-overlay">
+        <div class="init-content">
+            <div class="init-logo">
+                <img src="./../assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" style="max-width: 150px;">
+            </div>
+            <h2>Initialisation d'IA-DAS</h2>
+            <p>Préparation de la base de données en cours...</p>
+            <p class="init-subtext">Cette étape ne prend qu'une minute, puis tout sera rapide !</p>
+            <div class="init-spinner"></div>
+        </div>
     </div>
+
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3 id="loading-title">Chargement des données...</h3>
+            <div id="loading-steps">
+                <div class="step" id="step-warmup">
+                    <span class="step-text">Préparation de Fuseki...</span>
+                </div>
+                <div class="step" id="step-query">
+                    <span class="step-text">Exécution de la requête...</span>
+                </div>
+                <div class="step" id="step-parsing">
+                    <span class="step-text">Traitement des résultats...</span>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <div id="loading-details">Initialisation...</div>
+            <div id="loading-timer">Temps écoulé: <span id="timer-value">0s</span></div>
+        </div>
+    </div>
+
+    <header>
+        <h1>Projet IA-DAS</h1>
+        <img src="./../assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
+        <button id="switchChercheur" onclick="window.location.href='./index.html'" disabled>Accueil</button>
+    </header>
 
     <div class="content-container">
-        <div class="input-container">
-            <h2>Interroger l'ontologie</h2>
-            <select id="genderChoisie">
-                <option value="">-- Choisissez le sexe --</option>
-                <option value="female">Femme</option>
-                <option value="male">Homme</option>
-                <option value="mixed">Mixte</option>
-            </select>
-
-            <select id="minAge">
-                <option value="">-- Choisissez l’âge minimum --</option>
-                <option value="11">11</option>
-                <option value="12">12</option>
-                <option value="17">17</option>
-                <option value="30">30</option>
-            </select>
-
-            <select id="sport">
-                <option value="">-- Choisissez le sport --</option>
-                <option value="dance">Danse</option>
-                <option value="basketball">Basket-ball</option>
-                <option value="fitness">Fitness</option>
-            </select>
-
-            <br><br>
-            <button onclick="interrogerFuseki()">Exécuter la requête</button>
+        <input-intorregation-component></input-intorregation-component>
+       
+        <div id="results">
+            <div id="result-controls" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button id="viewTable" class="view-btn active" disabled>Tableau</button>
+                <button id="viewGraph" class="view-btn" disabled>Graphique</button>
+                <button id="viewSparql" class="view-btn" disabled>SPARQL</button>
+                
+                <div style="margin-left: 20px; display: flex; gap: 10px; align-items: center;">
+                    <!-- <button id="exportPNG" class="view-btn" style="background: #17a2b8;" disabled>
+                        Export PNG
+                    </button> -->
+                    <button id="exportExcel" class="view-btn" style="background: #77ffaf;" disabled>
+                        Export Excel
+                    </button>
+                    <button id="exportTurtle" class="view-btn" style="background: #df96ff;" disabled>
+                        Export Turtle
+                    </button>
+                </div>
+            </div>
+            
+            <div id="result-display"></div>
         </div>
-
-        <div class="resultats"></div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="./components/page-initializer.js"></script>
+    <script src="js/fuseki-analysis-retriever.js"></script>
+    <script src="./components/loading-manager.js"></script>
+    <script src="./data/excel-loader.js"></script>
+    <script src="./js/api-config.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="./analysis-panel/analysis-panel.js"></script>
+    <script src="./js/hierarchy-service.js"></script>
+    <script src="./graph-component/graph-component.js"></script>
+    <script src="./graph-component/data-parser.js"></script>
+    <script src="./graph-component/graph-renderer.js"></script>
+    <script src="./input-intorregation-component/input-intorregation-component.js"></script>
+    <script src="./doctor-page/doctor-page.js"></script>
+
+    <template id="error-template">
+    <div style="color: red; padding: 20px; background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 5px;">
+        <h4>Erreur de recherche</h4>
+        <p><strong>Message:</strong> <span id="error-message"></span></p>
+        <p><strong>Suggestions:</strong></p>
+        <ul>
+            <li>Vérifiez que le serveur SPARQL Generator fonctionne (port 8003)</li>
+            <li>Essayez avec moins de filtres pour éviter les timeouts</li>
+            <li>Vérifiez la console pour plus de détails</li>
+        </ul>
+    </div>
+</template>
+
+<template id="result-controls-template">
+    <div id="result-controls" style="display: flex; align-items: center; gap: 10px; margin-bottom: 0px; flex-wrap: wrap;">
+        <button id="viewTable" class="view-btn active">Tableau</button>
+        <button id="viewGraph" class="view-btn">Graphique</button>
+        <button id="viewSparql" class="view-btn">SPARQL</button>
+        
+        <div style="margin-left: 20px; display: flex; gap: 10px; align-items: center;">
+            <button id="exportExcel" class="view-btn" style="background: #27ae60;">
+                Export Excel
+            </button>
+            <button id="exportTurtle" class="view-btn" style="background: #8e44ad;">
+                Export Turtle
+            </button>
+        </div>
+    </div>
+    <div id="result-display"></div>
+</template>
+
+<!-- Template pour la vue graphique -->
+<template id="graph-view-template">
+    <div id="graph-container"></div>
+</template>
+
+<!-- Template pour export PNG (existant) -->
+<template id="export-image-template">
+    <button id="exportGraph" class="view-btn" style="background: #99d5fd;">
+        Export PNG
+    </button>
+</template>
+
+<!-- Template pour export des données -->
+<template id="export-data-template">
+    <div class="export-data-controls" style="display: flex; gap: 10px; align-items: center;">
+        <select id="dataExportFormat" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+            <option value="csv">CSV (Tableaux)</option>
+            <option value="turtle">Turtle (RDF)</option>
+        </select>
+        <button id="exportDataBtn" class="view-btn" style="background: #17a2b8;">
+            Export Données
+        </button>
+    </div>
+</template>
+
+<!-- Template pour la vue SPARQL -->
+<template id="sparql-view-template">
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 10px;">
+        <h4>Requête SPARQL générée :</h4>
+        <pre id="sparql-query" style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap;"></pre>
+        
+        <h4 style="margin-top: 20px;">Résultats JSON :</h4>
+        <pre id="sparql-results" style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 400px; white-space: pre-wrap;"></pre>
+    </div>
+</template>
+
+<!-- Template pour l'erreur graphique -->
+<template id="graph-error-template">
+    <p>Erreur lors de l'affichage du graphique</p>
+</template>
+   
 </body>
 
 <footer>

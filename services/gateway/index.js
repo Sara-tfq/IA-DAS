@@ -1,33 +1,103 @@
-// The http module contains methods to handle http queries.
 const http = require('http');
 const httpProxy = require('http-proxy');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
-// We will need a proxy to send requests to the other services.
 const proxy = httpProxy.createProxyServer();
 
-/* The http module contains a createServer function, which takes one argument, which is the function that
-** will be called whenever a new request arrives to the server.
- */
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'; // 'password' hashe
+
 http.createServer(function (request, response) {
-    // First, let's check the URL to see if it's a REST request or a file request.
-    // We will remove all cases of "../" in the url for security purposes.
+
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+
+    if (request.method === 'OPTIONS') {
+        response.writeHead(200);
+        response.end();
+        return;
+    }
+
+    // Ensuite seulement on analyse l’URL
     let filePath = request.url.split("/").filter(function (elem) {
         return elem !== "..";
     });
 
     try {
-        // If the URL starts by /api, then it's a REST request (you can change that if you want).
-        if (filePath[1] === "api" && filePath[2] === "query") {
-            console.log("Request for a REST query received, transferring to the SPARQL Generator service")
-            proxy.web(request, response, { target: "http://127.0.0.1:8003" }); // SPARQL Generator
-        }
-        else {
-            console.log("Request for a file received, transferring to the file service")
+        if (filePath[1] === "api" && filePath[2] === "auth") {
+            handleAuth(request, response);
+        } else if (filePath[1] === "api" && filePath[2] === "query") {
+            console.log("REST API call, redirecting to SPARQL Generator");
+            console.log(`Request URL: ${request.url}`);
+            if (filePath[1] === "api" && filePath[2] === "query") {
+                console.log("REST API call, redirecting to SPARQL Generator");
+                proxy.web(request, response, { target: "http://sparql-generator:8003" });
+            }
+        } else if (request.url.includes('update-page.html')) {
+            // TEMPORAIRE: Protection côté client uniquement (voir rapport sécurité)
+            console.log("Accès à update-page.html - redirection vers frontend");
+            proxy.web(request, response, { target: "http://frontend:8002" });
+        } else {
+            console.log("Static file request, redirecting to frontend service");
             proxy.web(request, response, { target: "http://frontend:8002" });
         }
     } catch (error) {
-        console.log(`error while processing ${request.url}: ${error}`)
+        console.log(`Error while processing ${request.url}: ${error}`);
         response.statusCode = 400;
-        response.end(`Something in your request (${request.url}) is strange...`);
+        response.end(`Something went wrong with your request: ${request.url}`);
     }
-}).listen(8000);
+
+function handleAuth(request, response) {
+    if (request.method === 'POST') {
+        let body = '';
+        request.on('data', chunk => {
+            body += chunk.toString();
+        });
+        request.on('end', () => {
+            try {
+                const { password } = JSON.parse(body);
+                const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+                
+                if (passwordHash === ADMIN_PASSWORD_HASH) {
+                    const token = jwt.sign(
+                        { role: 'admin', exp: Math.floor(Date.now() / 1000) + (30 * 60) }, 
+                        JWT_SECRET
+                    );
+                    response.writeHead(200, { 'Content-Type': 'application/json' });
+                    response.end(JSON.stringify({ success: true, token }));
+                } else {
+                    response.writeHead(401, { 'Content-Type': 'application/json' });
+                    response.end(JSON.stringify({ success: false, message: 'Mot de passe incorrect' }));
+                }
+            } catch (error) {
+                response.writeHead(400, { 'Content-Type': 'application/json' });
+                response.end(JSON.stringify({ success: false, message: 'Format invalide' }));
+            }
+        });
+    } else {
+        response.writeHead(405);
+        response.end();
+    }
+}
+
+function handleUpdatePageAccess(request, response) {
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        response.writeHead(401, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify({ success: false, message: 'Token manquant' }));
+        return;
+    }
+
+    const token = authHeader.substring(7);
+    try {
+        jwt.verify(token, JWT_SECRET);
+        proxy.web(request, response, { target: "http://frontend:8002" });
+    } catch (error) {
+        response.writeHead(401, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify({ success: false, message: 'Token invalide ou expiré' }));
+    }
+}
+}).listen(8000 , '0.0.0.0');

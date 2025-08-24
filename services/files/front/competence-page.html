@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Questions de Compétences - IA-DAS</title>
+    <link rel="stylesheet" href="./doctor-page/doctor-page.css">
+    <link rel="stylesheet" href="./competence-page.css">
+    <link rel="stylesheet" href="./input-competence-component/input-competence-component.css">
+    <link rel="stylesheet" href="./graph-component/graph-component.css">
+    <link rel="stylesheet" href="./analysis-panel/analysis-panel.css">
+</head>
+
+<header>
+    <h1>Projet IA-DAS - Questions de Compétences</h1>
+    <img src="./assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
+    <button id="switchToHome" onclick="window.location.href='./index.html'">Accueil</button>
+</header>
+
+<body>
+    <div class="content-container">
+        <input-competence-component></input-competence-component>
+       
+        <div id="results">
+            <div id="result-controls" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button id="viewTable" class="view-btn active" disabled>Tableau</button>
+                <button id="viewGraph" class="view-btn" disabled>Graphique</button>
+                <button id="viewSparql" class="view-btn" disabled>SPARQL</button>
+                
+                <div style="margin-left: 20px; display: flex; gap: 10px; align-items: center;">
+                    <button id="exportPNG" class="view-btn" style="background: #17a2b8;" disabled>
+                        Export PNG
+                    </button>
+                    <button id="exportExcel" class="view-btn" style="background: #8affbb;" disabled>
+                        Export Excel
+                    </button>
+                    <button id="exportTurtle" class="view-btn" style="background: #dd8fff;" disabled>
+                        Export Turtle
+                    </button>
+                </div>
+            </div>
+            
+            <div id="result-display"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="./data/excel-loader.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/fuseki-analysis-retriever.js"></script>
+    <script src="./analysis-panel/analysis-panel.js"></script>
+    <script src="./graph-component/data-parser.js"></script>
+    <script src="./js/api-config.js"></script>
+    <script src="./js/hierarchy-service.js"></script>
+    <script src="./graph-component/graph-component.js"></script>
+    <script src="js/fuseki-analysis-retriever.js"></script>
+    <script src="./graph-component/graph-renderer.js"></script>
+    <script src="./input-competence-component/input-competence-component.js"></script>
+    <script src="./competence-page/competence-page.js"></script>
+
+    <!-- Templates pour les exports -->
+    <template id="export-image-template">
+        <button id="exportGraph" class="view-btn" style="background: #b0e0ff;">
+            Export PNG
+        </button>
+    </template>
+
+    <template id="export-data-template">
+        <div class="export-data-controls" style="display: flex; gap: 10px; align-items: center;">
+            <select id="dataExportFormat" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                <option value="csv">CSV (Tableaux)</option>
+                <option value="turtle">Turtle (RDF)</option>
+            </select>
+            <button id="exportDataBtn" class="view-btn" style="background: #17a2b8;">
+                Export Données
+            </button>
+        </div>
+    </template>
+
+</body>
+
+<footer>
+    <p>&copy; 2025 – IA-DAS. Tous droits réservés.</p>
+</footer>
+
+</html>

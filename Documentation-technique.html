@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation Technique - IA-DAS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 3px solid #2c3e50;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .meta-info {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        .meta-info p {
+            margin-bottom: 5px;
+        }
+
+        .meta-info strong {
+            color: #2c3e50;
+        }
+
+        .nav-menu {
+            background-color: #34495e;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-menu ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-menu li {
+            margin: 5px 15px;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 3px;
+            transition: background-color 0.3s;
+            font-size: 0.9em;
+        }
+
+        .nav-menu a:hover {
+            background-color: #2c3e50;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border-left: 4px solid #3498db;
+            background-color: #f8f9fa;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .section h3 {
+            color: #34495e;
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+
+        .section h4 {
+            color: #34495e;
+            font-size: 1.2em;
+            margin: 20px 0 10px 0;
+        }
+
+        .section p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .section ul, .section ol {
+            margin: 15px 0 15px 30px;
+        }
+
+        .section li {
+            margin-bottom: 5px;
+        }
+
+        .code-block {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .highlight {
+            background-color: #f39c12;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .warning {
+            background-color: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .info {
+            background-color: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .success {
+            background-color: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: white;
+        }
+
+        .table th, .table td {
+            border: 1px solid #bdc3c7;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #34495e;
+            color: white;
+        }
+
+        .table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .glossary-term {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 2px solid #bdc3c7;
+            margin-top: 50px;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .nav-menu ul {
+                flex-direction: column;
+            }
+            
+            .nav-menu li {
+                margin: 2px 0;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Documentation Technique</h1>
+            <div class="subtitle">Choix de Modélisation et Principes Adoptés</div>
+            
+            <div class="meta-info">
+                <p><strong>Projet :</strong> IA-DAS</p>
+                <p><strong>Date :</strong> 27/05/2025</p>
+                <p><strong>Auteur :</strong> Sara TAOUFIQ</p>
+                <p><strong>Équipe :</strong> Stephanie Meriaux, Meggy Hayotte, Molka TOUNSI, Amandine DAUBRESSE</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Objectif</h2>
+            <p>Ce document a pour vocation de détailler les choix de modélisation techniques et méthodologiques adoptés dans le cadre du développement d'une ontologie dédiée à la représentation des Attitudes et Comportements Alimentaires Dysfonctionnels (ACAD) dans le contexte sportif.</p>
+            <p>L'objectif principal de cette ontologie est de formaliser, structurer et interconnecter les connaissances issues d'articles scientifiques portant sur les comportements alimentaires à risque chez les populations sportives, afin de pouvoir interroger cette ontologie, croiser les variables d'intérêt (ex. genre, type de sport, variables psychologiques) et en extraire des connaissances exploitables pour la recherche, la prévention ou l'analyse automatisée.</p>
+        </div>
+
+        <div class="section">
+            <h2>Public Cible</h2>
+            <p>Cette documentation est destinée à :</p>
+            <ul>
+                <li>L'équipe de recherche sur les ACAD et la psychologie du sport</li>
+                <li>Les développeurs impliqués dans la formalisation de l'ontologie</li>
+                <li>Les experts en modélisation des connaissances</li>
+                <li>Les futurs contributeurs souhaitant comprendre les bases de l'ontologie développée</li>
+            </ul>
+        </div>
+
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="#prerequis">Prérequis</a></li>
+                <li><a href="#glossaire">Glossaire</a></li>
+                <li><a href="#perimetre">Périmètre</a></li>
+                <li><a href="#conception">Conception</a></li>
+                <li><a href="#normalisation">Normalisation</a></li>
+                <li><a href="#mapping">Mapping RML</a></li>
+                <li><a href="#interface">Interface</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+            </ul>
+        </nav>
+
+        <div id="prerequis" class="section">
+            <h2>Prérequis</h2>
+            <div class="info">
+                <p>Pour comprendre et utiliser cette documentation, il est recommandé d'avoir des connaissances de base en :</p>
+                <ul>
+                    <li>Technologies du Web Sémantique (RDF, OWL, SPARQL)</li>
+                    <li>Modélisation ontologique</li>
+                    <li>Psychologie du sport et troubles alimentaires</li>
+                    <li>Développement web (HTML, CSS, JavaScript)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="glossaire" class="section">
+            <h2>Glossaire</h2>
+            
+            <h3>Ontologie – Concepts fondamentaux</h3>
+            
+            <h4><span class="glossary-term">rdfs:Class</span></h4>
+            <p>Représente la classe de toutes les classes. Toute nouvelle catégorie de ressources dans l'ontologie doit être définie comme une instance de rdfs:Class.</p>
+            
+            <h4><span class="glossary-term">rdf:Property</span></h4>
+            <p>Utilisée pour définir des propriétés, c'est-à-dire des relations ou attributs reliant des ressources entre elles, ou à des valeurs littérales.</p>
+            
+            <h4><span class="glossary-term">rdfs:Resource</span></h4>
+            <p>Classe englobante de toutes les ressources. Toute entité identifiée par un URI est considérée comme une instance de rdfs:Resource.</p>
+            
+            <h4><span class="glossary-term">rdfs:Literal</span></h4>
+            <p>Représente l'ensemble des valeurs littérales, comme les chaînes de caractères, les nombres, les dates, etc. Ces valeurs ne sont pas des ressources mais des données brutes.</p>
+            
+            <h3>Normalisation – Concepts clés</h3>
+            
+            <h4><span class="glossary-term">Data Cleaning</span></h4>
+            <p>Processus consistant à corriger ou supprimer les erreurs dans les données, telles que les doublons, les valeurs manquantes, les incohérences de format, ou les fautes typographiques. Cette étape est essentielle pour garantir la qualité et la fiabilité des données avant leur transformation en RDF.</p>
+            
+            <h4><span class="glossary-term">Data Profiling</span></h4>
+            <p>Analyse statistique et structurelle des données visant à identifier les motifs récurrents, les anomalies, les distributions de valeurs et les irrégularités. Le profiling permet de définir des règles de validation ou de nettoyage adaptées au contexte du jeu de données.</p>
+            
+            <h4><span class="glossary-term">Canonicalisation</span></h4>
+            <p>Transformation de différentes variantes d'une donnée vers une forme unique (exemple : "h" devient "heures", ou inversement, selon la décision prise).</p>
+            
+            <h4><span class="glossary-term">Harmonisation</span></h4>
+            <p>Alignement de données issues de différentes sources selon un schéma commun, afin d'assurer la cohérence et l'interopérabilité des jeux de données.</p>
+        </div>
+
+        <div id="perimetre" class="section">
+            <h2>Périmètre Fonctionnel : Avancement, Limites, Extension</h2>
+            
+            <h3>Questions de compétences</h3>
+            <p>Aucune pour l'instant</p>
+            
+            <h3>Traitement de cas particuliers</h3>
+            
+            <h3>Avancement de l'ontologie</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Colonne</th>
+                        <th>Nombre de lignes avec anomalies ou data à extraire</th>
+                        <th>Nombre de lignes traitées</th>
+                        <th>Pourcentage de lignes traitées</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="4"><strong>🔹 Total lignes automatisables : 368</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h4>Traitement des lignes pour year of experience (automatisable)</h4>
+            <div class="code-block">Liste des Analysis_ID des lignes à atomiser :
+[175, 176, 177, 178, 329, 330, 515, 516, 517, 518, 519, 520, 521, 522, 523, 527, 528, 607, 608, 609, 610, 611, 612, 806, 807, 808, 809, 810, 811, 812, 813, 814, 815, 858, 859, 860, 861, 902, 903, 904, 905, 914, 915, 916, 917, 918, 919, 972, 973, 974, 975, 1049, 1050, 1051, 1052, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1209, 1210, 1211, 1212, 1213, 1214, 1215, 1216, 1217, 1218, 1219, 1220, 1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1229, 1232, 1289, 1290, 1291, 1292, 1385, 1386, 1387, 1388, 1389, 1390, 1391, 1392, 1393, 1394, 1395, 1396, 1397, 1398, 1399, 1400, 1401, 1402, 1403, 1404, 1405, 1444, 1445, 1446, 1447, 1448, 1545, 1546, 1547, 1548, 1549, 1550, 1551, 1552, 1553, 1554, 1555, 1556, 1557, 1558, 1559, 1560, 1561, 1562, 1563, 1564, 1565, 1566, 1567, 1568, 1569, 1570, 1571, 1572, 1573, 1574, 1575, 1576, 1577, 1578, 1579, 1580, 1581, 1582, 1680, 1681, 1682, 1683, 1684, 1685, 1686, 1687, 1688, 1689, 1690, 1691, 1692, 1693, 1694, 1733, 1885, 1886, 1887, 1888, 1889, 1890, 1891, 1892, 1893, 1894, 1895, 1896, 1897, 1898, 1899, 1900, 1901, 1902]</div>
+            
+            <h4>ID des analyses des lignes pour les pays (Décalé de 1)</h4>
+            <div class="code-block">Analysis_ID concernés :
+[201, 202, 203, 732, 733, 734, 735, 736, 737, 738, 739, 740, 741, 742, 743, 744, 745, 746, 747, 748, 749, 750, 751, 752, 753, 754, 755, 756, 757, 758, 759, 760, 761, 762, 763, 764, 765, 1209, 1210, 1211, 1212, 1213, 1214, 1215, 1216, 1217, 1218, 1219, 1220, 1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1229, 1454, 1455, 1456, 1457, 1458, 1459, 1460, 1461, 1462, 1463, 1464, 1465, 1471, 1472, 1473, 1474, 1475, 1476, 1477, 1478, 1479]</div>
+        </div>
+
+        <div id="conception" class="section">
+            <h2>Conception et Architecture</h2>
+            
+            <h3>Architecture Générale</h3>
+            <p>L'architecture de notre ontologie repose sur trois classes primaires : <span class="highlight">Article</span>, <span class="highlight">Population</span> et <span class="highlight">Analysis</span>. Cette structure tripartite permet d'englober l'intégralité du contenu du fichier source, dans la mesure où toutes les données disponibles peuvent être rattachées directement ou indirectement à l'une de ces trois entités centrales.</p>
+            
+            <p>Cependant, afin de garantir une meilleure granularité, modularité et scalabilité, nous avons choisi d'enrichir cette structure de base par l'introduction de classes complémentaires. Ces classes permettent de modéliser plus finement des concepts transversaux ou complexes, tels que le sport pratiqué, les mesures statistiques, les médiateurs, les modérateurs ou encore les variables psychologiques.</p>
+            
+            <h3>Classe Sport</h3>
+            <p>Nous avons introduit la classe Sport parce qu'elle permet de regrouper de manière cohérente et centralisée toutes les informations relatives à une pratique sportive, tout en assurant une meilleure extensibilité du modèle. En effet, au lieu de rattacher directement les différentes dimensions du sport (type, niveau, sous-catégorie, etc.) à la classe Population, l'utilisation d'une entité Sport permet de construire une structure plus claire, normalisée et facilement réutilisable.</p>
+            
+            <h4>Avantages de cette approche :</h4>
+            <ul>
+                <li><strong>Modularité :</strong> la classe Sport agit comme une unité autonome pouvant être associée à différentes populations</li>
+                <li><strong>Granularité :</strong> les sous-composantes peuvent évoluer indépendamment</li>
+                <li><strong>Scalabilité :</strong> le modèle devient facilement extensible</li>
+            </ul>
+            
+            <div class="info">
+                <h4>Exemple concret</h4>
+                <p>L'un des articles étudiés porte sur une population de 200 hommes, âgés de 18 à 58 ans, inscrits dans des salles de sport à Chypre Nord, et pratiquant la musculation en amateur. Ces participants sont décrits selon de nombreuses dimensions : sexe, âge, fréquence hebdomadaire d'exercice, années d'expérience, type de sport pratiqué (individuel, esthétique), sous-catégorie (Bodybuilding), ainsi que plusieurs critères liés à leur profil psychologique.</p>
+            </div>
+            
+            <h3>Classe Statistiques</h3>
+            <p>Les données statistiques constituent un élément clé de notre ontologie. Elles décrivent en détail les caractéristiques des populations étudiées dans les articles scientifiques, notamment l'âge, l'indice de masse corporelle (IMC), la fréquence d'exercice et les années d'expérience.</p>
+            
+            <p>Nous avons introduit des classes spécifiques telles que <span class="highlight">AgeStatistics</span>, <span class="highlight">BMIStatistics</span>, <span class="highlight">ExerciseFrequencyStatistics</span>, ou encore <span class="highlight">ExperienceStatistics</span>.</p>
+            
+            <h4>Cette approche repose sur le <span class="highlight">value object pattern</span> :</h4>
+            <ul>
+                <li>Meilleure lisibilité du graphe RDF</li>
+                <li>Extensibilité facile en cas d'ajout de nouvelles métriques</li>
+                <li>Interopérabilité avec d'autres vocabulaires</li>
+                <li>Requêtes SPARQL plus riches et ciblées</li>
+            </ul>
+            
+            <h3>Utilisation de patterns ontologiques</h3>
+            <p>Certaines entités de notre modèle nécessitent plus qu'une simple relation directe pour être représentées de manière précise. C'est notamment le cas des modérateurs et médiateurs, qui jouent un rôle spécifique dans le cadre d'une analyse statistique donnée.</p>
+            
+            <p>Pour refléter correctement cette complexité, nous avons eu recours à des <span class="highlight">ontology design patterns</span>, et en particulier au pattern dit de <span class="highlight">"reification of contextual relationships"</span>, qui consiste à introduire une entité intermédiaire entre les ressources.</p>
+            
+            <div class="warning">
+                <h4>Exemple d'application</h4>
+                <p>Lorsqu'une variable agit comme médiateur dans une analyse, mais que la mesure ou le contexte est spécifique à cette analyse, il est préférable de ne pas créer un lien direct de type hasMediator. À la place, nous modélisons un chemin d'analyse (ou path) à travers une entité dédiée, telle que <strong>MediationPath</strong>.</p>
+            </div>
+        </div>
+
+        <div id="normalisation" class="section">
+            <h2>Normalisation des Données</h2>
+            
+            <h3>Canonicalisation des unités</h3>
+            <h4>Exemple avec la fréquence d'exercice</h4>
+            
+            <p>Dans un souci d'homogénéisation et de clarté sémantique, nous avons adopté une convention canonique pour représenter les unités de fréquence : le format <code>xxx/yyy</code>, où xxx représente la quantité et yyy l'unité de temps.</p>
+            
+            <h4>Exemples de transformation :</h4>
+            <ul>
+                <li>"everyday" sont systématiquement converties en <code>7 days/week</code></li>
+                <li>"3 hours a day" devient <code>3 hours/day</code></li>
+            </ul>
+            
+            <p>Ce format permet non seulement de standardiser les valeurs dans les colonnes comme Freq_Unit et Freq_Base, mais également de renforcer la comparabilité des données inter-lignes et leur réutilisation dans le cadre d'analyses automatiques ou de raisonnements sémantiques.</p>
+            
+            <h3>Détection des anomalies</h3>
+            <p>Pour identifier les incohérences, nous avons adopté une approche basée sur l'extraction de motifs récurrents (pattern matching) à l'aide d'expressions régulières (regex). Cela repose sur le principe de profiling de données : il s'agit d'observer les formes dominantes dans chaque champ pour en déduire un format de référence.</p>
+            
+            <p>Contrairement à des approches plus tolérantes, nous avons choisi de ne pas ignorer les erreurs typographiques, car elles nuisent à la qualité sémantique et à l'interopérabilité. Ainsi, même des variations de casse, des accents manquants ou des doublons sémantiques sont considérés comme des erreurs à corriger.</p>
+            
+            <h3>Harmonisation des modalités : exemple sur la variable "Gender"</h3>
+            <p>L'analyse des données brutes a mis en évidence une forte hétérogénéité dans les modalités textuelles associées à certaines variables catégorielles, notamment la variable "gender".</p>
+            
+            <h4>Modalités standardisées conservées :</h4>
+            <ul>
+                <li><strong>"Male"</strong></li>
+                <li><strong>"Female"</strong></li>
+                <li><strong>"Other"</strong> (pour inclure les identités transgenres, non binaires ou non spécifiées)</li>
+            </ul>
+            
+            <h4>Exemples de transformation :</h4>
+            <ul>
+                <li>"Man", "Boy", "M", "males" → harmonisées en <strong>"Male"</strong></li>
+                <li>"Woman", "Girl", "W", "F", "females" → harmonisées en <strong>"Female"</strong></li>
+            </ul>
+        </div>
+
+        <div id="mapping" class="section">
+            <h2>Mapping RML/OWL</h2>
+            
+            <h3>Bonnes pratiques suivies</h3>
+            <p>Pour réaliser le mapping, nous avons privilégié :</p>
+            <ul>
+                <li>L'utilisation d'URI plutôt que de valeurs littérales, mais aussi des valeurs littérales en complément pour l'interaction homme-machine</li>
+                <li>Le typage des ressources autant que possible pour faciliter le lien avec les classes dans notre schéma RDF</li>
+                <li>L'utilisation parcimonieuse des collections, seulement lorsqu'elles ont une signification propre</li>
+                <li>La déclaration de namespaces cohérents</li>
+            </ul>
+            
+            <h3>Étapes du processus de mapping</h3>
+            
+            <h4>1. Préparation des données</h4>
+            <p>Le fichier source doit être au format CSV.</p>
+            
+            <h4>2. Conversion du séparateur</h4>
+            <p>Un fichier de conversion est nécessaire pour garantir que les données sont bien séparées par des virgules.</p>
+            <div class="code-block">./script-converter</div>
+            
+            <h4>3. Configuration du fichier de mapping</h4>
+            <p>Une fois le fichier CSV généré, indiquer son chemin dans le fichier de mapping RML.</p>
+            
+            <h4>4. Exécution du moteur RML</h4>
+            <div class="code-block">java -jar rmlmapper.jar -m chemin/vers/mapping.ttl -o sortie.ttl</div>
+            
+            <div class="warning">
+                <h4>Remarque sur l'atomisation des données</h4>
+                <p>Afin de raffiner davantage la structuration des données, nous avons procédé à une atomisation de certaines colonnes. Par exemple, dans le cas des variables indépendantes, plusieurs valeurs pouvaient être regroupées sur une même ligne, ce qui n'est pas optimal pour un traitement sémantique.</p>
+            </div>
+            
+            <h3>Architecture de transformation</h3>
+            <p>Notre mapping RML agit comme un traducteur intelligent qui convertit nos données tabulaires de recherche en un graphe de connaissances RDF structuré et interconnecté.</p>
+            
+            <h4>Blocs principaux du mapping :</h4>
+            
+            <h5>1. RelationMapping</h5>
+            <p>Crée une ressource RDF de type :Relation pour chaque ligne du fichier CSV. Chaque relation est identifiée par un URI unique construit à partir de l'identifiant d'analyse, du nom de la variable source et de la variable cible.</p>
+            
+            <h5>2. AnalysisMapping</h5>
+            <p>Crée une ressource RDF de type :Analysis pour chaque identifiant d'analyse unique (analysisId) dans le fichier CSV. À chaque analyse sont associées des métadonnées descriptives.</p>
+            
+            <div class="code-block">:source :Drive%20for%20Muscularity ;
+:target :Bulimic%20Symptomatology ;</div>
+        </div>
+
+        <div id="interface" class="section">
+            <h2>Intégration de l'ontologie à une interface utilisateur</h2>
+            
+            <h3>Architecture mise en place</h3>
+            <p>Dans le cadre de ce projet, nous avons mis en place une architecture permettant de relier notre ontologie OWL à une interface utilisateur web. L'objectif est de permettre l'interrogation de l'ontologie via des requêtes SPARQL et d'afficher les réponses de manière lisible et interactive.</p>
+            
+            <p>Cette solution repose sur l'utilisation d'un triplestore RDF (Apache Jena Fuseki) couplé à une interface web développée en HTML et JavaScript.</p>
+            
+            <h3>Prérequis</h3>
+            <ul>
+                <li>Java Development Kit (JDK), indispensable pour exécuter le serveur Fuseki</li>
+                <li>Apache Jena Fuseki, utilisé comme serveur SPARQL pour héberger l'ontologie</li>
+                <li>Un fichier OWL représentant l'ontologie</li>
+                <li>Un éditeur de texte pour la création de l'interface</li>
+                <li>Un navigateur web pour l'accès à l'interface</li>
+            </ul>
+            
+            <h3>Étapes de mise en œuvre</h3>
+            
+            <h4>1. Installation de Fuseki et configuration initiale</h4>
+            <ul>
+                <li>Télécharger Apache Jena Fuseki depuis le site officiel</li>
+                <li>Installer Java JDK si ce n'est pas déjà fait</li>
+                <li>Extraire l'archive de Fuseki</li>
+                <li>Lancer le serveur Fuseki</li>
+                <li>Accéder à l'interface Fuseki via <code>http://localhost:3030</code></li>
+            </ul>
+            
+            <h4>2. Création d'un dataset RDF</h4>
+            <ul>
+                <li>À partir de l'interface Web de Fuseki, créer un nouveau dataset</li>
+                <li>Importer le fichier OWL contenant l'ontologie dans ce dataset</li>
+                <li>Vérifier l'intégration en exécutant des requêtes SPARQL simples</li>
+            </ul>
+            
+            <h4>3. Développement de l'interface utilisateur</h4>
+            <div class="code-block">const query = `
+  PREFIX ex: &lt;http://example.com/ontology#&gt;
+  SELECT ?variable WHERE {
+    ?s a ex:VariableIndependante ;
+       ex:nom ?variable .
+  }
+`;
+
+fetch("http://localhost:3030/nom_du_dataset/query", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/sparql-query",
+    "Accept": "application/sparql-results+json"
+  },
+  body: query
+})
+.then(response =&gt; response.json())
+.then(data =&gt; {
+  console.log(data.results.bindings);
+});</div>
+            
+            <h3>Architecture du Site Web</h3>
+            <p>Dans le dossier <code>services/</code> vous trouverez tous les projets qui composent votre site web. Chaque sous-dossier est un projet node.js qui contient :</p>
+            <ul>
+                <li>Un <code>package.json</code> (et potentiellement des <code>node_modules</code>)</li>
+                <li>Un fichier <code>index.js</code> qui est un serveur HTTP capable de recevoir des requêtes</li>
+                <li>Une logique utilisée pour que le service fonctionne correctement</li>
+            </ul>
+            
+            <h4>Services de base :</h4>
+            <ul>
+                <li><strong>gateway</strong> : point d'entrée des clients. Il reçoit toutes les requêtes et les redirige vers le service correct</li>
+                <li><strong>files</strong> : utilisé pour servir les fichiers. C'est là que vont vos fichiers front</li>
+            </ul>
+        </div>
+
+        <div id="troubleshooting" class="section">
+            <h2>Troubleshooting</h2>
+            
+            <h3>En rapport avec l'ontologie</h3>
+            
+            <h4>Données CSV</h4>
+            <p>Les problèmes fréquents concernent l'encoding et la séparation des valeurs. S'assurer que le fichier CSV est bien encodé en UTF-8 et que les séparateurs sont cohérents.</p>
+            
+            <h4>Perte d'analyse</h4>
+            <p>Certaines analyses peuvent être perdues lors de la transformation RML si les identifiants ne sont pas uniques ou si des valeurs critiques sont manquantes.</p>
+            
+            <h4>Debug RML</h4>
+            <p>Les erreurs de mapping RML sont souvent liées à :</p>
+            <ul>
+                <li>Références incorrectes aux colonnes CSV</li>
+                <li>Namespaces mal définis</li>
+                <li>Types de données incompatibles</li>
+            </ul>
+            
+            <h4>Debug Fuseki</h4>
+            <p>Les problèmes avec Fuseki concernent généralement :</p>
+            <ul>
+                <li>Configuration du dataset</li>
+                <li>Permissions d'accès aux fichiers</li>
+                <li>Problèmes de mémoire pour les gros datasets</li>
+            </ul>
+            
+            <h3>En rapport avec l'interface</h3>
+            
+            <h4>Changement de données Docker</h4>
+            <p>Lors de la mise à jour des données dans un environnement Docker, s'assurer que les volumes sont correctement montés et que les services redémarrent avec les nouvelles données.</p>
+            
+            <h4>Données non récupérées</h4>
+            <p>Vérifier :</p>
+            <ul>
+                <li>La connectivité réseau entre les services</li>
+                <li>Les ports exposés dans docker-compose.yml</li>
+                <li>La syntaxe des requêtes SPARQL</li>
+            </ul>
+            
+            <h4>Erreur réseau interface sur AWS</h4>
+            <p>Les problèmes de déploiement AWS concernent souvent :</p>
+            <ul>
+                <li>Configuration des Security Groups</li>
+                <li>Ouverture des ports nécessaires</li>
+                <li>Configuration des Load Balancers</li>
+            </ul>
+            
+            <div class="warning">
+                <h4>Rapport de Troubleshooting AWS</h4>
+                <p><strong>Problème identifié :</strong> Failed to fetch lors des appels API depuis le frontend</p>
+                <p><strong>Cause :</strong> AWS Security Groups bloquant le port 8003</p>
+                <p><strong>Solution :</strong> Ajout d'une règle d'entrée pour le port 8003 (Custom TCP, Source: 0.0.0.0/0)</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Extensions Futures</h2>
+            
+            <h3>SPARQL Generator Universel</h3>
+            <p>Un système qui :</p>
+            <ol>
+                <li>Analyse automatiquement le mapping RML</li>
+                <li>Découvre les entités et relations</li>
+                <li>Génère dynamiquement les requêtes</li>
+                <li>Propose des requêtes intelligentes</li>
+            </ol>
+            
+            <h3>Intégration d'Intelligence Artificielle</h3>
+            <p>Possibilité d'intégrer des services comme QAnswer.ai pour la génération automatique de requêtes SPARQL à partir de questions en langage naturel.</p>
+            
+            <h3>Amélioration de la Visualisation</h3>
+            <p>Développement d'outils de visualisation avancés pour l'exploration des graphes de connaissances et l'analyse des relations entre variables.</p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2025 IA-DAS Project - Sara TAOUFIQ et équipe</p>
+            <p>Documentation générée le 23 août 2025</p>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('.nav-menu a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Highlight current section in navigation
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.section[id]');
+            const navLinks = document.querySelectorAll('.nav-menu a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').substring(1) === current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+    <style>
+        .nav-menu a.active {
+            background-color: #2c3e50;
+            font-weight: bold;
+        }
+    </style>
+</body>
+</html>

@@ -28,5 +28,5 @@
     tdb2:unionDefaultGraph true ;                    # Permet d’unir tous les graphes nommés dans le graphe par défaut
     ja:loadClass "org.apache.jena.tdb2.TDB2Factory" ;# Classe Java qui permet de créer ce type de dataset
     ja:data [                                         
-        ja:externalContent "ontology.ttl"            # Charge automatiquement ce fichier RDF au démarrage
+        ja:externalContent "data.ttl"            # Charge automatiquement ce fichier RDF au démarrage
     ] .
