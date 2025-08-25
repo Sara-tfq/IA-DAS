@@ -3,16 +3,16 @@ class SPARQLDataParser {
   
   // Palettes de couleurs par catégorie
   static acadColorPalette = {
-    "DEAB": "#C62828",        // Rouge foncé pour DEAB
-    "Multiple": "#EF5350",    // Rouge moyen pour Multiple
+    "DEAB": "#f54542ff",        // Rouge foncé pour DEAB
+    "Multiple": "#821111ff",    // Rouge moyen pour Multiple
     "default": "#F44336"      // Rouge par défaut
   };
 
   static factorColorPalette = {
-    "Interpersonal factor related to DEAB": "#0D47A1",    // Bleu très foncé
-    "Intrapersonal factor related to DEAB": "#1565C0",    // Bleu foncé
-    "Other behaviors": "#1976D2",                          // Bleu moyen
-    "Sociocultural factor related to DEAB": "#42A5F5",    // Bleu clair
+    "Interpersonal factor related to DEAB": "#00112bff",    // Bleu très foncé
+    "Intrapersonal factor related to DEAB": "#0050acff",    // Bleu foncé
+    "Other behaviors": "#72a4d7ff",                          // Bleu moyen
+    "Sociocultural factor related to DEAB": "#bee0fdff",    // Bleu clair
     "default": "#64B5F6"                                   // Bleu très clair par défaut
   };
 

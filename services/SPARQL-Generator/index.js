@@ -1240,7 +1240,7 @@ WHERE {
     OPTIONAL { ?analysis iadas:hasModerator ?moderator }
 }
 ORDER BY ?vd ?vi
-LIMIT 1000`;
+LIMIT 10000`;
       break;
 
     case 'q2-protecteur':
