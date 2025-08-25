@@ -1,0 +1,147 @@
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix fnml: <http://semweb.mmlab.be/ns/fnml#> .
+@prefix fno: <https://w3id.org/function/ontology#> .
+@prefix grel: <http://users.ugent.be/~bjdmeest/function/grel.ttl#> .
+@prefix sport: <http://ia-das.org/sport#> .
+@prefix iadas: <http://ia-das.org/onto#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# ===============================================
+# Mapping RML pour la Taxonomie des Sports IA-DAS
+# ===============================================
+
+# Mapping pour les classes de niveau 1 (Class 1)
+<http://example.com/mapping#SportClass1Mapping> a rr:TriplesMap ;
+    rml:logicalSource [
+        rml:source "Sport-semi.csv" ;
+        rml:referenceFormulation ql:CSV ;
+        rml:delimiter ","
+    ] ;
+    
+    rr:subjectMap [
+        rr:template "http://ia-das.org/sport#{Class 1}" ;
+        rr:class rdfs:Class, owl:Class
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rml:reference "Class 1" ;
+            rr:language "en"
+        ]
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate rdfs:subClassOf ;
+        rr:objectMap [
+            rr:constant iadas:Sport
+        ]
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate skos:definition ;
+        rr:objectMap [
+            rml:reference "Definition" ;
+            rr:language "en"
+        ]
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate dc:source ;
+        rr:objectMap [
+            rml:reference "Références"
+        ]
+    ] .
+
+# Mapping pour les classes de niveau 2 (Sub class 2)
+<http://example.com/mapping#SportClass2Mapping> a rr:TriplesMap ;
+    rml:logicalSource [
+        rml:source "Sport-semi.csv" ;
+        rml:referenceFormulation ql:CSV ;
+        rml:delimiter ";"
+    ] ;
+    
+    rr:subjectMap [
+        rr:template "http://ia-das.org/sport#{Sub class 2}" ;
+        rr:class rdfs:Class, owl:Class
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate rdfs:subClassOf ;
+        rr:objectMap [
+            rr:template "http://ia-das.org/sport#{Class 1}"
+        ]
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rml:reference "Sub class 2" ;
+            rr:language "en"
+        ]
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate skos:definition ;
+        rr:objectMap [
+            rml:reference "Definition" ;
+            rr:language "en"
+        ]
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate dc:source ;
+        rr:objectMap [
+            rml:reference "Références"
+        ]
+    ] .
+
+# Mapping pour les classes de niveau 3 (Sub class 3)
+<http://example.com/mapping#SportClass3Mapping> a rr:TriplesMap ;
+    rml:logicalSource [
+        rml:source "Sport-semi.csv" ;
+        rml:referenceFormulation ql:CSV ;
+        rml:delimiter ";"
+    ] ;
+    
+    rr:subjectMap [
+        rr:template "http://ia-das.org/sport#{Sub class 3}" ;
+        rr:class rdfs:Class, owl:Class
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate rdfs:subClassOf ;
+        rr:objectMap [
+            rr:template "http://ia-das.org/sport#{Sub class 2}"
+        ]
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label ;
+        rr:objectMap [
+            rml:reference "Sub class 3" ;
+            rr:language "en"
+        ]
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate skos:definition ;
+        rr:objectMap [
+            rml:reference "Definition" ;
+            rr:language "en"
+        ]
+    ] ;
+    
+    rr:predicateObjectMap [
+        rr:predicate dc:source ;
+        rr:objectMap [
+            rml:reference "Références"
+        ]
+    ] .

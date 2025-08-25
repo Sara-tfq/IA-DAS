@@ -279,6 +279,15 @@ iadas:sportName
     rdfs:domain iadas:Sport ;
     rdfs:range xsd:string .
 
+iadas:hasSportConcept
+    a owl:ObjectProperty ;
+    rdfs:label "a pour concept de sport"@fr ;
+    rdfs:label "has sport concept"@en ;
+    rdfs:comment "Relie un sport à son concept dans la taxonomie des sports IA-DAS"@fr ;
+    rdfs:comment "Links a sport to its concept in the IA-DAS sport taxonomy"@en ;
+    rdfs:domain iadas:Sport ;
+    rdfs:range owl:Thing .
+
 iadas:sportLevel
     a owl:DatatypeProperty ;
     rdfs:label "niveau de sport"@fr ;
