@@ -120,9 +120,14 @@ async function rechercherCompetence(data) {
         questionText: data.questionText,
         description: data.description
     };
+
+    // Stocker les données de recherche pour l'export
+    window.currentSearchData = {
+        questionType: data.questionId,
+        filters: null,
+        timestamp: new Date()
+    };
    
-  
-    
     try {
         // ===== TEST CONNECTIVITÉ RÉSEAU =====
        
@@ -860,7 +865,7 @@ async function loadHtml2Canvas() {
     });
 }
 
-async function addLogoToCanvas(originalCanvas) {
+async function addLogoAndTitleToCanvas(originalCanvas, searchFilters = null) {
     return new Promise((resolve, reject) => {
         const logoPath = './../assets/logo_IA-DAS-No-Background.png'; 
         const logoImg = new Image();
@@ -870,35 +875,55 @@ async function addLogoToCanvas(originalCanvas) {
                 const finalCanvas = document.createElement('canvas');
                 const ctx = finalCanvas.getContext('2d');
                 
-                const margin = 40;
-                const maxLogoSize = 300; 
-                const padding = 150;
+                const margin = 240; // Plus de marge pour le titre agrandi (x4)
+                const maxLogoSize = 480; // Logo agrandi (x4)
+                const titleHeight = 320; // Espace pour le titre agrandi (x4)
+                const padding = 80;
                 
-                // Calculer les dimensions du logo en respectant les proportions
+                // Calculer les dimensions du logo (plus petit)
                 const logoRatio = logoImg.width / logoImg.height;
                 let logoWidth, logoHeight;
                 
                 if (logoRatio > 1) {
-                    // Logo plus large que haut
                     logoWidth = maxLogoSize;
                     logoHeight = maxLogoSize / logoRatio;
                 } else {
-                    // Logo plus haut que large
                     logoHeight = maxLogoSize;
                     logoWidth = maxLogoSize * logoRatio;
                 }
                 
+                // Canvas final avec espace pour titre
                 finalCanvas.width = originalCanvas.width + margin;
-                finalCanvas.height = originalCanvas.height + margin;
+                finalCanvas.height = originalCanvas.height + margin + titleHeight;
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
                 
-                ctx.drawImage(originalCanvas, margin/2, margin/2);
+                // === AJOUTER LE TITRE AGRANDI ===
+                const title = generateExportTitle(searchFilters);
+                if (title) {
+                    // Titre principal (x4)
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.font = 'bold 96px Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(title.main, finalCanvas.width / 2, 140);
+                    
+                    // Sous-titre avec filtres (x4)
+                    if (title.filters) {
+                        ctx.fillStyle = '#7f8c8d';
+                        ctx.font = '64px Arial, sans-serif';
+                        ctx.fillText(title.filters, finalCanvas.width / 2, 240);
+                    }
+                }
                 
+                // Dessiner le graphique (décalé vers le bas pour le titre)
+                ctx.drawImage(originalCanvas, margin/2, titleHeight + margin/2);
+                
+                // === AJOUTER LE LOGO (plus petit, en bas à droite) ===
                 const logoX = finalCanvas.width - logoWidth - padding;
-                const logoY = padding;
+                const logoY = finalCanvas.height - logoHeight - padding;
                 
-                const logoBgPadding = 15;
+                // Fond blanc pour le logo (agrandi)
+                const logoBgPadding = 32; // x4
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(
                     logoX - logoBgPadding, 
@@ -907,8 +932,9 @@ async function addLogoToCanvas(originalCanvas) {
                     logoHeight + (logoBgPadding * 2)
                 );
                 
+                // Bordure subtile (plus épaisse)
                 ctx.strokeStyle = '#e0e0e0';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 4; // x4
                 ctx.strokeRect(
                     logoX - logoBgPadding, 
                     logoY - logoBgPadding, 
@@ -916,7 +942,18 @@ async function addLogoToCanvas(originalCanvas) {
                     logoHeight + (logoBgPadding * 2)
                 );
                 
+                // Dessiner le logo
                 ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+                
+                // === AJOUTER LA DATE ET L'HEURE (agrandie) ===
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('fr-FR');
+                const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                
+                ctx.fillStyle = '#95a5a6';
+                ctx.font = '48px Arial, sans-serif'; // x4
+                ctx.textAlign = 'right';
+                ctx.fillText(`Généré le ${dateStr} à ${timeStr}`, finalCanvas.width - padding, finalCanvas.height - padding - logoHeight - 60);
                 
                 resolve(finalCanvas);
                 
@@ -927,11 +964,95 @@ async function addLogoToCanvas(originalCanvas) {
         
         logoImg.onerror = () => {
             console.warn('Logo non trouvé, export sans logo');
-            resolve(originalCanvas);
+            // Même traitement mais sans logo (tailles agrandies)
+            const finalCanvas = document.createElement('canvas');
+            const ctx = finalCanvas.getContext('2d');
+            const margin = 240; // x4
+            const titleHeight = 320; // x4
+            
+            finalCanvas.width = originalCanvas.width + margin;
+            finalCanvas.height = originalCanvas.height + margin + titleHeight;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+            
+            // Titre seulement (agrandi)
+            const title = generateExportTitle(searchFilters);
+            if (title) {
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 96px Arial, sans-serif'; // x4
+                ctx.textAlign = 'center';
+                ctx.fillText(title.main, finalCanvas.width / 2, 140); // x4
+                
+                if (title.filters) {
+                    ctx.fillStyle = '#7f8c8d';
+                    ctx.font = '64px Arial, sans-serif'; // x4
+                    ctx.fillText(title.filters, finalCanvas.width / 2, 240); // x4
+                }
+            }
+            
+            ctx.drawImage(originalCanvas, margin/2, titleHeight + margin/2);
+            resolve(finalCanvas);
         };
         
         logoImg.src = logoPath;
     });
+}
+
+function generateExportTitle(searchFilters) {
+    // Vérifier s'il y a des données de recherche disponibles
+    if (window.currentSearchData) {
+        const data = window.currentSearchData;
+        
+        // Pour les questions de compétence
+        if (data.questionType) {
+            return {
+                main: "IA-DAS - Analyse de Compétences",
+                filters: getCompetenceQuestionTitle(data.questionType)
+            };
+        }
+        
+        // Pour les recherches personnalisées
+        if (data.filters) {
+            const filters = [];
+            if (data.filters.gender) filters.push(`Genre: ${data.filters.gender}`);
+            if (data.filters.sportType) filters.push(`Sport: ${data.filters.sportType}`);
+            if (data.filters.selectedVI) filters.push(`VI: ${data.filters.selectedVI}`);
+            if (data.filters.selectedVD) filters.push(`VD: ${data.filters.selectedVD}`);
+            
+            return {
+                main: "IA-DAS - Recherche Personnalisée",
+                filters: filters.join(' • ')
+            };
+        }
+    }
+    
+    // Titre par défaut
+    return {
+        main: "IA-DAS - Graphique Ontologique",
+        filters: null
+    };
+}
+
+function getCompetenceQuestionTitle(questionType) {
+    const titles = {
+        'q1': 'Pour une ACAD spécifique → facteurs associés',
+        'q2-protecteur': 'Facteurs protecteurs → ACAD',
+        'q2-risque': 'Facteurs de risque → ACAD', 
+        'q2-ambigu': 'Facteurs ambigus → ACAD',
+        'q3-intrapersonnels': 'Facteurs intrapersonnels → ACAD',
+        'q3-interpersonnels': 'Facteurs interpersonnels → ACAD',
+        'q3-socioenvironnementaux': 'Facteurs socio-environnementaux → ACAD',
+        'q3-autres': 'Autres comportements → ACAD',
+        'q4-male': 'Relations ACAD-facteurs (Populations masculines)',
+        'q4-female': 'Relations ACAD-facteurs (Populations féminines)',
+        'q4-mixed': 'Relations ACAD-facteurs (Populations mixtes)',
+        'q5-individual': 'Relations ACAD-facteurs (Sports individuels)',
+        'q5-team': 'Relations ACAD-facteurs (Sports d\'équipe)',
+        'q5-mixed': 'Relations ACAD-facteurs (Sports mixtes)',
+        'q5-aesthetic': 'Relations ACAD-facteurs (Sports esthétiques)'
+    };
+    
+    return titles[questionType] || 'Question de compétence';
 }
 
 function downloadCanvas(canvas, filename) {
@@ -969,9 +1090,9 @@ async function exportGraphToPNG() {
 
         console.log('Graphique capturé, ajout du logo...');
         
-        const finalCanvas = await addLogoToCanvas(canvas);
+        const finalCanvas = await addLogoAndTitleToCanvas(canvas, window.currentSearchData);
         
-        console.log('Logo ajouté, téléchargement...');
+        console.log('Logo et titre ajoutés, téléchargement...');
         
         const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
         const filename = `competence_graph_${currentQuery?.questionId || 'unknown'}_${timestamp}.png`;

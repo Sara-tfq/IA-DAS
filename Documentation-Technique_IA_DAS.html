@@ -786,19 +786,15 @@ Variable finale: Exercise Dependence Scale Score
         transformation. L'spécification explicite de l'encodage UTF-8 prévient les problèmes d'accents et de caractères
         spéciaux fréquents dans les données de recherche multilingues.</p>
 
-           <div class="warning-box">
-        <p><strong>Quelques troubleshoot  :</strong></p>
-        <ul>
-            <p>La commande classique rml ne propose pas de debug pour pouvoir debug ajouter ... à votre commande</p>
-            <p>Il faut obligatoirement que le CSV soit separé par des virgules et non pas des ; comme le standrard classique des csv 
-                vous pouvez modifier ça directement dans excel en choisissant le format csv UTF-8 (virgule) lors de l'enregistrement.
-                ou avoir un convertisseur en ligne pour reformater votre fichier.
-            </p>
-            <p>Les warning du genre <code>Warning: No mapping found for variable 'Body Dissatisfaction' n'est pas à ignorer , cela signifie que cette donnée ne sera pas mappé et donc perdue</code>
-                D'après notre experience, les warning indique que des données n'ont pas été correctement mappées, ce qui peut entraîner des incohérences dans les résultats de recherche.
-            </p>
-        </ul>
-    </div>
+          <div class="warning-box">
+    <p><strong>Troubleshooting - Problèmes fréquents :</strong></p>
+    
+    <p><strong>Debug des mappings RML :</strong> La commande classique RML ne propose pas d'options de debug. Pour activer le debug, ajouter <code>--verbose</code> à votre commande RML.</p>
+    
+    <p><strong>Format CSV requis :</strong> Le fichier CSV doit obligatoirement être séparé par des virgules, pas des points-virgules. Dans Excel, choisir "CSV UTF-8 (virgule)" lors de l'enregistrement. Sinon, utiliser un convertisseur en ligne pour reformater le fichier.</p>
+    
+    <p><strong>Warnings de mapping :</strong> Les messages du type <code>Warning: No mapping found for variable 'Body Dissatisfaction'</code> ne doivent pas être ignorés. Ils indiquent que cette donnée ne sera pas mappée et sera donc perdue. D'après notre expérience, ces warnings signalent des données non mappées qui peuvent entraîner des incohérences dans les résultats.</p>
+</div>
 
     <h3>3.2 Liaison Automatique vers la Taxonomie</h3>
 
@@ -1294,6 +1290,165 @@ Variable finale: Exercise Dependence Scale Score
             qualité constitue un investissement essentiel pour la pérennité et l'adoption des innovations techniques en
             recherche scientifique.</p>
     </div>
+    <!-- Section à ajouter après la section 3.3 Impact et Validation -->
+
+<h2>4. Détection des Anomalies et Normalisation des Données</h2>
+
+<h3>4.1 Détection des Anomalies par Pattern Matching</h3>
+
+<p>Pour identifier les incohérences dans nos données sources, nous avons adopté une approche basée sur l'extraction de motifs récurrents via expressions régulières. Cette méthode repose sur le principe de profiling de données : observer les formes dominantes dans chaque champ pour en déduire un format de référence.</p>
+
+<p>Toute déviation de ce format est considérée comme une anomalie. Contrairement à des approches tolérantes, nous avons choisi de ne pas ignorer les erreurs typographiques car elles nuisent à la qualité sémantique et à l'interopérabilité. Même des variations de casse, des accents manquants ou des doublons sémantiques sont considérés comme des erreurs à corriger.</p>
+
+<h3>4.2 Normalisation et Nettoyage</h3>
+
+<p>La normalisation repose sur deux pratiques : la standardisation lexicale (uniformisation des termes, correction des fautes, harmonisation des formats) et la reconciliation des entités (alignement des variantes vers des formes uniques, liées à des URI canoniques).</p>
+
+<p>Concrètement, cela inclut :</p>
+<ul>
+    <li>Suppression d'espaces ou de ponctuations parasites</li>
+    <li>Mise en minuscule ou majuscule contrôlée</li>
+    <li>Homogénéisation des dates, unités, noms de sports ou pays</li>
+    <li>Conversion vers des représentations sémantiques normalisées (ex. URI au lieu de chaînes)</li>
+</ul>
+
+<p>Nous avons privilégié une approche semi-automatique : les règles sont définies manuellement basées sur l'analyse des patterns, mais appliquées automatiquement via des scripts Python.</p>
+
+<h4>Exemple : Harmonisation de la variable "Gender"</h4>
+
+<p>L'analyse des données brutes a révélé une forte hétérogénéité dans les modalités textuelles de la variable "gender". Pour garantir la cohérence dans le graphe RDF, une harmonisation stricte a été mise en œuvre.</p>
+
+<p>Seules trois modalités standardisées sont conservées :</p>
+<ul>
+    <li><strong>"Male"</strong> - pour "Man", "Boy", "M", "males"</li>
+    <li><strong>"Female"</strong> - pour "Woman", "Girl", "W", "F", "females"</li>
+    <li><strong>"Other"</strong> - pour les identités transgenres, non binaires ou non spécifiées</li>
+</ul>
+
+<p>Cette harmonisation garantit que chaque valeur de genre est représentée de façon univoque dans l'ontologie.</p>
+
+<!-- Section à ajouter après la section sur le mapping RML -->
+
+<h2>5. Interface Utilisateur et Architecture des Services</h2>
+
+<h3>5.1 Architecture Microservices</h3>
+
+<p>L'application IA-DAS adopte une architecture microservices avec une gateway centralisée. Chaque service est containerisé via Docker et écoute sur un port spécifique. Cette architecture facilite le développement modulaire et le déploiement.</p>
+
+<p>Architecture de base :</p>
+<ul>
+    <li><strong>Gateway (port 8000) :</strong> Point d'entrée client, redirection des requêtes</li>
+    <li><strong>Files (port 8001) :</strong> Service de fichiers statiques</li>
+    <li><strong>SPARQL Generator (port 8003) :</strong> Génération et exécution des requêtes</li>
+    <li><strong>Fuseki (port 3030) :</strong> Triplestore Apache Jena</li>
+</ul>
+
+<h3>5.2 Interface d'Interrogation Adaptative</h3>
+
+<p>L'interface propose deux modes d'interrogation : filtres personnalisés et questions prédéfinies. Cette approche répond aux différents niveaux d'expertise des utilisateurs.</p>
+
+<h4>Questions de Compétences</h4>
+
+<p>Nous avons développé une page dédiée avec un système d'accordéon organisé autour de 3 questions principales :</p>
+
+<ul>
+    <li><strong>Question 1 :</strong> "Pour une ACAD spécifique..." (sélection directe)</li>
+    <li><strong>Question 2 :</strong> "Pour un facteur spécifique..." (3 sous-options : Protecteur/Risque/Ambigu)</li>
+    <li><strong>Question 3 :</strong> "Pour une catégorie de facteurs..." (4 sous-options selon la taxonomie)</li>
+</ul>
+
+<div class="technical-decision">
+    <p><strong>Logique de filtrage démographique :</strong> Le système implémente une logique de chevauchement inclusif pour maximiser la pertinence des résultats. Lorsqu'un utilisateur sélectionne "Jeune adulte (18-25 ans)", le système génère une requête SPARQL avec clause UNION qui capture les études dont les plages démographiques chevauchent ET celles dont les moyennes tombent dans la plage sélectionnée.</p>
+</div>
+
+<h3>5.3 Sécurité et Authentification</h3>
+
+<p>L'accès aux fonctionnalités de mise à jour est protégé par un système d'authentification JWT. Une modal d'authentification s'affiche avant l'accès aux pages sensibles, avec les caractéristiques suivantes :</p>
+
+<ul>
+    <li>Mot de passe hashé SHA-256 côté serveur</li>
+    <li>Tokens JWT avec expiration (30 minutes)</li>
+    <li>Stockage temporaire en sessionStorage</li>
+    <li>Nettoyage automatique à la fermeture du navigateur</li>
+</ul>
+
+<!-- Section à ajouter dans troubleshooting -->
+
+<h3>5.4 Optimisation des Requêtes SPARQL</h3>
+
+<p>Le générateur de requêtes a été optimisé pour réduire les problèmes de timeout et améliorer les performances :</p>
+
+<h4>Problèmes identifiés</h4>
+<ul>
+    <li>Utilisation coûteuse de filtres FILTER(LCASE(...)) pour comparer des valeurs textuelles</li>
+    <li>Filtres appliqués en dehors des blocs OPTIONAL</li>
+    <li>Extraction massive de données (LIMIT 10000) surchargeant la mémoire</li>
+</ul>
+
+<h4>Solutions implémentées</h4>
+
+<p><strong>Remplacement des filtres coûteux :</strong> Au lieu de <code>FILTER(LCASE(str(?gender)) = LCASE("female"))</code>, utilisation directe de <code>?population iadas:gender "female"</code>.</p>
+
+<p><strong>Filtres intégrés dans les blocs OPTIONAL :</strong> Les filtres sont appliqués à l'intérieur des blocs où les variables sont garanties d'exister.</p>
+
+<p><strong>Pagination efficace :</strong> Limitation à 200 résultats par requête avec mécanisme d'OFFSET pour les requêtes successives.</p>
+
+<!-- Section problèmes techniques spécifiques -->
+
+<h2>6. Problèmes Techniques et Résolutions</h2>
+
+<h3>6.1 Déploiement AWS et Problèmes de Connectivité</h3>
+
+<p>Lors du déploiement sur AWS EC2, nous avons rencontré un problème critique de connectivité externe. L'application fonctionnait parfaitement en local mais générait des erreurs "Failed to fetch" sur l'environnement AWS.</p>
+
+<h4>Diagnostic</h4>
+<p>Le problème résidait dans deux éléments :</p>
+<ul>
+    <li><strong>Code JavaScript incohérent :</strong> URL définie mais hardcoding de l'IP dans le fetch</li>
+    <li><strong>AWS Security Groups :</strong> Port 8003 bloqué par le pare-feu</li>
+</ul>
+
+<h4>Solution</h4>
+
+<div class="code-block">
+// Détection d'environnement corrigée
+function getApiUrl() {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:8003';
+    } else {
+        return `http://${hostname}:8003`;
+    }
+}
+</div>
+
+<p>Ajout d'une règle AWS Security Groups pour autoriser le trafic entrant sur le port 8003.</p>
+
+<div class="success-box">
+    <p><strong>Résultat :</strong> Résolution complète du problème avec application fonctionnelle sur les deux environnements et détection automatique localhost/AWS opérationnelle.</p>
+</div>
+
+<h3>6.2 Validation des Données et Warnings RML</h3>
+
+<p>Durant le processus de mapping, nous avons identifié que les valeurs "NA" dans le tableau source posaient problème pour l'ontologie. Bien que ces valeurs aient du sens dans un contexte tabulaire, elles créent des incohérences dans la représentation RDF.</p>
+
+<p>De plus, les warnings RML du type "No mapping found for variable X" ne doivent jamais être ignorés car ils indiquent une perte de données qui peut compromettre l'intégrité des analyses.</p>
+
+<h3>6.3 Atomisation des Données Complexes</h3>
+
+<p>L'analyse de la ligne 395 de nos données sources illustre pourquoi l'atomisation des données est nécessaire. Cette ligne contenait plus de vingt relations regroupées dans un même littéral, compromettant l'efficacité du modèle RDF.</p>
+
+<div class="justification">
+    <p><strong>Problèmes du regroupement "en bloc" :</strong></p>
+    <ul>
+        <li>Chaque requête SPARQL nécessite un filtrage par regex pour isoler la relation recherchée</li>
+        <li>Les triplestores n'indexent que les composantes sujet-prédicat-objet, une relation dans une chaîne n'est plus indexable</li>
+        <li>Impossible de rattacher une relation enfermée à d'autres vocabulaires normalisés</li>
+        <li>Maintenance difficile (ajout/suppression d'une relation affecte le bloc entier)</li>
+    </ul>
+</div>
+
+<p>Le mapping atomisé crée une ressource RDF de type :Relation pour chaque relation, avec propriétés :source, :target, :weight (coefficient β), et :partOfAnalysis. Cette approche permet des requêtes SPARQL efficaces et une réutilisabilité optimale.</p>
 
 </body>
 
