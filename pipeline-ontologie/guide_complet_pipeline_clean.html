@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide Complet - Pipeline Ontologie IA-DAS</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #2c5aa0; 
+            text-align: center; 
+            border-bottom: 4px solid #2c5aa0; 
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        h2 { 
+            color: #d9534f; 
+            border-bottom: 3px solid #d9534f; 
+            padding-bottom: 8px;
+            margin-top: 40px;
+            font-size: 1.8em;
+        }
+        h3 {
+            color: #5cb85c;
+            margin-top: 30px;
+            font-size: 1.4em;
+        }
+        .step { 
+            background: #f8f9fa; 
+            margin: 20px 0; 
+            padding: 25px; 
+            border-radius: 10px; 
+            border-left: 5px solid #2c5aa0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        .command { 
+            background: #2d3748; 
+            color: #e2e8f0;
+            border: 1px solid #4a5568; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            font-family: 'Courier New', monospace; 
+            white-space: pre-wrap; 
+            overflow-x: auto; 
+        }
+        .file-structure {
+            background: #e8f5e8;
+            border: 1px solid #c3e6c3;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+        .warning { 
+            background: #fff3cd; 
+            border: 1px solid #ffeaa7;
+            border-left: 4px solid #f39c12; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 5px; 
+        }
+        .success { 
+            background: #d4edda; 
+            border: 1px solid #c3e6cb;
+            border-left: 4px solid #28a745; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 5px; 
+        }
+        .info { 
+            background: #d1ecf1; 
+            border: 1px solid #bee5eb;
+            border-left: 4px solid #17a2b8; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 5px; 
+        }
+        .code-block {
+            background: #f1f3f4;
+            border: 1px solid #dadce0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .table th, .table td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+        .nav-menu {
+            background: #495057;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .nav-menu a:hover {
+            background: #6c757d;
+        }
+        .requirement {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .requirement .check {
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>Guide Complet - Pipeline Ontologie IA-DAS</h1>
+
+<div class="nav-menu">
+    <strong>Navigation rapide :</strong>
+    <a href="#prerequis">Prerequis</a>
+    <a href="#structure">Structure</a>
+    <a href="#etapes">Etapes</a>
+    <a href="#fuseki">Fuseki</a>
+    <a href="#requetes">Requetes</a>
+    <a href="#troubleshooting">Depannage</a>
+</div>
+
+<div class="info">
+<strong>Objectif :</strong> Ce guide vous permet de creer une ontologie complete IA-DAS a partir de fichiers Excel, en passant par le nettoyage des donnees, la creation de mappings RML, et la generation des fichiers TTL pour Fuseki.
+</div>
+
+<h2 id="prerequis">Prerequis et Installation</h2>
+
+<div class="step">
+<h3>Logiciels requis</h3>
+<div class="requirement"><span class="check">OK</span> Python 3.7+ installe</div>
+<div class="requirement"><span class="check">OK</span> Java 8+ installe (pour RMLMapper)</div>
+<div class="requirement"><span class="check">OK</span> Apache Jena Fuseki (optionnel, pour les requetes SPARQL)</div>
+
+<h3>Fichiers de depart necessaires</h3>
+<div class="requirement"><span class="check">OK</span> <strong>IA-DAS-Data.csv</strong> - Donnees principales (format Excel vers CSV)</div>
+<div class="requirement"><span class="check">OK</span> <strong>Sport-Hierarchy.csv</strong> - Hierarchie des sports</div>
+<div class="requirement"><span class="check">OK</span> <strong>Class-Hierarchy-V1.csv</strong> - Hierarchie des variables</div>
+<div class="requirement"><span class="check">OK</span> <strong>rmlmapper-7.3.3-r374-all.jar</strong> - Outil RML Mapper</div>
+</div>
+
+<h2 id="etapes">Etapes du Pipeline Complet</h2>
+
+<h3>Etape 1 : Preparation des Donnees Sports</h3>
+
+<div class="step">
+<h4>1.1 Nettoyage de la hierarchie des sports</h4>
+<div class="warning">
+<strong>Probleme :</strong> Le fichier Sport-Hierarchy.csv contient 16383 colonnes dont la plupart sont vides.
+</div>
+
+<div class="command">python clean_sport_hierarchy.py</div>
+
+<strong>Resultat :</strong> Reduit de 16383 a 5 colonnes utiles
+<div class="code-block">Colonnes conservees :
+- Class 1 (sport principal)
+- Sub class 2 (sous-categorie)
+- Sub class 3 (specialite)
+- Definition (definition)
+- References (sources)</div>
+
+<h4>1.2 Conversion des separateurs</h4>
+<div class="command">python convert_csv_separator.py</div>
+<strong>Action :</strong> Convertit les separateurs ; en , pour compatibilite RML
+
+<h4>1.3 Creation du mapping RML pour les sports</h4>
+<div class="info">
+Le fichier <strong>mapping/mapping-sport.ttl</strong> cree la hierarchie des sports avec rdfs:subClassOf
+</div>
+
+<h4>1.4 Generation de l'ontologie des sports</h4>
+<div class="command">java -jar rmlmapper-7.3.3-r374-all.jar -m mapping/mapping-sport.ttl -o output/sport-hierarchy.ttl</div>
+
+<h4>1.5 Nettoyage des URIs</h4>
+<div class="command">python clean_ttl_uris.py</div>
+<div class="success">
+<strong>Resultat :</strong> 80 URIs nettoyees (ex: 100%20meters vers 100_meters)
+</div>
+</div>
+
+<h3>Etape 2 : Preparation des Variables</h3>
+
+<div class="step">
+<h4>2.1 Nettoyage de la hierarchie des variables</h4>
+<div class="command">python clean_variables_csv.py</div>
+<strong>Resultat :</strong> Reduit de 42 a environ 5 colonnes utiles
+
+<h4>2.2 Creation du mapping RML pour les variables</h4>
+<div class="warning">
+<strong>Important :</strong> Ne pas utiliser SKOS pour les variables selon les exigences du tuteur
+</div>
+
+<h4>2.3 Generation de l'ontologie des variables</h4>
+<div class="command">java -jar rmlmapper-7.3.3-r374-all.jar -m mapping/mapping-hierarchy.ttl -o output/variable-hierarchy.ttl</div>
+
+<div class="success">
+<strong>Resultat :</strong> 557 URIs nettoyees dans la hierarchie des variables
+</div>
+</div>
+
+<h3>Etape 3 : Preparation des Donnees Principales</h3>
+
+<div class="step">
+<h4>3.1 Nettoyage du fichier principal</h4>
+<div class="command">python clean_main_data.py</div>
+<div class="info">
+<strong>Transformation :</strong>
+<ul>
+<li>Lignes : 8211 vers 8209</li>
+<li>Colonnes : 151 vers 85</li>
+<li>Suppression des colonnes et lignes vides</li>
+</ul>
+</div>
+
+<h4>3.2 Creation d'Analysis_IDs uniques</h4>
+<div class="warning">
+<strong>Probleme critique :</strong> Plusieurs lignes partagent le meme Analysis_ID, causant des ecrasements de donnees
+</div>
+
+<div class="command">python create_unique_analysis_ids.py</div>
+
+<div class="success">
+<strong>Solution :</strong> Creation d'IDs uniques avec suffixes
+<br>Exemple : ID 1200 devient vers 1200, 1200.1, 1200.2, 1200.3
+<br><strong>Resultat :</strong> 2013 IDs originaux vers 4494 IDs uniques
+</div>
+</div>
+
+<h3>Etape 4 : Creation du Mapping Principal</h3>
+
+<div class="step">
+<h4>4.1 Corrections selon les exigences du tuteur</h4>
+<div class="info">
+<strong>Modifications importantes :</strong>
+<ul>
+<li>Sport_level deplace de Sport vers Population</li>
+<li>Double typage des variables : VariableDependante + concept specifique</li>
+<li>Suppression des proprietes de sous-classes</li>
+<li>Liens depuis Analysis vers Variables (au lieu de l'inverse)</li>
+</ul>
+</div>
+
+<h4>4.2 Structure du double typage</h4>
+<div class="code-block">Exemple de variable avec double typage :
+iadas-data:Variable_VD_1 a iadas:VariableDependante ;
+                         a iadas:Orthorexia ;
+                         iadas:hasCategory "DEAB" ;
+                         iadas:measure "ORTHO-11" .</div>
+
+<h4>4.3 Fichier mapping-ontology.ttl</h4>
+<div class="info">
+Le mapping principal contient :
+<ul>
+<li><strong>Articles</strong> : DOI, titre, auteurs, annee, journal, pays</li>
+<li><strong>Analyses</strong> : Type, conclusions, limites, perspectives</li>
+<li><strong>Populations</strong> : Genre, age, BMI, experience, frequence</li>
+<li><strong>Sports</strong> : Nom, type, sous-categorie</li>
+<li><strong>Variables</strong> : VD/VI avec double typage</li>
+<li><strong>Relations</strong> : Coefficients statistiques</li>
+</ul>
+</div>
+</div>
+
+<h3>Etape 5 : Generation de l'Ontologie Finale</h3>
+
+<div class="step">
+<h4>5.1 Execution du RML Mapper</h4>
+<div class="command">java -jar rmlmapper-7.3.3-r374-all.jar -m mapping/mapping-ontology.ttl -o output/ia-das-ontology.ttl</div>
+
+<h4>5.2 Nettoyage des URIs finales</h4>
+<div class="command">sed 's/%20/_/g' output/ia-das-ontology.ttl > output/ia-das-ontology-clean.ttl</div>
+
+<div class="success">
+<strong>Ontologie finale creee !</strong>
+<br>Nombre total d'analyses : <strong>4494</strong>
+<br>Taille du fichier : environ 139,697 lignes
+</div>
+</div>
+
+<h2 id="fuseki">Configuration Fuseki</h2>
+
+<div class="step">
+<h3>Fichiers a charger dans Fuseki</h3>
+
+<table class="table">
+<tr>
+<th>Fichier</th>
+<th>Description</th>
+<th>Ordre de chargement</th>
+</tr>
+<tr>
+<td><code>sport-hierarchy-simple-clean.ttl</code></td>
+<td>Hierarchie des sports (80 URIs nettoyees)</td>
+<td>1</td>
+</tr>
+<tr>
+<td><code>variable-hierarchy-clean.ttl</code></td>
+<td>Hierarchie des variables (557 URIs nettoyees)</td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>ia-das-ontology-clean.ttl</code></td>
+<td>Ontologie principale avec 4494 analyses</td>
+<td>3</td>
+</tr>
+</table>
+
+<h3>Creation du dataset Fuseki</h3>
+<div class="command">1. Demarrer Fuseki : ./fuseki-server
+2. Ouvrir http://localhost:3030
+3. Creer un nouveau dataset "ia-das"
+4. Charger les 3 fichiers TTL dans l'ordre indique</div>
+</div>
+
+<h2 id="requetes">Requetes SPARQL Utiles</h2>
+
+<div class="step">
+<h3>Prefixes standard</h3>
+<div class="code-block">PREFIX iadas: &lt;http://ia-das.org/onto#&gt;
+PREFIX iadas-data: &lt;http://ia-das.org/data#&gt;
+PREFIX bibo: &lt;http://purl.org/ontology/bibo/&gt;
+PREFIX dcterms: &lt;http://purl.org/dc/terms/&gt;
+PREFIX rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt;</div>
+
+<h3>Requetes de validation</h3>
+
+<h4>Compter le nombre total d'analyses</h4>
+<div class="code-block">SELECT (COUNT(*) AS ?count)
+WHERE {
+    ?analysis a iadas:Analysis .
+}</div>
+<div class="success">Resultat attendu : 4494</div>
+
+<h4>Compter les variables dependantes par type</h4>
+<div class="code-block">SELECT ?type (COUNT(*) AS ?count)
+WHERE {
+    ?vd a iadas:VariableDependante ;
+        a ?type .
+    FILTER(?type != iadas:VariableDependante)
+}
+GROUP BY ?type
+ORDER BY DESC(?count)</div>
+
+<h4>Recuperer une analyse complete</h4>
+<div class="code-block">SELECT DISTINCT ?analysisId ?authors ?year ?country ?sport ?vd ?vi ?degreeR
+WHERE {
+    iadas-data:Analysis_1 a iadas:Analysis ;
+        iadas:analysisId ?analysisId .
+    
+    ?article iadas:hasAnalysis iadas-data:Analysis_1 ;
+            dcterms:creator ?authors ;
+            dcterms:date ?year ;
+            iadas:country ?country .
+    
+    iadas-data:Analysis_1 iadas:hasSport ?sportEntity .
+    ?sportEntity iadas:sportName ?sport .
+    
+    iadas-data:Analysis_1 iadas:hasRelation ?relation .
+    ?relation iadas:hasDependentVariable ?vd ;
+             iadas:hasIndependentVariable ?vi ;
+             iadas:degreR ?degreeR .
+}</div>
+</div>
+
+<h2 id="troubleshooting">Depannage</h2>
+
+<div class="step">
+<h3>Problemes courants et solutions</h3>
+
+<h4>Erreur : "Unable to access jarfile"</h4>
+<div class="warning">
+<strong>Cause :</strong> RMLMapper JAR introuvable
+<br><strong>Solution :</strong> Verifier le nom exact du fichier JAR
+</div>
+<div class="command">ls *.jar
+# Utiliser le nom exact trouve</div>
+
+<h4>Erreur : Encoding UTF-8</h4>
+<div class="warning">
+<strong>Cause :</strong> Caracteres speciaux dans les CSV
+<br><strong>Solution :</strong> Verifier l'encodage des fichiers
+</div>
+<div class="command"># Dans les scripts Python, verifier :
+with open(file, 'r', encoding='utf-8-sig') as f:</div>
+
+<h4>Nombre d'analyses incorrect</h4>
+<div class="warning">
+<strong>Cause :</strong> Analysis_IDs dupliques
+<br><strong>Solution :</strong> Executer create_unique_analysis_ids.py
+</div>
+
+<h4>URIs avec %20</h4>
+<div class="warning">
+<strong>Cause :</strong> Espaces dans les noms non nettoyes
+<br><strong>Solution :</strong> Utiliser sed pour nettoyer
+</div>
+<div class="command">sed 's/%20/_/g' input.ttl > output.ttl</div>
+
+<h3>Validation des resultats</h3>
+
+<table class="table">
+<tr>
+<th>Etape</th>
+<th>Fichier de sortie</th>
+<th>Validation</th>
+</tr>
+<tr>
+<td>Sports nettoyes</td>
+<td>Sport-Hierarchy-cleaned.csv</td>
+<td>5 colonnes, pas de colonnes vides</td>
+</tr>
+<tr>
+<td>Variables nettoyees</td>
+<td>Class-Hierarchy-V1-cleaned.csv</td>
+<td>Environ 5 colonnes utiles</td>
+</tr>
+<tr>
+<td>Donnees principales</td>
+<td>IA-DAS-Data-unique-ids.csv</td>
+<td>4494 Analysis_IDs uniques</td>
+</tr>
+<tr>
+<td>Ontologie sports</td>
+<td>sport-hierarchy-simple-clean.ttl</td>
+<td>80 URIs nettoyees</td>
+</tr>
+<tr>
+<td>Ontologie variables</td>
+<td>variable-hierarchy-clean.ttl</td>
+<td>557 URIs nettoyees</td>
+</tr>
+<tr>
+<td>Ontologie finale</td>
+<td>ia-das-ontology-clean.ttl</td>
+<td>4494 analyses, double typage</td>
+</tr>
+</table>
+</div>
+
+<h2>Utilisation du Pipeline Automatise</h2>
+
+<div class="step">
+<div class="success">
+<strong>PIPELINE AUTOMATISE DISPONIBLE !</strong>
+
+<h3>Execution simple :</h3>
+<div class="command">python pipeline_complet_ia_das.py</div>
+
+<h3>Le pipeline fait automatiquement :</h3>
+<ul>
+<li><strong>Verification</strong> des prerequis (Java, JAR, fichiers CSV)</li>
+<li><strong>Nettoyage</strong> de tous les fichiers CSV</li>
+<li><strong>Conversion</strong> des separateurs</li>
+<li><strong>Creation</strong> des IDs uniques</li>
+<li><strong>Generation</strong> des ontologies</li>
+<li><strong>Nettoyage</strong> des URIs</li>
+<li><strong>Copie</strong> des fichiers finaux dans /resultats/</li>
+</ul>
+
+<h3>Resultat :</h3>
+<p>3 fichiers TTL prets pour Fuseki dans le dossier <code>resultats/</code></p>
+</div>
+</div>
+
+<h2>Statistiques Finales</h2>
+
+<div class="step">
+<div class="info">
+<strong>Pipeline termine avec succes !</strong>
+
+<h3>Donnees traitees :</h3>
+<ul>
+<li><strong>Sports :</strong> Hierarchie complete avec 80 concepts nettoyes</li>
+<li><strong>Variables :</strong> 557 concepts de variables hierarchises</li>
+<li><strong>Analyses :</strong> 4494 analyses uniques (vs 2013 originaux)</li>
+<li><strong>Articles :</strong> Metadonnees completes avec DOI, auteurs, etc.</li>
+<li><strong>Populations :</strong> Statistiques detaillees (age, BMI, experience)</li>
+<li><strong>Relations :</strong> Coefficients statistiques (r, p, beta, R2)</li>
+</ul>
+
+<h3>Corrections appliquees :</h3>
+<ul>
+<li>Double typage des variables selon exigences tuteur</li>
+<li>Sport_level deplace vers Population</li>
+<li>IDs d'analyse uniques crees</li>
+<li>URIs nettoyees (plus de %20)</li>
+<li>Structure optimisee pour les requetes SPARQL</li>
+<li>Suppression des proprietes redondantes</li>
+</ul>
+</div>
+</div>
+
+<div style="margin-top: 40px; padding: 20px; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; text-align: center;">
+<h3>Ontologie IA-DAS prete pour la production !</h3>
+<p>Votre pipeline est maintenant operationnel. L'ontologie peut etre utilisee dans Fuseki pour des analyses complexes des facteurs psychosociaux lies aux ACAD chez les athletes.</p>
+<p><strong>Fichiers finaux :</strong> sport-hierarchy-simple-clean.ttl + variable-hierarchy-clean.ttl + ia-das-ontology-clean.ttl</p>
+</div>
+
+</div>
+
+</body>
+</html>

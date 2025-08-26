@@ -1,0 +1,79 @@
+REQUETES DE DEBUG POUR COMPRENDRE LA STRUCTURE
+===============================================
+
+-- Test 1: Vérifier qu'on a bien des analyses
+PREFIX iadas: <http://ia-das.org/onto#>
+SELECT (COUNT(*) AS ?total)
+WHERE {
+    ?analysis a iadas:Analysis .
+}
+
+-- Test 2: Vérifier les relations
+PREFIX iadas: <http://ia-das.org/onto#>
+SELECT ?analysis ?relation
+WHERE {
+    ?analysis a iadas:Analysis ;
+              iadas:hasRelation ?relation .
+}
+LIMIT 10
+
+-- Test 3: Vérifier les variables indépendantes
+PREFIX iadas: <http://ia-das.org/onto#>
+SELECT ?relation ?vi
+WHERE {
+    ?analysis a iadas:Analysis ;
+              iadas:hasRelation ?relation .
+    ?relation iadas:hasIndependentVariable ?vi .
+}
+LIMIT 10
+
+-- Test 4: Vérifier les types des variables
+PREFIX iadas: <http://ia-das.org/onto#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT ?vi ?type
+WHERE {
+    ?analysis a iadas:Analysis ;
+              iadas:hasRelation ?relation .
+    ?relation iadas:hasIndependentVariable ?vi .
+    ?vi rdf:type ?type .
+}
+LIMIT 20
+
+-- Test 5: Voir toute la structure d'une relation
+PREFIX iadas: <http://ia-das.org/onto#>
+SELECT ?p ?o
+WHERE {
+    ?analysis a iadas:Analysis ;
+              iadas:hasRelation ?relation .
+    ?relation ?p ?o .
+}
+LIMIT 50
+
+-- Test 6: Question 1 simplifiée - chercher les facteurs protecteurs
+PREFIX iadas: <http://ia-das.org/onto#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT DISTINCT ?acads ?type ?resultat
+WHERE {
+    ?analysis a iadas:Analysis ;
+              iadas:acads ?acads ;
+              iadas:hasRelation ?relation .
+    
+    ?relation iadas:resultatRelation ?resultat ;
+              iadas:hasIndependentVariable ?vi .
+    
+    ?vi rdf:type ?type .
+    
+    FILTER(?resultat = "+")
+}
+LIMIT 20
+
+-- Test 7: Voir la structure complète d'une variable
+PREFIX iadas: <http://ia-das.org/onto#>
+SELECT ?vi ?p ?o
+WHERE {
+    ?analysis a iadas:Analysis ;
+              iadas:hasRelation ?relation .
+    ?relation iadas:hasIndependentVariable ?vi .
+    ?vi ?p ?o .
+}
+LIMIT 30
