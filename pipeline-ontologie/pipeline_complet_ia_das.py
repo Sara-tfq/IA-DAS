@@ -27,6 +27,8 @@ class PipelineIADAS:
         
         Args:
             base_dir (str): Répertoire de base (par défaut: répertoire courant)
+            En vrai se serait interessant d'avoir les fichiers py dans un fichier python
+            TO DO
         """
         self.base_dir = Path(base_dir) if base_dir else Path.cwd()
         self.data_csv_dir = self.base_dir / 'data-csv'
