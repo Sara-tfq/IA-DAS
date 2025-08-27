@@ -1815,12 +1815,15 @@ ORDER BY DESC(?count)`,
 
         categoriesVI: `
 PREFIX iadas: <http://ia-das.org/onto#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 SELECT DISTINCT ?category (COUNT(*) as ?count)
 WHERE {
     ?analysis a iadas:Analysis .
     ?analysis iadas:hasRelation ?relation .
     ?relation iadas:hasIndependentVariable ?variableVI .
+    ?variableVI rdf:type ?viType .
+    FILTER(?viType != iadas:VariableIndependante)
     ?variableVI iadas:hasCategory ?category .
 }
 GROUP BY ?category
