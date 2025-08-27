@@ -325,40 +325,52 @@ class InputInterrogationComponent extends HTMLElement {
         });
     }
 
-    handleCategoryChangeVD() {
+    async handleCategoryChangeVD() {
         const selectedCategory = this.querySelector('#categoryVD').value;
 
         if (selectedCategory === '') {
             this.availableVD = [...this.allVD];
+            this.resetVariableInput('variableVD');
+            this.updatePlaceholder('variableVD', this.availableVD.length, 'facteurs VD');
         } else {
-            this.availableVD = [...new Set(
-                this.csvData
-                    .filter(row => row['CLASS'] === selectedCategory && row['sub-class_Final_VD'])  // ← 'CLASS'
-                    .map(row => row['sub-class_Final_VD'])
-                    .filter(val => val != null && val !== '' && val !== undefined)
-            )].sort();
+            // Appel à l'ontologie pour récupérer les facteurs VD filtrés
+            try {
+                const response = await fetch(`http://localhost:8000/api/interface-data?categoryVD=${encodeURIComponent(selectedCategory)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.availableVD = data.data.factorsVD.map(item => item.vd ? item.vd.value : item.value).sort();
+                    this.resetVariableInput('variableVD');
+                    this.updatePlaceholder('variableVD', this.availableVD.length, 'facteurs VD');
+                }
+            } catch (error) {
+                console.error('Erreur filtrage VD:', error);
+            }
         }
-
-        this.resetVariableInput('variableVD');
-        this.updatePlaceholder('variableVD', this.availableVD.length, 'ACAD');
     }
 
-    handleCategoryChangeVI() {
+    async handleCategoryChangeVI() {
         const selectedCategory = this.querySelector('#categoryVI').value;
 
         if (selectedCategory === '') {
             this.availableVI = [...this.allVI];
+            this.resetVariableInput('variableVI');
+            this.updatePlaceholder('variableVI', this.availableVI.length, 'facteurs VI');
         } else {
-            this.availableVI = [...new Set(
-                this.csvData
-                    .filter(row => row['CLASS_1'] === selectedCategory && row['sub-class_Final_VI'])  // ← 'CLASS_1'
-                    .map(row => row['sub-class_Final_VI'])
-                    .filter(val => val != null && val !== '' && val !== undefined)
-            )].sort();
+            // Appel à l'ontologie pour récupérer les facteurs VI filtrés
+            try {
+                const response = await fetch(`http://localhost:8000/api/interface-data?categoryVI=${encodeURIComponent(selectedCategory)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.availableVI = data.data.factorsVI.map(item => item.vi ? item.vi.value : item.value).sort();
+                    this.resetVariableInput('variableVI');
+                    this.updatePlaceholder('variableVI', this.availableVI.length, 'facteurs VI');
+                }
+            } catch (error) {
+                console.error('Erreur filtrage VI:', error);
+            }
         }
-
-        this.resetVariableInput('variableVI');
-        this.updatePlaceholder('variableVI', this.availableVI.length, 'facteurs');
     }
     resetVariableInput(inputId) {
         this.querySelector(`#${inputId}`).value = '';
@@ -373,48 +385,27 @@ class InputInterrogationComponent extends HTMLElement {
         const statusDiv = this.querySelector('#loadingStatus');
 
         try {
-            if (typeof Papa === 'undefined') {
-                await this.loadPapaParse();
-            }
-
-            const response = await fetch('/data/IA-DAS-Data.csv');
+            console.log('📡 Chargement des données depuis l\'ontologie...');
+            
+            const response = await fetch('http://localhost:8000/api/interface-data');
             if (!response.ok) {
                 throw new Error(`Erreur HTTP: ${response.status}`);
             }
 
-
-            const csvText = await response.text();
-            const result = Papa.parse(csvText, {
-                header: true,
-                dynamicTyping: true,
-                skipEmptyLines: true,
-                delimitersToGuess: [',', '\t', '|', ';']
-            });
-           
-
-            console.log("🏃 Chargement du fichier Sport.csv...");
-            const response2 = await fetch('/data/Sport.csv');
-            if (!response2.ok) {
-                console.error("❌ Erreur chargement Sport.csv:", response2.status);
-                throw new Error(`Erreur HTTP Sport: ${response2.status}`);
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Erreur inconnue');
             }
-            const csvText2 = await response2.text();
-            console.log("✅ Sport.csv chargé, taille:", csvText2.length);
-            const result2 = Papa.parse(csvText2, {
-                header: true,
-                dynamicTyping: true,
-                skipEmptyLines: true,
-                delimitersToGuess: [',', '\t', '|', ';']
-            });
-            console.log("📊 Sport.csv parsé, lignes:", result2.data.length);
-            this.sportsData = result2.data;
 
-            this.csvData = result.data;
-            this.extractUniqueValues();
+            console.log('✅ Données ontologie chargées:', data.data);
+            
+            this.ontologyData = data.data;
+            this.extractValuesFromOntology();
             this.enableInputs();
+            
         } catch (error) {
-            console.error('Erreur lors du chargement CSV:', error);
-            statusDiv.innerHTML = `<p style="color: red;"> Erreur : ${error.message}</p>`;
+            console.error('Erreur lors du chargement depuis l\'ontologie:', error);
+            statusDiv.innerHTML = `<p style="color: red;">❌ Erreur : ${error.message}</p>`;
         }
     }
 
@@ -522,71 +513,51 @@ class InputInterrogationComponent extends HTMLElement {
         });
     }
 
-    extractUniqueValues() {
+    extractValuesFromOntology() {
+        console.log('🔄 Extraction des valeurs depuis les données ontologie...');
 
-        // Extraire toutes les variables (backup)
-        this.allVD = [...new Set(
-            this.csvData
-                .map(row => row['sub-class_Final_VD'])
-                .filter(val => val != null && val !== '' && val !== undefined)
-        )].sort();
-
-        this.allVI = [...new Set(
-            this.csvData
-                .map(row => row['sub-class_Final_VI'])
-                .filter(val => val != null && val !== '' && val !== undefined)
-        )].sort();
-
-        // Extraire les catégories pour VD (utilise 'CLASS')
-        this.availableCategoriesVD = [...new Set(
-            this.csvData
-                .filter(row => row['sub-class_Final_VD'] != null && row['sub-class_Final_VD'] !== '')
-                .map(row => row['CLASS'])
-                .filter(val => val != null && val !== '' && val !== undefined)
-        )].sort();
-
-        // Extraire les catégories pour VI (utilise 'CLASS_1')
-        this.availableCategoriesVI = [...new Set(
-            this.csvData
-                .filter(row => row['sub-class_Final_VI'] != null && row['sub-class_Final_VI'] !== '')
-                .map(row => row['CLASS_1'])  // ← CHANGEMENT ICI
-                .filter(val => val != null && val !== '' && val !== undefined)
-        )].sort();
-
-        
-        // Initialiser avec toutes les variables
+        // Extraire les facteurs VD depuis l'ontologie principale
+        this.allVD = this.ontologyData.factorsVD.map(item => item.vd ? item.vd.value : item.value).sort();
         this.availableVD = [...this.allVD];
+
+        // Extraire les facteurs VI depuis l'ontologie principale
+        this.allVI = this.ontologyData.factorsVI.map(item => item.vi ? item.vi.value : item.value).sort();
         this.availableVI = [...this.allVI];
 
-        // Extraire les sports depuis Sport.csv avec logique hiérarchique
+        // Extraire les catégories VD depuis l'ontologie principale
+        this.availableCategoriesVD = this.ontologyData.categoriesVD.map(item => item.category ? item.category.value : item.value).sort();
+
+        // Extraire les catégories VI depuis l'ontologie principale
+        this.availableCategoriesVI = this.ontologyData.categoriesVI.map(item => item.category ? item.category.value : item.value).sort();
+
+        console.log('📊 Facteurs VD extraits:', this.allVD.length);
+        console.log('📊 Facteurs VI extraits:', this.allVI.length);
+        console.log('📊 Catégories VD:', this.availableCategoriesVD);
+        console.log('📊 Catégories VI:', this.availableCategoriesVI);
+
+        // Extraire les sports depuis l'ontologie hiérarchique
+        this.allSports = this.ontologyData.sports.map(item => item.sport.value).sort();
+        this.availableSports = [...this.allSports];
+
+        console.log('📊 Sports extraits:', this.allSports.length);
+
+        // Mettre à jour les placeholders
+        this.updatePlaceholder('variableVD', this.allVD.length, 'facteurs VD');
+        this.updatePlaceholder('variableVI', this.allVI.length, 'facteurs VI'); 
+        this.updatePlaceholder('sportType', this.allSports.length, 'sports');
+    }
+
+    // Ancienne méthode extractUniqueValues - désactivée, remplacée par extractValuesFromOntology
+    extractUniqueValues() {
+        console.log('⚠️ Méthode extractUniqueValues désactivée - utilise extractValuesFromOntology');
+        return;
+        
+        // Ancien code commenté
+        /*
         this.allSports = [...new Set(
             this.sportsData
                 .map(row => {
-                    // Priorité : Sub class 3, sinon Sub class 2
-                    const sportLevel3 = row['Sub class 3'];
-                    const sportLevel2 = row['Sub class 2'];
-
-                    // Si Sub class 3 existe et n'est pas vide
-                    if (sportLevel3 && sportLevel3.toString().trim() !== '') {
-                        return sportLevel3.toString().trim();
-                    }
-                    // Sinon utiliser Sub class 2 si elle existe
-                    if (sportLevel2 && sportLevel2.toString().trim() !== '') {
-                        return sportLevel2.toString().trim();
-                    }
-                    // Sinon ignorer cette ligne
-                    return null;
-                })
-                .filter(val => val !== null) // Eliminer les lignes sans sport
-        )].sort();
-
-        console.log("🏃 Sports extraits:", this.allSports.length);
-        // Initialiser avec tous les sports
-        this.availableSports = [...this.allSports];
-        console.log("✅ AvailableSports initialisé:", this.availableSports.length);
-
-        // Peupler les sélecteurs de catégories
-        this.populateCategorySelectors();
+        */
     }
 
     enableInputs() {

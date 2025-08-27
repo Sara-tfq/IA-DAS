@@ -117,12 +117,12 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     ?variableVD iadas:hasCategory "DEAB" .
@@ -153,12 +153,12 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     ?analysis iadas:hasPopulation ?population .
@@ -189,12 +189,12 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     OPTIONAL { 
@@ -224,12 +224,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
@@ -511,12 +511,12 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }`;
 
   // === FILTRES D'ÂGE - NOUVEAU SYSTÈME ===
@@ -1209,12 +1209,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
@@ -1243,12 +1243,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     BIND("-" AS ?resultatRelation)
@@ -1275,12 +1275,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     BIND("+" AS ?resultatRelation)
@@ -1307,12 +1307,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     BIND("NS" AS ?resultatRelation)
@@ -1339,11 +1339,11 @@ WHERE {
     ?variableVI rdf:type ?viType ;
                 iadas:hasCategory "Sociocultural factor related to DEAB" .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
     
@@ -1371,11 +1371,11 @@ WHERE {
     ?variableVI rdf:type ?viType ;
                 iadas:hasCategory "Other behaviors" .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
     
@@ -1402,12 +1402,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     ?analysis iadas:hasPopulation ?population .
@@ -1437,12 +1437,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     ?analysis iadas:hasPopulation ?population .
@@ -1472,12 +1472,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     ?analysis iadas:hasPopulation ?population .
@@ -1507,12 +1507,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     ?analysis iadas:hasSport ?sport .
@@ -1542,12 +1542,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     ?analysis iadas:hasSport ?sport .
@@ -1577,12 +1577,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     ?analysis iadas:hasSport ?sport .
@@ -1612,12 +1612,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     ?analysis iadas:hasSport ?sport .
@@ -1655,12 +1655,12 @@ WHERE {
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
@@ -1707,12 +1707,12 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     ?variableVI rdf:type ?viType .
     FILTER(?viType != iadas:VariableIndependante)
-    BIND(REPLACE(STR(?viType), "http://ia-das.org/onto#", "") AS ?vi)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
     OPTIONAL { ?variableVI iadas:hasCategory ?categoryVI }
     
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
-    BIND(REPLACE(STR(?vdType), "http://ia-das.org/onto#", "") AS ?vd)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
     OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
     
     OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
@@ -1733,6 +1733,159 @@ http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
     res.end();
+    return;
+  }
+
+  if (req.url.startsWith('/api/interface-data') && req.method === 'GET') {
+    try {
+      console.log('\n=== RÉCUPÉRATION DONNÉES INTERFACE ===');
+      
+      const urlParts = req.url.split('?');
+      const params = new URLSearchParams(urlParts[1] || '');
+      
+      console.log('Paramètres de filtrage:', Object.fromEntries(params));
+      
+      const fusekiEndpoint = 'http://fuseki:3030/ds/sparql';
+      
+      // Requêtes pour alimenter l'interface depuis les ontologies hiérarchiques
+      const queries = {
+        acads: `
+PREFIX iadas: <http://ia-das.org/onto#>
+
+SELECT DISTINCT ?acad (COUNT(*) as ?count) 
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasPopulation ?population .
+    ?population iadas:practicesSport ?sport .
+    ?sport iadas:sportName ?acad .
+}
+GROUP BY ?acad
+ORDER BY DESC(?count)`,
+
+        factorsVI: `
+PREFIX iadas: <http://ia-das.org/onto#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT DISTINCT ?vi (COUNT(*) as ?count)
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasRelation ?relation .
+    ?relation iadas:hasIndependentVariable ?variableVI .
+    
+    ?variableVI rdf:type ?viType .
+    FILTER(?viType != iadas:VariableIndependante)
+    BIND(REPLACE(REPLACE(STR(?viType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vi)
+    
+    ${params.get('categoryVI') ? `?variableVI iadas:hasCategory "${params.get('categoryVI')}" .` : ''}
+}
+GROUP BY ?vi
+ORDER BY DESC(?count)`,
+
+        factorsVD: `
+PREFIX iadas: <http://ia-das.org/onto#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT DISTINCT ?vd (COUNT(*) as ?count)
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasRelation ?relation .
+    ?relation iadas:hasDependentVariable ?variableVD .
+    
+    ?variableVD rdf:type ?vdType .
+    FILTER(?vdType != iadas:VariableDependante)
+    BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
+    
+    ${params.get('categoryVD') ? `?variableVD iadas:hasCategory "${params.get('categoryVD')}" .` : ''}
+}
+GROUP BY ?vd
+ORDER BY DESC(?count)`,
+
+        categoriesVD: `
+PREFIX iadas: <http://ia-das.org/onto#>
+
+SELECT DISTINCT ?category (COUNT(*) as ?count)
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasRelation ?relation .
+    ?relation iadas:hasDependentVariable ?variableVD .
+    ?variableVD iadas:hasCategory ?category .
+}
+GROUP BY ?category
+ORDER BY DESC(?count)`,
+
+        categoriesVI: `
+PREFIX iadas: <http://ia-das.org/onto#>
+
+SELECT DISTINCT ?category (COUNT(*) as ?count)
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasRelation ?relation .
+    ?relation iadas:hasIndependentVariable ?variableVI .
+    ?variableVI iadas:hasCategory ?category .
+}
+GROUP BY ?category
+ORDER BY DESC(?count)`,
+
+        sports: `
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT ?sport 
+WHERE {
+    ?concept a owl:Class .
+    ?concept rdfs:label ?sportLabel .
+    BIND(?sportLabel AS ?sport)
+    FILTER NOT EXISTS { ?child rdfs:subClassOf ?concept }
+    FILTER(?sportLabel != "Sport" && ?sportLabel != "Physical_activity" && ?sportLabel != "Athletic" && 
+           ?sportLabel != "Individual_sport" && ?sportLabel != "Team_sport" && ?sportLabel != "Combat_sport" &&
+           ?sportLabel != "Aesthetic" && ?sportLabel != "Endurance" && ?sportLabel != "Power" && ?sportLabel != "Technical")
+}
+ORDER BY ?sport`,
+
+        countries: `
+PREFIX iadas: <http://ia-das.org/onto#>
+
+SELECT DISTINCT ?country (COUNT(*) as ?count)
+WHERE {
+    ?analysis a iadas:Analysis .
+    ?analysis iadas:hasPopulation ?population .
+    ?population iadas:country ?country .
+}
+GROUP BY ?country
+ORDER BY DESC(?count)`
+      };
+
+      // Exécuter toutes les requêtes en parallèle
+      const results = {};
+      
+      for (const [key, query] of Object.entries(queries)) {
+        try {
+          console.log(`Exécution requête: ${key}`);
+          const data = await executeWithRetry(fusekiEndpoint, query, 2);
+          results[key] = data.results?.bindings || [];
+          console.log(`${key}: ${results[key].length} résultats`);
+        } catch (error) {
+          console.error(`Erreur requête ${key}:`, error.message);
+          results[key] = [];
+        }
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        data: results,
+        timestamp: new Date().toISOString()
+      }));
+
+    } catch (error) {
+      console.error('Erreur récupération données interface:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }));
+    }
     return;
   }
 

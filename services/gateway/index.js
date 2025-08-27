@@ -29,13 +29,10 @@ http.createServer(function (request, response) {
     try {
         if (filePath[1] === "api" && filePath[2] === "auth") {
             handleAuth(request, response);
-        } else if (filePath[1] === "api" && filePath[2] === "query") {
+        } else if (filePath[1] === "api" && (filePath[2] === "query" || filePath[2] === "interface-data")) {
             console.log("REST API call, redirecting to SPARQL Generator");
             console.log(`Request URL: ${request.url}`);
-            if (filePath[1] === "api" && filePath[2] === "query") {
-                console.log("REST API call, redirecting to SPARQL Generator");
-                proxy.web(request, response, { target: "http://sparql-generator:8003" });
-            }
+            proxy.web(request, response, { target: "http://sparql-generator:8003" });
         } else if (request.url.includes('update-page.html')) {
             // TEMPORAIRE: Protection côté client uniquement (voir rapport sécurité)
             console.log("Accès à update-page.html - redirection vers frontend");
