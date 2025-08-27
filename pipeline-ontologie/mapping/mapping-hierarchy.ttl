@@ -7,11 +7,8 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 
-# ============================================
-# Mapping simple pour la hiérarchie des variables
-# ============================================
 
-# Mapping pour CLASS (niveau racine)
+
 <#VariableClass>
     rml:logicalSource [
         rml:source "data-csv-converted/Class-Hierarchy-V1-cleaned.csv" ;
@@ -33,7 +30,7 @@
         rr:objectMap [ rml:reference "CLASS" ]
     ] .
 
-# Mapping pour sub-class 1
+
 <#VariableSubClass1>
     rml:logicalSource [
         rml:source "data-csv-converted/Class-Hierarchy-V1-cleaned.csv" ;
@@ -70,7 +67,7 @@
         rr:objectMap [ rml:reference "Outils" ]
     ] .
 
-# Mapping pour sub-class 2
+
 <#VariableSubClass2>
     rml:logicalSource [
         rml:source "data-csv-converted/Class-Hierarchy-V1-cleaned.csv" ;
@@ -107,7 +104,7 @@
         rr:objectMap [ rml:reference "Outils" ]
     ] .
 
-# Mapping pour sub-class 3
+
 <#VariableSubClass3>
     rml:logicalSource [
         rml:source "data-csv-converted/Class-Hierarchy-V1-cleaned.csv" ;
@@ -144,7 +141,7 @@
         rr:objectMap [ rml:reference "Outils" ]
     ] .
 
-# Mapping pour sub-class 4
+
 <#VariableSubClass4>
     rml:logicalSource [
         rml:source "data-csv-converted/Class-Hierarchy-V1-cleaned.csv" ;

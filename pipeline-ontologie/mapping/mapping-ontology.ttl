@@ -12,14 +12,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
-# ============================================
-# Définition de l'ontologie principale
-# ============================================
 
-# Corriger le niveau de sport ne pas le mettre dans sport mais plutot dans population.
-# Il ne faut pas associer une variable à une analyse. 
-# Ajouter l'hierarchie des sports.
-# Faire le lien vers les variables en appelant le lien depuis d'analyse.
 
 
 <http://ia-das.org/onto#>
@@ -33,11 +26,8 @@
     owl:versionInfo "1.0" ;
     owl:imports <http://ia-das.org/taxonomy#> .
 
-# ============================================
-# Classes principales avec documentation
-# ============================================
 
-# Article comme sous-classe de BIBO
+
 iadas:SportPsychologyArticle
     a owl:Class ;
     rdfs:subClassOf bibo:AcademicArticle ;
@@ -97,7 +87,6 @@ iadas:VariableIndependante
     rdfs:comment "Variable indépendante dans une analyse"@fr ;
     rdfs:comment "Independent variable in an analysis"@en .
 
-# Classes de statistiques
 iadas:AgeStatistics
     a owl:Class ;
     rdfs:label "Statistiques d'âge"@fr ;
@@ -126,11 +115,7 @@ iadas:YearsOfExperienceStatistics
     rdfs:comment "Statistiques descriptives concernant les années d'expérience sportive"@fr ;
     rdfs:comment "Descriptive statistics concerning years of sports experience"@en .
 
-# ============================================
-# Propriétés avec domaines et ranges
-# ============================================
 
-# Propriétés liées aux articles
 iadas:country
     a owl:DatatypeProperty ;
     rdfs:label "pays"@fr ;
@@ -158,7 +143,6 @@ iadas:hasAnalysis
     rdfs:domain iadas:SportPsychologyArticle ;
     rdfs:range iadas:Analysis .
 
-# Propriétés liées aux analyses
 iadas:analysisId
     a owl:DatatypeProperty ;
     rdfs:label "identifiant d'analyse"@fr ;
@@ -308,7 +292,6 @@ iadas:sportName
     rdfs:range xsd:string .
 
 
-# Il faut mettre directement l'URI de la texonomie du sport. 
 
 iadas:hasSportConcept
     a owl:ObjectProperty ;
@@ -566,23 +549,6 @@ iadas:resultatRelation
     rdfs:domain iadas:Relations ;
     rdfs:range xsd:string .
 
-iadas:sousGroupeAnalyse
-    a owl:DatatypeProperty ;
-    rdfs:label "sous-groupe d'analyse"@fr ;
-    rdfs:label "analysis subgroup"@en ;
-    rdfs:comment "Sous-groupe spécifique pour l'analyse"@fr ;
-    rdfs:comment "Specific subgroup for the analysis"@en ;
-    rdfs:domain iadas:Relations ;
-    rdfs:range xsd:string .
-
-iadas:sousGroupeAnalyse2
-    a owl:DatatypeProperty ;
-    rdfs:label "sous-groupe d'analyse 2"@fr ;
-    rdfs:label "analysis subgroup 2"@en ;
-    rdfs:comment "Deuxième sous-groupe pour l'analyse"@fr ;
-    rdfs:comment "Second subgroup for the analysis"@en ;
-    rdfs:domain iadas:Relations ;
-    rdfs:range xsd:string .
 
 iadas:relationDegreeSecondary
     a owl:DatatypeProperty ;
@@ -630,23 +596,6 @@ iadas:inclusionCriteria
     rdfs:domain iadas:Population ;
     rdfs:range xsd:string .
 
-iadas:sousGroupeAnalyse1
-    a owl:DatatypeProperty ;
-    rdfs:label "sous-groupe d'analyse 1"@fr ;
-    rdfs:label "analysis subgroup 1"@en ;
-    rdfs:comment "Premier sous-groupe pour l'analyse de population"@fr ;
-    rdfs:comment "First subgroup for population analysis"@en ;
-    rdfs:domain iadas:Population ;
-    rdfs:range xsd:string .
-
-iadas:sousGroupeAnalyse2
-    a owl:DatatypeProperty ;
-    rdfs:label "sous-groupe d'analyse 2"@fr ;
-    rdfs:label "analysis subgroup 2"@en ;
-    rdfs:comment "Deuxième sous-groupe pour l'analyse de population"@fr ;
-    rdfs:comment "Second subgroup for population analysis"@en ;
-    rdfs:domain iadas:Population ;
-    rdfs:range xsd:string .
 
 # Propriétés supplémentaires des sports
 iadas:sportPracticeType
@@ -814,17 +763,11 @@ iadas:expUnit
     rdfs:domain iadas:YearsOfExperienceStatistics ;
     rdfs:range xsd:string .
 
-# ============================================
-# Source de données
-# ============================================
+
 
 <#LogicalSource>
     rml:source "data-csv-converted/IA-DAS-Data-unique-ids.csv" ;    
     rml:referenceFormulation ql:CSV .
-
-# ============================================
-# Mapping Article (utilisant BIBO + IA-DAS)
-# ============================================
 
 <#ArticleMap>
     rml:logicalSource <#LogicalSource> ;
@@ -865,9 +808,7 @@ iadas:expUnit
         rr:objectMap [ rr:template "http://ia-das.org/data#Analysis_{Analysis_ID}" ] 
     ] .
 
-# ============================================
-# Mapping Analysis
-# ============================================
+
 
 <#AnalysisMap>
     rml:logicalSource <#LogicalSource> ;
@@ -940,9 +881,7 @@ iadas:expUnit
         rr:objectMap [ rml:reference "N_mobilise_dans_les analyse" ] 
     ] .
 
-# ============================================
-# Mapping Relations
-# ============================================
+
 
 <#RelationMap>
     rml:logicalSource <#LogicalSource> ;
@@ -983,21 +922,11 @@ iadas:expUnit
         rr:objectMap [ rml:reference "Resultat_de_relation" ] 
     ] ;
     rr:predicateObjectMap [ 
-        rr:predicate iadas:sousGroupeAnalyse ; 
-        rr:objectMap [ rml:reference "Sous-groupe_d'analyse" ] 
-    ] ;
-    rr:predicateObjectMap [ 
-        rr:predicate iadas:sousGroupeAnalyse2 ; 
-        rr:objectMap [ rml:reference "Sous-groupe_d'analyse2" ] 
-    ] ;
-    rr:predicateObjectMap [ 
         rr:predicate iadas:relationDegreeSecondary ; 
         rr:objectMap [ rml:reference "Degre_de_relation.1" ] 
     ] .
 
-# ============================================
-# Mapping Variables VD (Variable Dépendante) - Double Typage
-# ============================================
+
 
 <#VariableMapVD>
     rml:logicalSource <#LogicalSource> ;
@@ -1022,9 +951,7 @@ iadas:expUnit
         rr:objectMap [ rml:reference "Measure_VD" ] 
     ] .
 
-# ============================================
-# Mapping Variables VI (Variable Indépendante) - Version Corrigée et Complète
-# ============================================
+
 
 <#VariableMapVI>
     rml:logicalSource <#LogicalSource> ;
@@ -1049,9 +976,7 @@ iadas:expUnit
         rr:objectMap [ rml:reference "Measure_VI" ] 
     ] .
 
-# ============================================
-# Mapping Population
-# ============================================
+
 
 <#PopulationMap>
     rml:logicalSource <#LogicalSource> ;
@@ -1100,22 +1025,11 @@ iadas:expUnit
         rr:objectMap [ rml:reference "Inclusion criteria" ] 
     ] ;
     rr:predicateObjectMap [ 
-        rr:predicate iadas:sousGroupeAnalyse1 ; 
-        rr:objectMap [ rml:reference "Sous-groupe_d'analyse.1" ] 
-    ] ;
-    rr:predicateObjectMap [ 
-        rr:predicate iadas:sousGroupeAnalyse2 ; 
-        rr:objectMap [ rml:reference "Sous-groupe_d'analyse.2" ] 
-    ] ;
-    # Sport_level déplacé dans Population
-    rr:predicateObjectMap [ 
         rr:predicate iadas:sportLevel ; 
         rr:objectMap [ rml:reference "Sport_level" ] 
     ] .
 
-# ============================================
-# Mapping Sport
-# ============================================
+
 
 <#SportMap>
     rml:logicalSource <#LogicalSource> ;
@@ -1136,9 +1050,7 @@ iadas:expUnit
         rr:objectMap [ rml:reference "Subcategory_of_sport" ] 
     ] .
 
-# ============================================
-# Mapping Statistiques d'âge
-# ============================================
+
 
 <#AgeStatsMap>
     rml:logicalSource <#LogicalSource> ;
@@ -1167,9 +1079,6 @@ iadas:expUnit
         rr:objectMap [ rml:reference "MaxAge" ] 
     ] .
 
-# ============================================
-# Mapping Statistiques d'IMC
-# ============================================
 
 <#BmiStatsMap>
     rml:logicalSource <#LogicalSource> ;
@@ -1198,9 +1107,7 @@ iadas:expUnit
         rr:objectMap [ rml:reference "BMI_Max" ] 
     ] .
 
-# ============================================
-# Mapping Statistiques de fréquence d'exercice
-# ============================================
+
 
 <#ExFreqStatsMap>
     rml:logicalSource <#LogicalSource> ;
@@ -1237,9 +1144,7 @@ iadas:expUnit
         rr:objectMap [ rml:reference "Freq_Base" ] 
     ] .
 
-# ============================================
-# Mapping Statistiques d'années d'expérience
-# ============================================
+
 
 <#ExpStatsMap>
     rml:logicalSource <#LogicalSource> ;
