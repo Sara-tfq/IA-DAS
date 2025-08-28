@@ -526,21 +526,16 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     # Nouvelles colonnes ajoutées
     OPTIONAL { ?analysis iadas:analysisId ?reference }
-    
-    # Population obligatoire (pas OPTIONAL)
-    ?analysis iadas:hasPopulation ?population .
-    ?population iadas:gender ?gender .
-    OPTIONAL { ?population iadas:population ?populationType }
+    OPTIONAL { 
+        ?analysis iadas:hasPopulation ?population .
+        ?population iadas:gender ?gender .
+        ?population iadas:population ?populationType .
+    }
     
     OPTIONAL { 
         ?analysis iadas:hasSport ?sport .
         ?sport iadas:sportName ?sportName .
-    }
-    
-    # Récupérer le résultat de relation, médiateur et modérateur
-    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
-    OPTIONAL { ?analysis iadas:hasMediator ?mediator }
-    OPTIONAL { ?analysis iadas:hasModerator ?moderator }`;
+    }`;
 
   // === FILTRES D'ÂGE - NOUVEAU SYSTÈME ===
   if (filters.meanAge !== undefined) {
