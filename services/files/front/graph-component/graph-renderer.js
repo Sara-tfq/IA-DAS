@@ -1004,13 +1004,13 @@ class GraphRenderer {
 
       allHierarchyNodes.push(parentNode);
 
-      // Lien avec flèche vers le nœud central
+      // Lien hiérarchique : Parent spécialise vers Enfant (concept central)
       allHierarchyLinks.push({
         source: parentNode,
         target: centerNode,
         type: 'hierarchy_parent_link',
         id: `hierarchy_parent_link_${index}`,
-        direction: 'to_center',
+        direction: 'parent_to_child', // Spécialisation du parent vers l'enfant
         level: level
       });
     });
@@ -1042,13 +1042,13 @@ class GraphRenderer {
 
       allHierarchyNodes.push(childNode);
 
-      // Lien avec flèche depuis le nœud central
+      // Lien hiérarchique : Enfant spécialisé depuis le concept central
       allHierarchyLinks.push({
         source: centerNode,
         target: childNode,
         type: 'hierarchy_child_link',
         id: `hierarchy_child_link_${index}`,
-        direction: 'from_center',
+        direction: 'child_from_parent', // Enfant spécialisé depuis le parent
         level: level
       });
     });
@@ -1120,15 +1120,7 @@ class GraphRenderer {
       .style('pointer-events', 'none')
       .text(d => d.label);
 
-    // Indicateur de niveau
-    nodeGroups.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('dy', d => d.type === 'hierarchy_parent' ? '-25px' : '25px')
-      .style('font-size', '10px')
-      .style('fill', '#666')
-      .style('font-weight', 'bold')
-      .style('pointer-events', 'none')
-      .text(d => `N${d.level}`);
+    // Indicateurs de niveau N1, N2, N3 supprimés pour plus de clarté
 
     // Animation d'apparition en cascade
     nodeGroups.style('opacity', 0)
@@ -1166,7 +1158,10 @@ class GraphRenderer {
       })
       .style('stroke-width', d => Math.max(2, 4 - d.level * 0.5))
       .style('opacity', 0.8)
-      .attr('marker-end', d => d.direction === 'from_center' ? 'url(#arrow-child)' : 'url(#arrow-parent)')
+      .attr('marker-end', d => 
+        d.direction === 'parent_to_child' ? 'url(#arrow-specialization)' : 
+        d.direction === 'child_from_parent' ? 'url(#arrow-specialization)' : 
+        'url(#arrow-specialization)')
       .style('stroke-dasharray', d => d.level > 1 ? '4,2' : 'none'); // Pointillés pour niveaux éloignés
 
     // Animation d'apparition en cascade
@@ -1184,23 +1179,9 @@ class GraphRenderer {
     
     const defs = this.svg.append('defs');
 
-    // Flèche pour parents (vers le centre) - Verte
+    // Flèche unique pour la spécialisation hiérarchique - Verte
     defs.append('marker')
-      .attr('id', 'arrow-parent')
-      .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 8)
-      .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
-      .attr('orient', 'auto')
-      .append('path')
-      .attr('d', 'M0,-5L10,0L0,5')
-      .style('fill', '#2E7D32')
-      .style('opacity', 0.8);
-
-    // Flèche pour enfants (depuis le centre) - Verte
-    defs.append('marker')
-      .attr('id', 'arrow-child')
+      .attr('id', 'arrow-specialization')
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 8)
       .attr('refY', 0)

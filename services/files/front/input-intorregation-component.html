@@ -72,6 +72,7 @@
             </div>
 
             <div class="demographics-grid">
+                <!-- COLONNE 1: Sexe + Sport -->
                 <select id="gender">
                     <option value="">Sexe</option>
                     <option value="Female">Femme</option>
@@ -79,6 +80,7 @@
                     <option value="Mixed">Mixte</option>
                 </select>
 
+                <!-- COLONNE 2: Âge -->
                 <div class="age-container">
                     <select id="ageCategory">
                         <option value="">Catégorie d'âge</option>
@@ -97,11 +99,14 @@
                     </div>
                 </div>
 
-                <div class="autocomplete-container">
-                    <input type="text" id="sportType" placeholder="Chargement des sports..." disabled>
-                    <div class="autocomplete-dropdown" id="sportType-dropdown"></div>
+                <!-- COLONNE 1: Catégorie Sport -->
+                <div class="variable-row">
+                    <select id="sportCategory">
+                        <option value="">Catégorie Sport</option>
+                    </select>
                 </div>
 
+                <!-- COLONNE 2: Fréquence -->
                 <div class="frequency-container">
                     <select id="exerciseFrequency">
                         <option value="">Fréquence d'exercice</option>
@@ -119,9 +124,16 @@
                     </div>
                 </div>
 
+                <!-- COLONNE 1: Sport -->
+                <div class="autocomplete-container">
+                    <input type="text" id="sportType" placeholder="Chargement des sports..." disabled>
+                    <div class="autocomplete-dropdown" id="sportType-dropdown"></div>
+                </div>
+
+                <!-- COLONNE 2: Expérience -->
                 <div class="experience-container">
                     <select id="experienceCategory">
-                        <option value="">Catégorie expérience</option>
+                        <option value="">Années d'expérience</option>
                         <option value="debutant">Débutant (< 2 ans)</option>
                         <option value="intermediaire">Intermédiaire (2-7 ans)</option>
                         <option value="experimente">Expérimenté (7-15 ans)</option>

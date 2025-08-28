@@ -10,6 +10,8 @@ class InputInterrogationComponent extends HTMLElement {
         this.sportsData = null;
         this.availableCategoriesSports = [];
         this.allSports = [];
+        this.availableSportCategories = [];
+        this.allSportCategories = [];
         this.isQueryMode = false;
     }
 
@@ -36,6 +38,9 @@ class InputInterrogationComponent extends HTMLElement {
 
         this.querySelector('#categoryVD').addEventListener('change', () => this.handleCategoryChangeVD());
         this.querySelector('#categoryVI').addEventListener('change', () => this.handleCategoryChangeVI());
+        
+        // Event listener for sport category filtering
+        this.querySelector('#sportCategory').addEventListener('change', () => this.handleSportCategoryChange());
 
         // Autocomplete for variables
         this.setupAutocomplete('variableVI', () => this.availableVI);
@@ -313,7 +318,7 @@ class InputInterrogationComponent extends HTMLElement {
 
         // Vider les options existantes (garder la première)
         while (categorySelect.children.length > 1) {
-            categorySelect.extractremoveChild(categorySelect.lastChild);
+            categorySelect.removeChild(categorySelect.lastChild);
         }
 
         // Ajouter les catégories
@@ -322,6 +327,23 @@ class InputInterrogationComponent extends HTMLElement {
             option.value = category;
             option.textContent = category;
             categorySelect.appendChild(option);
+        });
+    }
+
+    populateSportCategorySelector() {
+        const sportCategorySelect = this.querySelector('#sportCategory');
+        
+        // Vider les options existantes (garder la première)
+        while (sportCategorySelect.children.length > 1) {
+            sportCategorySelect.removeChild(sportCategorySelect.lastChild);
+        }
+
+        // Ajouter les catégories sport
+        this.allSportCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            sportCategorySelect.appendChild(option);
         });
     }
 
@@ -379,6 +401,61 @@ class InputInterrogationComponent extends HTMLElement {
 
     updatePlaceholder(inputId, count, type) {
         this.querySelector(`#${inputId}`).placeholder = `Rechercher parmi ${count} ${type}...`;
+    }
+
+    async handleSportCategoryChange() {
+        const sportCategorySelect = this.querySelector('#sportCategory');
+        const selectedCategory = sportCategorySelect.value;
+
+        if (selectedCategory === '') {
+            // Aucune catégorie sélectionnée, montrer tous les sports
+            this.availableSports = [...this.allSports];
+            this.resetSportInput();
+            this.updatePlaceholder('sportType', this.availableSports.length, 'sports');
+        } else {
+            // Filtrer les sports selon la catégorie sélectionnée
+            console.log('Filtrage sports par catégorie:', selectedCategory);
+            await this.filterSportsByCategory(selectedCategory);
+        }
+    }
+
+    resetSportInput() {
+        this.querySelector('#sportType').value = '';
+        this.querySelector('#sportType-dropdown').classList.remove('show');
+    }
+
+    async filterSportsByCategory(category) {
+        // Filtrage des sports selon la catégorie sélectionnée via une requête à l'ontologie
+        try {
+            console.log('🔍 Filtrage sports pour catégorie:', category);
+            
+            // Faire appel à l'endpoint pour récupérer les sports de cette catégorie
+            const response = await fetch(`http://localhost:8000/api/interface-data?sportCategory=${encodeURIComponent(category)}`);
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.success && data.data.sports) {
+                // Extraire les sports filtrés
+                this.availableSports = data.data.sports.map(item => item.sport.value).sort();
+                console.log(`✅ ${this.availableSports.length} sports trouvés pour la catégorie "${category}"`);
+            } else {
+                // Si pas de sports trouvés, garder la liste complète
+                console.log(`❌ Aucun sport trouvé pour "${category}", utilisation de la liste complète`);
+                this.availableSports = [...this.allSports];
+            }
+            
+            this.resetSportInput();
+            this.updatePlaceholder('sportType', this.availableSports.length, 'sports');
+            
+        } catch (error) {
+            console.error('Erreur filtrage sports par catégorie:', error);
+            // En cas d'erreur, garder la liste complète
+            this.availableSports = [...this.allSports];
+            this.resetSportInput();
+            this.updatePlaceholder('sportType', this.availableSports.length, 'sports');
+        }
     }
 
     async loadCSVData() {
@@ -539,8 +616,18 @@ class InputInterrogationComponent extends HTMLElement {
         this.allSports = this.ontologyData.sports.map(item => item.sport.value).sort();
         this.availableSports = [...this.allSports];
 
-        console.log('📊 Sports extraits:', this.allSports.length);
+        // Extraire les catégories sport depuis l'ontologie hiérarchique
+        this.allSportCategories = this.ontologyData.sportCategories ? 
+            this.ontologyData.sportCategories.map(item => item.category.value).sort() : [];
+        this.availableSportCategories = [...this.allSportCategories];
 
+        console.log('📊 Sports extraits:', this.allSports.length);
+        console.log('📊 Catégories sport extraites:', this.allSportCategories.length);
+
+        // Peupler les sélecteurs de catégories
+        this.populateCategorySelectors();
+        this.populateSportCategorySelector();
+        
         // Mettre à jour les placeholders
         this.updatePlaceholder('variableVD', this.allVD.length, 'facteurs VD');
         this.updatePlaceholder('variableVI', this.allVI.length, 'facteurs VI'); 
@@ -565,9 +652,12 @@ class InputInterrogationComponent extends HTMLElement {
         const variableVIInput = this.querySelector('#variableVI');
         const variableVDInput = this.querySelector('#variableVD');
         const searchBtn = this.querySelector('#searchBtn');
+        const sportCategorySelect = this.querySelector('#sportCategory');
         const sportTypeInput = this.querySelector('#sportType');
         
+        console.log("🏃 SportCategory select trouvé:", !!sportCategorySelect);
         console.log("🏃 SportType input trouvé:", !!sportTypeInput);
+        console.log("🏃 Nombre de catégories sport disponibles:", this.availableSportCategories?.length || 0);
         console.log("🏃 Nombre de sports disponibles:", this.availableSports?.length || 0);
         
         sportTypeInput.placeholder = `Rechercher parmi ${this.availableSports.length} sports...`;

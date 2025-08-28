@@ -317,24 +317,50 @@ PREFIX taxonomy: <http://ia-das.org/taxonomy#>`;
 
   const query = `${prefixes}
 
-SELECT ?concept ?conceptLabel ?relation ?related ?relatedLabel WHERE {
+SELECT ?concept ?conceptLabel ?relation ?related ?relatedLabel ?level WHERE {
   # Le concept principal
   BIND(<http://ia-das.org/onto#${conceptUri.replace('iadas:', '')}> AS ?mainConcept)
   
   {
-    # PARENTS du concept
-    ?mainConcept rdfs:subClassOf+ ?concept .
+    # PARENTS du concept avec comptage de niveaux
+    ?mainConcept rdfs:subClassOf ?parent1 .
+    BIND(?parent1 as ?concept)
     BIND("parent" as ?relation)
-    BIND(?concept as ?related)
+    BIND(?concept as ?related) 
+    BIND(1 as ?level)
     OPTIONAL { ?concept rdfs:label ?conceptLabel }
     OPTIONAL { ?related rdfs:label ?relatedLabel }
   }
   UNION
   {
-    # ENFANTS du concept  
-    ?concept rdfs:subClassOf+ ?mainConcept .
+    ?mainConcept rdfs:subClassOf ?parent1 .
+    ?parent1 rdfs:subClassOf ?parent2 .
+    BIND(?parent2 as ?concept)
+    BIND("parent" as ?relation)
+    BIND(?concept as ?related)
+    BIND(2 as ?level)
+    OPTIONAL { ?concept rdfs:label ?conceptLabel }
+    OPTIONAL { ?related rdfs:label ?relatedLabel }
+  }
+  UNION
+  {
+    ?mainConcept rdfs:subClassOf ?parent1 .
+    ?parent1 rdfs:subClassOf ?parent2 .
+    ?parent2 rdfs:subClassOf ?parent3 .
+    BIND(?parent3 as ?concept)
+    BIND("parent" as ?relation)
+    BIND(?concept as ?related)
+    BIND(3 as ?level)
+    OPTIONAL { ?concept rdfs:label ?conceptLabel }
+    OPTIONAL { ?related rdfs:label ?relatedLabel }
+  }
+  UNION
+  {
+    # ENFANTS du concept
+    ?concept rdfs:subClassOf ?mainConcept .
     BIND("child" as ?relation)
     BIND(?concept as ?related)
+    BIND(1 as ?level)
     OPTIONAL { ?concept rdfs:label ?conceptLabel }
     OPTIONAL { ?related rdfs:label ?relatedLabel }
   }
@@ -344,15 +370,16 @@ SELECT ?concept ?conceptLabel ?relation ?related ?relatedLabel WHERE {
     BIND(?mainConcept as ?concept)
     BIND("self" as ?relation)
     BIND(?mainConcept as ?related)
+    BIND(0 as ?level)
     OPTIONAL { ?concept rdfs:label ?conceptLabel }
     OPTIONAL { ?related rdfs:label ?relatedLabel }
   }
   
-  # Filtrer pour éviter les concepts vides
+  # Filtrer pour évider les concepts vides
   FILTER(?concept != <http://www.w3.org/2002/07/owl#Thing>)
   FILTER(?related != <http://www.w3.org/2002/07/owl#Thing>)
 }
-ORDER BY ?relation ?conceptLabel
+ORDER BY ?relation DESC(?level)
 LIMIT 50`;
 
 
@@ -372,34 +399,12 @@ function generateAutomaticUri(label) {
   
   // Règles de transformation automatiques
   
-  // 1. Supprimer les caractères spéciaux et tirets
-  cleanLabel = cleanLabel.replace(/[-_]/g, ' ');
+  // 1. Remplacer SEULEMENT les espaces par des underscores (préserver les tirets existants)
+  cleanLabel = cleanLabel.replace(/\s+/g, '_');
   
-  // 2. Gérer les cas spéciaux avec prépositions
-  cleanLabel = cleanLabel
-    .replace(/\s+in\s+/gi, 'In')     // "in" → "In"
-    .replace(/\s+of\s+/gi, 'Of')     // "of" → "Of"  
-    .replace(/\s+to\s+/gi, 'To')     // "to" → "To"
-    .replace(/\s+for\s+/gi, 'For')   // "for" → "For"
-    .replace(/\s+and\s+/gi, 'And')   // "and" → "And"
-    .replace(/\s+with\s+/gi, 'With') // "with" → "With"
-    .replace(/\s+on\s+/gi, 'On');    // "on" → "On"
-  
-  // 3. Transformer en CamelCase
-  const words = cleanLabel.split(/\s+/);
-  const camelCaseWords = words.map(word => {
-    if (word.length === 0) return '';
-    
-    // Préserver les acronymes (tout en majuscules)
-    if (word === word.toUpperCase() && word.length > 1) {
-      return word; // DEAB, BMI, etc.
-    }
-    
-    // Première lettre majuscule, reste minuscule
-    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-  });
-  
-  const finalUri = camelCaseWords.join('');
+  // 2. Transformation simple : remplacer espaces par underscores
+  // Plus de CamelCase - utiliser le format exact de l'ontologie
+  const finalUri = cleanLabel;
   
   
   return `iadas:${finalUri}`;
@@ -503,7 +508,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>`;
 
   let query = `${prefixes}
 
-SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatRelation WHERE {
+SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatRelation ?reference ?gender ?populationType ?sportName WHERE {
     ?analysis a iadas:Analysis .
     ?analysis iadas:hasRelation ?relation .
     ?relation iadas:hasIndependentVariable ?variableVI ;
@@ -517,7 +522,25 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     ?variableVD rdf:type ?vdType .
     FILTER(?vdType != iadas:VariableDependante)
     BIND(REPLACE(REPLACE(STR(?vdType), "http://ia-das.org/onto#", ""), "_", " ") AS ?vd)
-    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }`;
+    OPTIONAL { ?variableVD iadas:hasCategory ?categoryVD }
+    
+    # Nouvelles colonnes ajoutées
+    OPTIONAL { ?analysis iadas:analysisId ?reference }
+    
+    # Population obligatoire (pas OPTIONAL)
+    ?analysis iadas:hasPopulation ?population .
+    ?population iadas:gender ?gender .
+    OPTIONAL { ?population iadas:population ?populationType }
+    
+    OPTIONAL { 
+        ?analysis iadas:hasSport ?sport .
+        ?sport iadas:sportName ?sportName .
+    }
+    
+    # Récupérer le résultat de relation, médiateur et modérateur
+    OPTIONAL { ?relation iadas:resultatRelation ?resultatRelation }
+    OPTIONAL { ?analysis iadas:hasMediator ?mediator }
+    OPTIONAL { ?analysis iadas:hasModerator ?moderator }`;
 
   // === FILTRES D'ÂGE - NOUVEAU SYSTÈME ===
   if (filters.meanAge !== undefined) {
@@ -1832,6 +1855,7 @@ ORDER BY DESC(?count)`,
         sports: `
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX iadas: <http://ia-das.org/onto#>
 
 SELECT DISTINCT ?sport 
 WHERE {
@@ -1842,8 +1866,29 @@ WHERE {
     FILTER(?sportLabel != "Sport" && ?sportLabel != "Physical_activity" && ?sportLabel != "Athletic" && 
            ?sportLabel != "Individual_sport" && ?sportLabel != "Team_sport" && ?sportLabel != "Combat_sport" &&
            ?sportLabel != "Aesthetic" && ?sportLabel != "Endurance" && ?sportLabel != "Power" && ?sportLabel != "Technical")
+    ${params.get('sportCategory') ? `
+    # Filtrer les sports par catégorie
+    ?concept rdfs:subClassOf* ?categoryClass .
+    ?categoryClass rdfs:label "${params.get('sportCategory')}" .
+    ` : ''}
 }
 ORDER BY ?sport`,
+
+        sportCategories: `
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX iadas: <http://ia-das.org/onto#>
+
+SELECT DISTINCT ?category 
+WHERE {
+    ?concept a owl:Class .
+    ?concept rdfs:label ?category .
+    # Récupérer les Class 1 (catégories principales) qui sont directement sous Sport
+    ?concept rdfs:subClassOf iadas:Sport .
+    # S'assurer qu'il y a des sous-classes (pour évider les catégories vides)
+    ?child rdfs:subClassOf ?concept .
+}
+ORDER BY ?category`,
 
         countries: `
 PREFIX iadas: <http://ia-das.org/onto#>

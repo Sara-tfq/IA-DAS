@@ -21,8 +21,9 @@ http.createServer(function (request, response) {
         return;
     }
 
-    // Ensuite seulement on analyse l’URL
-    let filePath = request.url.split("/").filter(function (elem) {
+    // Ensuite seulement on analyse l'URL (ignorer les paramètres GET)
+    let urlWithoutParams = request.url.split("?")[0];
+    let filePath = urlWithoutParams.split("/").filter(function (elem) {
         return elem !== "..";
     });
 

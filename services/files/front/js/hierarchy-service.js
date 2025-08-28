@@ -96,14 +96,16 @@ class HierarchyService {
       const conceptLabel = binding.conceptLabel?.value || this.extractLabelFromUri(concept);
       const related = binding.related?.value;
       const relatedLabel = binding.relatedLabel?.value || this.extractLabelFromUri(related);
+      const level = binding.level?.value ? parseInt(binding.level.value) : 0;
       
      
-      // Créer l'objet nœud
+      // Créer l'objet nœud avec niveau
       const nodeData = {
         uri: related,
         label: relatedLabel,
         originalConcept: concept,
-        originalLabel: conceptLabel
+        originalLabel: conceptLabel,
+        level: level
       };
       
       // Classer selon le type de relation
@@ -127,8 +129,21 @@ class HierarchyService {
     
     
     
+    // ✅ CORRECTION: Trier les parents par niveau CROISSANT
+    // Level 1 = proche du centre, Level 2 = plus loin, Level 3 = le plus loin
+    // Mais on veut N1 = le plus loin, N2 = intermédiaire, N3 = le plus proche
+    parents.sort((a, b) => a.level - b.level); // Tri croissant: level 1, 2, 3...
+    
+    // Assigner N1 au level le plus PROCHE (level 1), N2 au suivant, etc.
+    parents.forEach((parent, index) => {
+      // Level 1 = N1, Level 2 = N2, Level 3 = N3
+      const displayNumber = index + 1;
+      parent.displayLevel = `N${displayNumber}`;
+      console.log(`   Parent N${displayNumber}: ${parent.label} (level original: ${parent.level})`);
+    });
+    
     if (parents.length > 0) {
-      console.log(`   Parents: ${parents.map(p => p.label).join(', ')}`);
+      console.log(`   Parents réorganisés: ${parents.map(p => `${p.displayLevel}: ${p.label}`).join(', ')}`);
     }
     
     if (children.length > 0) {
