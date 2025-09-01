@@ -901,3 +901,27 @@ function displaySparqlView() {
     displayDiv.innerHTML = '';
     displayDiv.appendChild(clone);
 }
+
+// Gestion du modal d'aide
+document.addEventListener('DOMContentLoaded', function() {
+    const helpButton = document.getElementById('helpButton');
+    const helpModal = document.getElementById('helpModal');
+    const closeHelp = document.getElementById('closeHelp');
+
+    // Ouvrir le modal
+    helpButton.addEventListener('click', function() {
+        helpModal.style.display = 'block';
+    });
+
+    // Fermer le modal avec le bouton X
+    closeHelp.addEventListener('click', function() {
+        helpModal.style.display = 'none';
+    });
+
+    // Fermer le modal en cliquant en dehors
+    window.addEventListener('click', function(event) {
+        if (event.target === helpModal) {
+            helpModal.style.display = 'none';
+        }
+    });
+});

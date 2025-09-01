@@ -14,7 +14,10 @@
 <header>
     <h1>Projet IA-DAS - Questions de Compétences</h1>
     <img src="./assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
-    <button id="switchChercheur" onclick="window.location.href='./index.html'">Accueil</button>
+    <div>
+        <button id="helpButton" style="background: #27ae60; margin-right: 10px;">🔍 Aide</button>
+        <button id="switchChercheur" onclick="window.location.href='./index.html'">Accueil</button>
+    </div>
 </header>
 
 <body>
@@ -41,6 +44,124 @@
             </div>
             
             <div id="result-display"></div>
+        </div>
+    </div>
+
+    <!-- Modal d'aide -->
+    <div id="helpModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4);">
+        <div style="background-color: white; margin: 2% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 800px; max-height: 90%; overflow-y: auto; position: relative;">
+            <span id="closeHelp" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+            
+            <h2 style="color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px;">🔍 Guide d'utilisation - Questions de Compétences</h2>
+            
+            <div style="margin: 20px 0;">
+                <h3 style="color: #2980b9; margin-top: 25px;">Interface accordéon</h3>
+                <p>En arrivant, vous avez un panneau accordéon qui vous permet de :</p>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Composer la question que vous souhaitez</li>
+                    <li>Sélectionner le début et la suite de la question via des menus déroulants</li>
+                    <li>Construire des requêtes guidées sans connaître SPARQL</li>
+                </ul>
+                
+                <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                    <strong>Exemple de question :</strong><br>
+                    "Quels sont les ACADS dont le résultat de relation est ambigu ?"
+                </div>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3 style="color: #2980b9;">Modes de visualisation des résultats</h3>
+                
+                <h4 style="color: #27ae60; margin-top: 20px;">1. En tableau</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Affichage structuré sous forme de tableau</li>
+                    <li>En cliquant sur le lien d'ID analyse, un panneau s'ouvre avec l'analyse en question</li>
+                    <li>Il vous suffit de cliquer dessus pour avoir toutes les informations de cette analyse</li>
+                </ul>
+
+                <h4 style="color: #27ae60; margin-top: 20px;">2. En graphe</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li><strong>Double-clic sur un nœud</strong> : Permet d'ouvrir un panneau avec toutes les analyses liées à ce nœud</li>
+                    <li>Les analyses récupérées peuvent être exportées en PDF avec leurs références APA</li>
+                    <li>Si vous cliquez sur une analyse, vous avez toutes les informations de cette analyse qui s'affichent</li>
+                    <li><strong>Clic droit prolongé sur un nœud</strong> : Permet d'afficher la hiérarchie de la variable sélectionnée</li>
+                </ul>
+
+                <h4 style="color: #27ae60; margin-top: 20px;">3. En SPARQL</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Permet de voir la requête générée que vous pouvez utiliser dans un autre serveur</li>
+                    <li>Compatible avec GraphDB, Protégé et autres outils SPARQL</li>
+                </ul>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3 style="color: #2980b9;">Code couleur des visualisations</h3>
+                
+                <h4 style="color: #27ae60; margin-top: 20px;">Couleurs pour les ACADS (Variables Dépendantes)</h4>
+                <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                    <tr style="background-color: #f2f2f2;">
+                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Catégorie ACAD</th>
+                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Couleur</th>
+                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Description</th>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 12px;"><strong>DEAB</strong></td>
+                        <td style="border: 1px solid #ddd; padding: 12px; background-color: #821111; color: white; text-align: center;">■</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">Rouge foncé - Troubles du comportement alimentaire définis</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 12px;"><strong>Multiple</strong></td>
+                        <td style="border: 1px solid #ddd; padding: 12px; background-color: #f54542; color: white; text-align: center;">■</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">Rouge moyen - Analyses concernant plusieurs ACADS</td>
+                    </tr>
+                </table>
+
+                <h4 style="color: #27ae60; margin-top: 20px;">Couleurs pour les Facteurs (Variables Indépendantes)</h4>
+                <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                    <tr style="background-color: #f2f2f2;">
+                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Catégorie de facteur</th>
+                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Couleur</th>
+                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Description</th>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 12px;"><strong>Facteur interpersonnel lié aux DEAB</strong></td>
+                        <td style="border: 1px solid #ddd; padding: 12px; background-color: #00112b; color: white; text-align: center;">■</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">Bleu très foncé - Relations sociales, famille, pairs</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 12px;"><strong>Facteur intrapersonnel lié aux DEAB</strong></td>
+                        <td style="border: 1px solid #ddd; padding: 12px; background-color: #0050ac; color: white; text-align: center;">■</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">Bleu foncé - Facteurs psychologiques individuels</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 12px;"><strong>Autres comportements</strong></td>
+                        <td style="border: 1px solid #ddd; padding: 12px; background-color: #72a4d7; color: white; text-align: center;">■</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">Bleu moyen - Comportements non spécifiques aux DEAB</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3 style="color: #2980b9;">Options d'export</h3>
+                <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                    <tr style="background-color: #f2f2f2;">
+                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Format</th>
+                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Description</th>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 12px;"><strong>Export PNG</strong></td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">Récupère une photo/capture du résultat visuel</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 12px;"><strong>Export Excel</strong></td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">Exporte le résultat dans un fichier Excel pour analyse</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 12px;"><strong>Export Turtle</strong></td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">Récupère la partie de l'ontologie utilisable dans un autre outil</td>
+                    </tr>
+                </table>
+            </div>
         </div>
     </div>
 
