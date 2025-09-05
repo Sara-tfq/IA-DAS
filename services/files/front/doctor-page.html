@@ -49,9 +49,12 @@
 
     <header>
         <h1>Projet IA-DAS</h1>
-        <img src="./../assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
+        <div class="logo-container">
+            <img src="./../assets/logo_IA-DAS-No-Background.png" alt="Logo IA-DAS" class="logo">
+            <span class="logo-subtitle">IA-DAS : Utilisation de l'Intelligence Artificielle pour mieux Détecter et prévenir les Attitudes et comportements alimentaires dysfonctionnels en Sport</span>
+        </div>
         <div>
-            <button id="helpButton" style="background: #27ae60; margin-right: 10px;">🔍 Aide</button>
+            <button id="helpButton" class="header-btn">🔍 Aide</button>
             <button id="switchChercheur" onclick="window.location.href='./index.html'" disabled>Accueil</button>
         </div>
     </header>
@@ -133,10 +136,10 @@
             <div style="margin: 20px 0;">
                 <h3 style="color: #2980b9;">Code couleur des visualisations</h3>
                 
-                <h4 style="color: #27ae60; margin-top: 20px;">Couleurs pour les attitudes et comportements alimentaires dysfonctionnels (ACAD) - Variables Dépendantes</h4>
+                <h4 style="color: #27ae60; margin-top: 20px;">Couleurs pour les Attitudes et Comportements Alimentaires Dysfonctionnels - ACAD (Variables Dépendantes)</h4>
                 <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                     <tr style="background-color: #f2f2f2;">
-                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Catégorie attitudes et comportements alimentaires dysfonctionnels (ACAD)</th>
+                        <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Catégorie Attitudes et Comportements Alimentaires Dysfonctionnels (ACAD)</th>
                         <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Couleur</th>
                         <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Description</th>
                     </tr>
@@ -148,7 +151,7 @@
                     <tr>
                         <td style="border: 1px solid #ddd; padding: 12px;"><strong>Multiple</strong></td>
                         <td style="border: 1px solid #ddd; padding: 12px; background-color: #f54542; color: white; text-align: center;">■</td>
-                        <td style="border: 1px solid #ddd; padding: 12px;">Rouge moyen - Analyses concernant plusieurs attitudes et comportements alimentaires dysfonctionnels (ACAD)</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">Rouge moyen - Analyses concernant plusieurs Attitudes et Comportements Alimentaires Dysfonctionnels (ACAD)</td>
                     </tr>
                 </table>
 
@@ -172,7 +175,7 @@
                     <tr>
                         <td style="border: 1px solid #ddd; padding: 12px;"><strong>Autres comportements</strong></td>
                         <td style="border: 1px solid #ddd; padding: 12px; background-color: #72a4d7; color: white; text-align: center;">■</td>
-                        <td style="border: 1px solid #ddd; padding: 12px;">Bleu moyen - Comportements non spécifiques aux attitudes et comportements alimentaires dysfonctionnels (ACAD)</td>
+                        <td style="border: 1px solid #ddd; padding: 12px;">Bleu moyen - Comportements non spécifiques aux DEAB</td>
                     </tr>
                 </table>
             </div>

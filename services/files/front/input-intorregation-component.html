@@ -3,7 +3,7 @@
     </div>
     <div id="formMode">
         <div class="acad-section">
-            <h3>ACAD</h3>
+            <h3>Attitudes et Comportements Alimentaires Dysfonctionnels (ACAD)</h3>
 
             <div class="variable-row">
                 <label for="categoryVD">Catégorie ACAD :</label>
@@ -42,9 +42,13 @@
         </div>
 
         <div class="relations-section">
-            <h3>Type de relations</h3>
+            <h3>Type de relations d'après la littérature scientifique</h3>
 
             <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="all-relations" name="relationDirection" value="ALL">
+                    <label for="all-relations">Tout type de relation</label>
+                </div>
                 <div class="radio-option">
                     <input type="radio" id="positive" name="relationDirection" value="+">
                     <label for="positive">À risque</label>
@@ -84,11 +88,11 @@
                 <div class="age-container">
                     <select id="ageCategory">
                         <option value="">Catégorie d'âge</option>
-                        <option value="adolescent">Adolescent (10-17)</option>
-                        <option value="jeune-adulte">Jeune adulte (18-25)</option>
-                        <option value="adulte">Adulte (26-40)</option>
-                        <option value="adulte-mature">Adulte mature (41-65)</option>
-                        <option value="senior">Senior (65+)</option>
+                        <option value="adolescent">Adolescent (15-19)</option>
+                        <option value="jeune-adulte">Jeune adulte (18-26)</option>
+                        <option value="adulte">Adulte (26-35)</option>
+                        <option value="adulte-mature">Adulte mature (35-50)</option>
+                        <option value="senior">Senior (50-80)</option>
                         <option value="custom">Personnalisé...</option>
                     </select>
                     

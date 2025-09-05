@@ -12,7 +12,10 @@
       "Bash(docker-compose build:*)",
       "Bash(docker restart:*)",
       "Bash(docker logs:*)",
-      "Bash(docker-compose up:*)"
+      "Bash(docker-compose up:*)",
+      "Bash(awk:*)",
+      "Bash(node:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []
