@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Récupération des boutons
     const addAnalysisBtn = document.getElementById('addAnalysisBtn');
     const modifyAnalysisBtn = document.getElementById('modifyAnalysisBtn');
+    const rebuildOntologyBtn = document.getElementById('rebuildOntologyBtn');
     
     // Gestionnaire pour "Ajouter une analyse"
     if (addAnalysisBtn) {
@@ -32,6 +33,20 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Gestionnaire "Modifier" attaché');
     } else {
         console.error(' Bouton "Modifier une analyse" non trouvé');
+    }
+    
+    // Gestionnaire pour "Reconstruire ontologie"
+    if (rebuildOntologyBtn) {
+        rebuildOntologyBtn.addEventListener('click', function() {
+            console.log(' Bouton Reconstruire ontologie cliqué');
+            
+            // Redirection vers la page d'import CSV
+            window.location.href = './import-ontology.html';
+        });
+        
+        console.log(' Gestionnaire "Reconstruire" attaché');
+    } else {
+        console.error(' Bouton "Reconstruire ontologie" non trouvé');
     }
     
     // Animation au survol des boutons

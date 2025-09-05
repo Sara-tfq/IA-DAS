@@ -51,6 +51,9 @@ class PageInitializer {
             
         } catch (error) {
             console.error(' Erreur lors de l\'initialisation:', error);
+            console.error(' Type d\'erreur:', error.name);
+            console.error(' Message:', error.message);
+            console.error(' Stack:', error.stack);
             
             window.loadingManager.showError(
                 'Erreur d\'initialisation', 

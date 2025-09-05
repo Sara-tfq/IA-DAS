@@ -34,6 +34,9 @@ http.createServer(function (request, response) {
             console.log("REST API call, redirecting to SPARQL Generator");
             console.log(`Request URL: ${request.url}`);
             proxy.web(request, response, { target: "http://sparql-generator:8003" });
+        } else if (request.url === '/rebuild-ontology' && request.method === 'POST') {
+            console.log("Ontology rebuild request, redirecting to database service");
+            proxy.web(request, response, { target: "http://database-service:8005" });
         } else if (request.url.includes('update-page.html')) {
             // TEMPORAIRE: Protection côté client uniquement (voir rapport sécurité)
             console.log("Accès à update-page.html - redirection vers frontend");

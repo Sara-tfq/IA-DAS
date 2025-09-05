@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh issue close:*)",
+      "Bash(curl:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(git commit:*)",
+      "Bash(gh issue:*)",
+      "Bash(git restore:*)",
+      "Bash(dir \"C:\\Users\\Sara\\Desktop\\IA-DAS\\services\\database-service\")",
+      "Bash(docker-compose build:*)",
+      "Bash(docker restart:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker-compose up:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

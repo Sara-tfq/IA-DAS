@@ -120,8 +120,8 @@ footer {
 
 /* Centre box - même style que la page d'accueil */
 .center-box {
-    width: 300px;
-    height: 300px;
+    width: 320px;
+    height: 350px;
     background-color: #ecf0f1;
     border: 2px solid #bdc3c7;
     border-radius: 12px;
@@ -129,7 +129,7 @@ footer {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -169,6 +169,15 @@ footer {
 
 .btn-icon {
     font-size: 18px;
+}
+
+/* Style spécial pour le bouton de reconstruction */
+.rebuild-btn {
+    background-color: #e74c3c;
+}
+
+.rebuild-btn:hover {
+    background-color: #c0392b;
 }
 
 /* Responsive design */
