@@ -23,8 +23,9 @@ header {
     justify-content: space-between;
     align-items: center;
     background-color: #ecf0f1;
-    padding: 8px 10px;
+    padding: 20px;
     border-bottom: 2px solid #bdc3c7;
+    min-height: 80px;
 }
 
 header h1 {
@@ -38,30 +39,25 @@ header h1 {
     left: 50%;
     transform: translateX(-50%);
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    max-width: calc(100% - 40px);
-    flex-direction: row-reverse;
+    text-align: center;
 }
 
 .logo {
-    height: 50px;
-    flex-shrink: 0;
+    height: 30px;
+    width: auto;
+    object-fit: contain;
+    margin-bottom: 3px;
 }
 
 .logo-subtitle {
-    font-size: 11px;
+    font-size: 9px;
     color: #666;
     margin: 0;
+    white-space: nowrap;
     font-style: italic;
-    line-height: 1.2;
-    max-width: 400px;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    min-height: 39px;
-    text-align: left;
+    line-height: 1;
 }
 
 .logo-subtitle.typewriter {

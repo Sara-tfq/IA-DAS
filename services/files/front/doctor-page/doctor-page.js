@@ -481,21 +481,49 @@ async function openAnalysisPanelFromTable(analysisId, event) {
 }
 
 // Fonctions d'export simplifiées
-function exportToExcel() {
+async function exportToExcel() {
     if (!currentData || !currentData.results || !currentData.results.bindings) {
         alert('Aucune donnée à exporter');
         return;
     }
     
     try {
-        console.log('Export Excel...');
-        const excelData = convertToExcel(currentData.results.bindings, currentData.head.vars);
+        console.log('Export Excel avec toutes les analyses...');
+        
+        // Afficher un indicateur de chargement
+        const originalText = 'Export Excel';
+        const exportBtn = document.getElementById('exportExcel');
+        if (exportBtn) {
+            exportBtn.textContent = 'Export en cours...';
+            exportBtn.disabled = true;
+        }
+        
+        // Récupérer toutes les analyses complètes
+        const completeAnalyses = await getAllCompleteAnalyses(currentData.results.bindings);
+        
+        // Créer le fichier Excel avec toutes les informations
+        const excelData = createCompleteExcelExport(completeAnalyses, currentData);
+        
         const timestamp = new Date().toISOString().slice(0, 16).replace(/[:-]/g, '');
-        downloadExcelFile(excelData, `IA-DAS-Export-${timestamp}.xlsx`);
-        console.log('Export Excel réussi');
+        downloadExcelFile(excelData, `IA-DAS-Export-Complet-${timestamp}.xlsx`);
+        console.log('Export Excel complet réussi');
+        
+        // Restaurer le bouton
+        if (exportBtn) {
+            exportBtn.textContent = originalText;
+            exportBtn.disabled = false;
+        }
+        
     } catch (error) {
         console.error('Erreur export Excel:', error);
         alert(`Erreur lors de l'export Excel: ${error.message}`);
+        
+        // Restaurer le bouton en cas d'erreur
+        const exportBtn = document.getElementById('exportExcel');
+        if (exportBtn) {
+            exportBtn.textContent = 'Export Excel';
+            exportBtn.disabled = false;
+        }
     }
 }
 
@@ -517,7 +545,218 @@ async function exportToTurtle() {
     }
 }
 
-// Convertir les données SPARQL en Excel
+// Récupère toutes les analyses complètes avec tous leurs détails
+async function getAllCompleteAnalyses(bindings) {
+    console.log(`Récupération de ${bindings.length} analyses complètes...`);
+    
+    // Extraire les IDs d'analyses uniques
+    const analysisIds = new Set();
+    bindings.forEach(binding => {
+        Object.keys(binding).forEach(key => {
+            const value = binding[key]?.value || binding[key];
+            if (value && isAnalysisId(key, value)) {
+                // Nettoyer l'ID d'analyse
+                let cleanId = value;
+                if (cleanId.includes('#')) {
+                    cleanId = cleanId.split('#').pop();
+                } else if (cleanId.includes('/')) {
+                    cleanId = cleanId.split('/').pop();
+                }
+                if (cleanId.startsWith('Analysis_')) {
+                    cleanId = cleanId.replace('Analysis_', '');
+                }
+                analysisIds.add(cleanId);
+            }
+        });
+    });
+    
+    console.log(`${analysisIds.size} analyses uniques trouvées:`, Array.from(analysisIds));
+    
+    // Récupérer les données complètes via FusekiAnalysisRetriever
+    const completeAnalyses = [];
+    
+    if (window.fusekiRetriever && typeof window.fusekiRetriever.getAnalysisData === 'function') {
+        const promises = Array.from(analysisIds).map(async analysisId => {
+            try {
+                const analysisData = await window.fusekiRetriever.getAnalysisData(analysisId);
+                return analysisData;
+            } catch (error) {
+                console.error(`Erreur pour analyse ${analysisId}:`, error);
+                return {
+                    id: analysisId,
+                    error: error.message,
+                    rawData: { Analysis_ID: analysisId, ERROR: error.message }
+                };
+            }
+        });
+        
+        const results = await Promise.all(promises);
+        completeAnalyses.push(...results);
+    } else {
+        console.warn('FusekiAnalysisRetriever non disponible, export basique seulement');
+        // Fallback : créer des analyses basiques depuis les bindings
+        Array.from(analysisIds).forEach(analysisId => {
+            completeAnalyses.push({
+                id: analysisId,
+                rawData: { Analysis_ID: analysisId, Source: 'Données limitées' }
+            });
+        });
+    }
+    
+    console.log(`${completeAnalyses.length} analyses complètes récupérées`);
+    return completeAnalyses;
+}
+
+// Crée un export Excel complet avec toutes les informations de l'ontologie
+function createCompleteExcelExport(completeAnalyses, originalData) {
+    const workbook = XLSX.utils.book_new();
+    
+    // ========== FEUILLE 1: RÉSULTATS DE RECHERCHE ==========
+    const originalBindings = originalData.results.bindings;
+    const originalVariables = originalData.head.vars;
+    
+    const searchData = [];
+    searchData.push(originalVariables); // En-têtes
+    
+    originalBindings.forEach(binding => {
+        const row = originalVariables.map(variable => {
+            const value = binding[variable];
+            return value ? (value.value || value) : '';
+        });
+        searchData.push(row);
+    });
+    
+    const searchSheet = XLSX.utils.aoa_to_sheet(searchData);
+    XLSX.utils.book_append_sheet(workbook, searchSheet, "Résultats Recherche");
+    
+    // ========== FEUILLE 2: ANALYSES COMPLÈTES ==========
+    if (completeAnalyses.length > 0) {
+        // Définir toutes les colonnes possibles de l'ontologie
+        const allColumns = [
+            'Analysis_ID', 'Title', 'Authors', 'Year', 'DOI', 'Journal', 'Country',
+            'Types of study', 'N', 'Population', 'Sexe', 'Age', 'AgeForAnalysis_Mean',
+            'SDAnalysis', 'MinAge', 'MaxAge', 'BMI', 'BMI_Mean', 'BMI_SD',
+            'Sport_name', 'Sport_level', 'Type_of _sport_practice', 'Subcategory_of_sport',
+            'ACADS', 'VD', 'Measure_VD', 'VI', 'Measure_VI',
+            'Mediator', 'Measure_Mediator', 'Moderator', 'Measure_Moderator',
+            'Resultat_de_relation', 'Degre_r', 'Degre_p', 'Signe_p', 'Degre_beta', 'Degre_RS',
+            'Type_of_analysis', 'N_mobilise_dans_les analyse', 'Authors_conclusions',
+            'Limites', 'Perspectives', 'Multiplicity_analyse'
+        ];
+        
+        const analysesData = [];
+        analysesData.push(allColumns); // En-têtes
+        
+        completeAnalyses.forEach(analysis => {
+            const row = allColumns.map(column => {
+                if (analysis.error) {
+                    return column === 'Analysis_ID' ? analysis.id : 
+                           column === 'ERROR' ? analysis.error : '';
+                }
+                return analysis.rawData?.[column] || '';
+            });
+            analysesData.push(row);
+        });
+        
+        const analysesSheet = XLSX.utils.aoa_to_sheet(analysesData);
+        XLSX.utils.book_append_sheet(workbook, analysesSheet, "Analyses Complètes");
+    }
+    
+    // ========== FEUILLE 3: MÉTADONNÉES ==========
+    const metadataData = [
+        ['Propriété', 'Valeur'],
+        ['Date Export', new Date().toLocaleString('fr-FR')],
+        ['Nombre Résultats Recherche', originalBindings.length],
+        ['Nombre Analyses Détaillées', completeAnalyses.length],
+        ['Variables Recherche', originalVariables.join(', ')],
+        ['Filtres Appliqués', getAppliedFiltersText()],
+        ['Source', 'Ontologie IA-DAS'],
+        ['Type Export', 'Export Complet avec Panel Analysis']
+    ];
+    
+    const metadataSheet = XLSX.utils.aoa_to_sheet(metadataData);
+    XLSX.utils.book_append_sheet(workbook, metadataSheet, "Métadonnées");
+    
+    // ========== FEUILLE 4: STATISTIQUES ==========
+    if (completeAnalyses.length > 0) {
+        const stats = calculateAnalysesStatistics(completeAnalyses);
+        const statsData = [
+            ['Statistique', 'Valeur'],
+            ...Object.entries(stats).map(([key, value]) => [key, value])
+        ];
+        
+        const statsSheet = XLSX.utils.aoa_to_sheet(statsData);
+        XLSX.utils.book_append_sheet(workbook, statsSheet, "Statistiques");
+    }
+    
+    return workbook;
+}
+
+// Calcule des statistiques sur les analyses récupérées
+function calculateAnalysesStatistics(analyses) {
+    const stats = {};
+    
+    // Analyses avec/sans erreur
+    const validAnalyses = analyses.filter(a => !a.error);
+    const errorAnalyses = analyses.filter(a => a.error);
+    
+    stats['Analyses Valides'] = validAnalyses.length;
+    stats['Analyses en Erreur'] = errorAnalyses.length;
+    stats['Taux de Succès'] = `${Math.round((validAnalyses.length / analyses.length) * 100)}%`;
+    
+    // Statistiques sur les données
+    if (validAnalyses.length > 0) {
+        const countries = new Set();
+        const journals = new Set();
+        const sports = new Set();
+        const years = [];
+        
+        validAnalyses.forEach(analysis => {
+            const raw = analysis.rawData;
+            if (raw?.Country) countries.add(raw.Country);
+            if (raw?.Journal) journals.add(raw.Journal);
+            if (raw?.Sport_name) sports.add(raw.Sport_name);
+            if (raw?.['Year ']) {
+                const year = parseInt(raw['Year ']);
+                if (!isNaN(year)) years.push(year);
+            }
+        });
+        
+        stats['Pays Différents'] = countries.size;
+        stats['Journaux Différents'] = journals.size;
+        stats['Sports Différents'] = sports.size;
+        
+        if (years.length > 0) {
+            stats['Année Min'] = Math.min(...years);
+            stats['Année Max'] = Math.max(...years);
+            stats['Année Moyenne'] = Math.round(years.reduce((a, b) => a + b, 0) / years.length);
+        }
+    }
+    
+    return stats;
+}
+
+// Récupère le texte des filtres appliqués
+function getAppliedFiltersText() {
+    if (window.currentSearchData && window.currentSearchData.filters) {
+        const filters = window.currentSearchData.filters;
+        const filterTexts = [];
+        
+        if (filters.gender) filterTexts.push(`Genre: ${filters.gender}`);
+        if (filters.sportType) filterTexts.push(`Sport: ${filters.sportType}`);
+        if (filters.selectedVI) filterTexts.push(`VI: ${filters.selectedVI}`);
+        if (filters.selectedVD) filterTexts.push(`VD: ${filters.selectedVD}`);
+        if (filters.minAge || filters.maxAge) {
+            filterTexts.push(`Âge: ${filters.minAge || 'N/A'}-${filters.maxAge || 'N/A'}`);
+        }
+        
+        return filterTexts.join(', ') || 'Aucun filtre spécifique';
+    }
+    
+    return 'Informations de filtres non disponibles';
+}
+
+// Convertir les données SPARQL en Excel (fonction originale gardée pour compatibilité)
 function convertToExcel(bindings, variables) {
     // Préparer les données pour XLSX
     const worksheetData = [];

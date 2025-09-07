@@ -501,6 +501,17 @@ showExportSuccess(fileName) {
 }
 
 formatAPATitleForPDF(analysis) {
+  // Utiliser directement la référence APA formatée depuis l'ontologie si disponible
+  if (analysis.reference && analysis.reference.trim() !== '') {
+    return analysis.reference;
+  }
+  
+  // Sinon, vérifier dans rawData
+  if (analysis.rawData?.reference && analysis.rawData.reference.trim() !== '') {
+    return analysis.rawData.reference;
+  }
+  
+  // Fallback : reconstruction manuelle (ancien comportement)
   const data = analysis.rawData || {};
   const authors = data.Authors || 'Auteur inconnu';
   const year = data['Year '] || 'Année inconnue';
@@ -516,6 +527,17 @@ formatAPATitleForPDF(analysis) {
 }
 
   formatAPATitle(analysis) {
+    // Utiliser directement la référence APA formatée depuis l'ontologie si disponible
+    if (analysis.reference && analysis.reference.trim() !== '') {
+      return analysis.reference;
+    }
+    
+    // Sinon, vérifier dans rawData
+    if (analysis.rawData?.reference && analysis.rawData.reference.trim() !== '') {
+      return analysis.rawData.reference;
+    }
+    
+    // Fallback : reconstruction manuelle (ancien comportement)
     const authors = analysis.rawData?.Authors || 'Auteur inconnu';
     const year = analysis.rawData?.['Year '] || 'Année inconnue';          
     const title = analysis.rawData?.Title || analysis.title || `Analyse ${analysis.id}`;
