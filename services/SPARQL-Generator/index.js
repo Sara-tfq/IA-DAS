@@ -546,11 +546,11 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
 
     query += `
     
-    # Filtrer sur l'âge moyen ± 1
+    # Filtrer sur l'âge moyen ± 1 (correction virgules → points)
     ?analysis iadas:hasPopulation ?population .
     ?population iadas:ageStats ?ageStats .
     ?ageStats iadas:meanAge ?meanAgeStr .
-    BIND(xsd:decimal(?meanAgeStr) AS ?meanAge)
+    BIND(xsd:decimal(REPLACE(?meanAgeStr, ",", ".")) AS ?meanAge)
     FILTER(?meanAge >= ${minAge} && ?meanAge <= ${maxAge})`;
 
 
@@ -579,7 +579,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
           {
             # Âges moyens dans la plage ${range.minAge}-${range.maxAge}
             ?ageStats iadas:meanAge ?meanAgeStr .
-            FILTER(?meanAgeStr != "" && xsd:decimal(?meanAgeStr) >= ${range.minAge} && xsd:decimal(?meanAgeStr) <= ${range.maxAge})
+            FILTER(?meanAgeStr != "" && xsd:decimal(REPLACE(?meanAgeStr, ",", ".")) >= ${range.minAge} && xsd:decimal(REPLACE(?meanAgeStr, ",", ".")) <= ${range.maxAge})
           }
           UNION
           {
@@ -587,8 +587,8 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
             ?ageStats iadas:minAge ?minAgeStr .
             ?ageStats iadas:maxAge ?maxAgeStr .
             FILTER(?minAgeStr != "" && ?maxAgeStr != "")
-            BIND(xsd:decimal(?minAgeStr) AS ?minAge)
-            BIND(xsd:decimal(?maxAgeStr) AS ?maxAge)
+            BIND(xsd:decimal(REPLACE(?minAgeStr, ",", ".")) AS ?minAge)
+            BIND(xsd:decimal(REPLACE(?maxAgeStr, ",", ".")) AS ?maxAge)
             FILTER(?maxAge >= ${range.minAge} && ?minAge <= ${range.maxAge})
           }
         }`;
@@ -598,7 +598,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
           ?analysis iadas:hasPopulation ?population .
           ?population iadas:ageStats ?ageStats .
           ?ageStats iadas:meanAge ?meanAgeStr .
-          FILTER(?meanAgeStr != "" && xsd:decimal(?meanAgeStr) >= ${range.minAge} && xsd:decimal(?meanAgeStr) <= ${range.maxAge})
+          FILTER(?meanAgeStr != "" && xsd:decimal(REPLACE(?meanAgeStr, ",", ".")) >= ${range.minAge} && xsd:decimal(REPLACE(?meanAgeStr, ",", ".")) <= ${range.maxAge})
         }`;
       }
     }).filter(condition => condition !== '');
@@ -626,7 +626,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     ?analysis iadas:hasPopulation ?population .
     ?population iadas:ageStats ?ageStats .
     ?ageStats iadas:meanAge ?meanAgeStr .
-    FILTER(?meanAgeStr != "" && xsd:decimal(?meanAgeStr) >= ${filters.minAge} && xsd:decimal(?meanAgeStr) <= ${filters.maxAge})`;
+    FILTER(?meanAgeStr != "" && xsd:decimal(REPLACE(?meanAgeStr, ",", ".")) >= ${filters.minAge} && xsd:decimal(REPLACE(?meanAgeStr, ",", ".")) <= ${filters.maxAge})`;
         
         console.log(` Filtre âge strict: seulement moyennes ${filters.minAge}-${filters.maxAge}`);
         
@@ -641,7 +641,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     {
       # Option 1 (PRIORITAIRE): Âges moyens dans la plage
       ?ageStats iadas:meanAge ?meanAgeStr .
-      FILTER(?meanAgeStr != "" && xsd:decimal(?meanAgeStr) >= ${filters.minAge} && xsd:decimal(?meanAgeStr) <= ${filters.maxAge})
+      FILTER(?meanAgeStr != "" && xsd:decimal(REPLACE(?meanAgeStr, ",", ".")) >= ${filters.minAge} && xsd:decimal(REPLACE(?meanAgeStr, ",", ".")) <= ${filters.maxAge})
     }
     UNION
     {
@@ -649,8 +649,8 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
       ?ageStats iadas:minAge ?minAgeStr .
       ?ageStats iadas:maxAge ?maxAgeStr .
       FILTER(?minAgeStr != "" && ?maxAgeStr != "")
-      BIND(xsd:decimal(?minAgeStr) AS ?minAge)
-      BIND(xsd:decimal(?maxAgeStr) AS ?maxAge)
+      BIND(xsd:decimal(REPLACE(?minAgeStr, ",", ".")) AS ?minAge)
+      BIND(xsd:decimal(REPLACE(?maxAgeStr, ",", ".")) AS ?maxAge)
       FILTER(?maxAge >= ${filters.minAge} && ?minAge <= ${filters.maxAge})
       # Éviter doublons avec les moyennes
       FILTER NOT EXISTS {
@@ -675,8 +675,8 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
         query += `
     ?ageStats iadas:minAge ?minAgeStr .
     ?ageStats iadas:maxAge ?maxAgeStr .
-    BIND(xsd:decimal(?minAgeStr) AS ?minAge)
-    BIND(xsd:decimal(?maxAgeStr) AS ?maxAge)
+    BIND(xsd:decimal(REPLACE(?minAgeStr, ",", ".")) AS ?minAge)
+    BIND(xsd:decimal(REPLACE(?maxAgeStr, ",", ".")) AS ?maxAge)
     FILTER(?minAge >= ${filters.minAge} && ?maxAge <= ${filters.maxAge})`;
 
 
@@ -722,13 +722,13 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     # Normalisation automatique vers heures/semaine
     BIND(
-      IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?meanExFRStr) / 60,
-      IF(?freqUnit = "minutes" && ?freqBase = "day", (xsd:decimal(?meanExFRStr) / 60) * 7,
-      IF(?freqUnit = "hours" && ?freqBase = "day", xsd:decimal(?meanExFRStr) * 7,
-      IF(?freqUnit = "hours" && ?freqBase = "week", xsd:decimal(?meanExFRStr),
-      IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?meanExFRStr) * 24,
-      IF(?freqUnit = "sessions" && ?freqBase = "week", xsd:decimal(?meanExFRStr) * 1.5,
-      IF(xsd:decimal(?meanExFRStr) < 50, xsd:decimal(?meanExFRStr), xsd:decimal(?meanExFRStr) / 60)))))))
+      IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) / 60,
+      IF(?freqUnit = "minutes" && ?freqBase = "day", (xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) / 60) * 7,
+      IF(?freqUnit = "hours" && ?freqBase = "day", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) * 7,
+      IF(?freqUnit = "hours" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")),
+      IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) * 24,
+      IF(?freqUnit = "sessions" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) * 1.5,
+      IF(xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) < 50, xsd:decimal(REPLACE(?meanExFRStr, ",", ".")), xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) / 60)))))))
       AS ?normalizedFreq
     )
     
@@ -765,10 +765,10 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
             FILTER(?meanExFRStr != "")
             
             BIND(
-              IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?meanExFRStr) / 60,
-              IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?meanExFRStr) * 24, 
-              IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?meanExFRStr) < 50), xsd:decimal(?meanExFRStr),
-              xsd:decimal(?meanExFRStr))))
+              IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) / 60,
+              IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) * 24, 
+              IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) < 50), xsd:decimal(REPLACE(?meanExFRStr, ",", ".")),
+              xsd:decimal(REPLACE(?meanExFRStr, ",", ".")))))
               AS ?normalizedMeanFreq
             )
             
@@ -784,18 +784,18 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
             FILTER(?minExFRStr != "" && ?maxExFRStr != "")
             
             BIND(
-              IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?minExFRStr) / 60,
-              IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?minExFRStr) * 24, 
-              IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?minExFRStr) < 50), xsd:decimal(?minExFRStr),
-              xsd:decimal(?minExFRStr))))
+              IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(REPLACE(?minExFRStr, ",", ".")) / 60,
+              IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(REPLACE(?minExFRStr, ",", ".")) * 24, 
+              IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(REPLACE(?minExFRStr, ",", ".")) < 50), xsd:decimal(REPLACE(?minExFRStr, ",", ".")),
+              xsd:decimal(REPLACE(?minExFRStr, ",", ".")))))
               AS ?normalizedMinFreq
             )
             
             BIND(
-              IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?maxExFRStr) / 60,
-              IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?maxExFRStr) * 24, 
-              IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?maxExFRStr) < 50), xsd:decimal(?maxExFRStr),
-              xsd:decimal(?maxExFRStr))))
+              IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(REPLACE(?maxExFRStr, ",", ".")) / 60,
+              IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(REPLACE(?maxExFRStr, ",", ".")) * 24, 
+              IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(REPLACE(?maxExFRStr, ",", ".")) < 50), xsd:decimal(REPLACE(?maxExFRStr, ",", ".")),
+              xsd:decimal(REPLACE(?maxExFRStr, ",", ".")))))
               AS ?normalizedMaxFreq
             )
             
@@ -813,10 +813,10 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
           FILTER(?meanExFRStr != "")
           
           BIND(
-            IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?meanExFRStr) / 60,
-            IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?meanExFRStr) * 24, 
-            IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?meanExFRStr) < 50), xsd:decimal(?meanExFRStr),
-            xsd:decimal(?meanExFRStr))))
+            IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) / 60,
+            IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) * 24, 
+            IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) < 50), xsd:decimal(REPLACE(?meanExFRStr, ",", ".")),
+            xsd:decimal(REPLACE(?meanExFRStr, ",", ".")))))
             AS ?normalizedFreq
           )
           
@@ -858,10 +858,10 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     # Normalisation vers heures/semaine
     BIND(
-      IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?meanExFRStr) / 60,
-      IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?meanExFRStr) * 24, 
-      IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?meanExFRStr) < 50), xsd:decimal(?meanExFRStr),
-      xsd:decimal(?meanExFRStr))))
+      IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) / 60,
+      IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) * 24, 
+      IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) < 50), xsd:decimal(REPLACE(?meanExFRStr, ",", ".")),
+      xsd:decimal(REPLACE(?meanExFRStr, ",", ".")))))
       AS ?normalizedFreq
     )
     
@@ -883,10 +883,10 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
       
       # Normalisation vers heures/semaine
       BIND(
-        IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?meanExFRStr) / 60,
-        IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?meanExFRStr) * 24, 
-        IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?meanExFRStr) < 50), xsd:decimal(?meanExFRStr),
-        xsd:decimal(?meanExFRStr))))
+        IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) / 60,
+        IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) * 24, 
+        IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(REPLACE(?meanExFRStr, ",", ".")) < 50), xsd:decimal(REPLACE(?meanExFRStr, ",", ".")),
+        xsd:decimal(REPLACE(?meanExFRStr, ",", ".")))))
         AS ?normalizedMeanFreq
       )
       
@@ -903,18 +903,18 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
       
       # Normalisation des bornes
       BIND(
-        IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?minExFRStr) / 60,
-        IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?minExFRStr) * 24, 
-        IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?minExFRStr) < 50), xsd:decimal(?minExFRStr),
-        xsd:decimal(?minExFRStr))))
+        IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(REPLACE(?minExFRStr, ",", ".")) / 60,
+        IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(REPLACE(?minExFRStr, ",", ".")) * 24, 
+        IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(REPLACE(?minExFRStr, ",", ".")) < 50), xsd:decimal(REPLACE(?minExFRStr, ",", ".")),
+        xsd:decimal(REPLACE(?minExFRStr, ",", ".")))))
         AS ?normalizedMinFreq
       )
       
       BIND(
-        IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(?maxExFRStr) / 60,
-        IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(?maxExFRStr) * 24, 
-        IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(?maxExFRStr) < 50), xsd:decimal(?maxExFRStr),
-        xsd:decimal(?maxExFRStr))))
+        IF(?freqUnit = "minutes" && ?freqBase = "week", xsd:decimal(REPLACE(?maxExFRStr, ",", ".")) / 60,
+        IF(?freqUnit = "days" && ?freqBase = "week", xsd:decimal(REPLACE(?maxExFRStr, ",", ".")) * 24, 
+        IF(?freqUnit = "hours" || (?freqUnit = "" && xsd:decimal(REPLACE(?maxExFRStr, ",", ".")) < 50), xsd:decimal(REPLACE(?maxExFRStr, ",", ".")),
+        xsd:decimal(REPLACE(?maxExFRStr, ",", ".")))))
         AS ?normalizedMaxFreq
       )
       
@@ -956,8 +956,8 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
         query += `
     ?freqStats iadas:minExFR ?minExFRStr .
     ?freqStats iadas:maxExFR ?maxExFRStr .
-    BIND(xsd:decimal(?minExFRStr) AS ?minExFR)
-    BIND(xsd:decimal(?maxExFRStr) AS ?maxExFR)
+    BIND(xsd:decimal(REPLACE(?minExFRStr, ",", ".")) AS ?minExFR)
+    BIND(xsd:decimal(REPLACE(?maxExFRStr, ",", ".")) AS ?maxExFR)
     FILTER(?minExFR >= ${filters.minExFR} && ?maxExFR <= ${filters.maxExFR})`;
 
         console.log(` Filtre plage fréquence: population dans [${filters.minExFR}, ${filters.maxExFR}] h/sem`);
@@ -966,7 +966,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
         // Seulement minExFR
         query += `
     ?freqStats iadas:minExFR ?minExFRStr .
-    BIND(xsd:decimal(?minExFRStr) AS ?minExFR)
+    BIND(xsd:decimal(REPLACE(?minExFRStr, ",", ".")) AS ?minExFR)
     FILTER(?minExFR >= ${filters.minExFR})`;
 
         console.log(` Filtre fréquence minimum: minExFR >= ${filters.minExFR}`);
@@ -975,7 +975,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
         // Seulement maxExFR
         query += `
     ?freqStats iadas:maxExFR ?maxExFRStr .
-    BIND(xsd:decimal(?maxExFRStr) AS ?maxExFR)
+    BIND(xsd:decimal(REPLACE(?maxExFRStr, ",", ".")) AS ?maxExFR)
     FILTER(?maxExFR <= ${filters.maxExFR})`;
 
         console.log(` Filtre fréquence maximum: maxExFR <= ${filters.maxExFR}`);
@@ -1004,11 +1004,11 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     # Normalisation automatique vers années
     BIND(
-      IF(?expUnit = "months", xsd:decimal(?meanYOEStr) / 12,
-      IF(?expUnit = "weeks", xsd:decimal(?meanYOEStr) / 52,
-      IF(?expUnit = "days", xsd:decimal(?meanYOEStr) / 365,
-      IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?meanYOEStr),
-      xsd:decimal(?meanYOEStr)))))
+      IF(?expUnit = "months", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 12,
+      IF(?expUnit = "weeks", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 52,
+      IF(?expUnit = "days", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 365,
+      IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(REPLACE(?meanYOEStr, ",", ".")),
+      xsd:decimal(REPLACE(?meanYOEStr, ",", "."))))))
       AS ?normalizedExp
     )
     
@@ -1044,11 +1044,11 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
             FILTER(?meanYOEStr != "" && ?meanYOEStr != "N.A.")
             
             BIND(
-              IF(?expUnit = "months", xsd:decimal(?meanYOEStr) / 12,
-              IF(?expUnit = "weeks", xsd:decimal(?meanYOEStr) / 52,
-              IF(?expUnit = "days", xsd:decimal(?meanYOEStr) / 365,
-              IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?meanYOEStr),
-              xsd:decimal(?meanYOEStr)))))
+              IF(?expUnit = "months", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 12,
+              IF(?expUnit = "weeks", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 52,
+              IF(?expUnit = "days", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 365,
+              IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(REPLACE(?meanYOEStr, ",", ".")),
+              xsd:decimal(REPLACE(?meanYOEStr, ",", "."))))))
               AS ?normalizedMeanExp
             )
             
@@ -1063,20 +1063,20 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
             FILTER(?minYOEStr != "" && ?maxYOEStr != "" && ?minYOEStr != "N.A." && ?maxYOEStr != "N.A.")
             
             BIND(
-              IF(?expUnit = "months", xsd:decimal(?minYOEStr) / 12,
-              IF(?expUnit = "weeks", xsd:decimal(?minYOEStr) / 52,
-              IF(?expUnit = "days", xsd:decimal(?minYOEStr) / 365,
-              IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?minYOEStr),
-              xsd:decimal(?minYOEStr)))))
+              IF(?expUnit = "months", xsd:decimal(REPLACE(?minYOEStr, ",", ".")) / 12,
+              IF(?expUnit = "weeks", xsd:decimal(REPLACE(?minYOEStr, ",", ".")) / 52,
+              IF(?expUnit = "days", xsd:decimal(REPLACE(?minYOEStr, ",", ".")) / 365,
+              IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(REPLACE(?minYOEStr, ",", ".")),
+              xsd:decimal(REPLACE(?minYOEStr, ",", "."))))))
               AS ?normalizedMinExp
             )
             
             BIND(
-              IF(?expUnit = "months", xsd:decimal(?maxYOEStr) / 12,
-              IF(?expUnit = "weeks", xsd:decimal(?maxYOEStr) / 52,
-              IF(?expUnit = "days", xsd:decimal(?maxYOEStr) / 365,
-              IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?maxYOEStr),
-              xsd:decimal(?maxYOEStr)))))
+              IF(?expUnit = "months", xsd:decimal(REPLACE(?maxYOEStr, ",", ".")) / 12,
+              IF(?expUnit = "weeks", xsd:decimal(REPLACE(?maxYOEStr, ",", ".")) / 52,
+              IF(?expUnit = "days", xsd:decimal(REPLACE(?maxYOEStr, ",", ".")) / 365,
+              IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(REPLACE(?maxYOEStr, ",", ".")),
+              xsd:decimal(REPLACE(?maxYOEStr, ",", "."))))))
               AS ?normalizedMaxExp
             )
             
@@ -1093,11 +1093,11 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
           FILTER(?meanYOEStr != "" && ?meanYOEStr != "N.A.")
           
           BIND(
-            IF(?expUnit = "months", xsd:decimal(?meanYOEStr) / 12,
-            IF(?expUnit = "weeks", xsd:decimal(?meanYOEStr) / 52,
-            IF(?expUnit = "days", xsd:decimal(?meanYOEStr) / 365,
-            IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?meanYOEStr),
-            xsd:decimal(?meanYOEStr)))))
+            IF(?expUnit = "months", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 12,
+            IF(?expUnit = "weeks", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 52,
+            IF(?expUnit = "days", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 365,
+            IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(REPLACE(?meanYOEStr, ",", ".")),
+            xsd:decimal(REPLACE(?meanYOEStr, ",", "."))))))
             AS ?normalizedExp
           )
           
@@ -1138,11 +1138,11 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
     
     # Normalisation complète vers années
     BIND(
-      IF(?expUnit = "months", xsd:decimal(?meanYOEStr) / 12,
-      IF(?expUnit = "weeks", xsd:decimal(?meanYOEStr) / 52,
-      IF(?expUnit = "days", xsd:decimal(?meanYOEStr) / 365,
-      IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?meanYOEStr),
-      xsd:decimal(?meanYOEStr)))))
+      IF(?expUnit = "months", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 12,
+      IF(?expUnit = "weeks", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 52,
+      IF(?expUnit = "days", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 365,
+      IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(REPLACE(?meanYOEStr, ",", ".")),
+      xsd:decimal(REPLACE(?meanYOEStr, ",", "."))))))
       AS ?normalizedExp
     )
     FILTER(?normalizedExp >= ${filters.minYOE} && ?normalizedExp <= ${filters.maxYOE})`;
@@ -1161,11 +1161,11 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
       FILTER(?meanYOEStr != "" && ?meanYOEStr != "N.A.")
       
       BIND(
-        IF(?expUnit = "months", xsd:decimal(?meanYOEStr) / 12,
-        IF(?expUnit = "weeks", xsd:decimal(?meanYOEStr) / 52,
-        IF(?expUnit = "days", xsd:decimal(?meanYOEStr) / 365,
-        IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?meanYOEStr),
-        xsd:decimal(?meanYOEStr)))))
+        IF(?expUnit = "months", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 12,
+        IF(?expUnit = "weeks", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 52,
+        IF(?expUnit = "days", xsd:decimal(REPLACE(?meanYOEStr, ",", ".")) / 365,
+        IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(REPLACE(?meanYOEStr, ",", ".")),
+        xsd:decimal(REPLACE(?meanYOEStr, ",", "."))))))
         AS ?normalizedMeanExp
       )
       FILTER(?normalizedMeanExp >= ${filters.minYOE} && ?normalizedMeanExp <= ${filters.maxYOE})
@@ -1179,20 +1179,20 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
       FILTER(?minYOEStr != "" && ?maxYOEStr != "" && ?minYOEStr != "N.A." && ?maxYOEStr != "N.A.")
       
       BIND(
-        IF(?expUnit = "months", xsd:decimal(?minYOEStr) / 12,
-        IF(?expUnit = "weeks", xsd:decimal(?minYOEStr) / 52,
-        IF(?expUnit = "days", xsd:decimal(?minYOEStr) / 365,
-        IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?minYOEStr),
-        xsd:decimal(?minYOEStr)))))
+        IF(?expUnit = "months", xsd:decimal(REPLACE(?minYOEStr, ",", ".")) / 12,
+        IF(?expUnit = "weeks", xsd:decimal(REPLACE(?minYOEStr, ",", ".")) / 52,
+        IF(?expUnit = "days", xsd:decimal(REPLACE(?minYOEStr, ",", ".")) / 365,
+        IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(REPLACE(?minYOEStr, ",", ".")),
+        xsd:decimal(REPLACE(?minYOEStr, ",", "."))))))
         AS ?normalizedMinExp
       )
       
       BIND(
-        IF(?expUnit = "months", xsd:decimal(?maxYOEStr) / 12,
-        IF(?expUnit = "weeks", xsd:decimal(?maxYOEStr) / 52,
-        IF(?expUnit = "days", xsd:decimal(?maxYOEStr) / 365,
-        IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(?maxYOEStr),
-        xsd:decimal(?maxYOEStr)))))
+        IF(?expUnit = "months", xsd:decimal(REPLACE(?maxYOEStr, ",", ".")) / 12,
+        IF(?expUnit = "weeks", xsd:decimal(REPLACE(?maxYOEStr, ",", ".")) / 52,
+        IF(?expUnit = "days", xsd:decimal(REPLACE(?maxYOEStr, ",", ".")) / 365,
+        IF(?expUnit = "years" || ?expUnit = "" || !BOUND(?expUnit), xsd:decimal(REPLACE(?maxYOEStr, ",", ".")),
+        xsd:decimal(REPLACE(?maxYOEStr, ",", "."))))))
         AS ?normalizedMaxExp
       )
       
@@ -1234,8 +1234,8 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
         query += `
     ?expStats iadas:minYOE ?minYOEStr .
     ?expStats iadas:maxYOE ?maxYOEStr .
-    BIND(xsd:decimal(?minYOEStr) AS ?minYOE)
-    BIND(xsd:decimal(?maxYOEStr) AS ?maxYOE)
+    BIND(xsd:decimal(REPLACE(?minYOEStr, ",", ".")) AS ?minYOE)
+    BIND(xsd:decimal(REPLACE(?maxYOEStr, ",", ".")) AS ?maxYOE)
     FILTER(?minYOE >= ${filters.minYOE} && ?maxYOE <= ${filters.maxYOE})`;
 
         console.log(` Filtre plage expérience: population dans [${filters.minYOE}, ${filters.maxYOE}] ans`);
@@ -1244,7 +1244,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
         // Seulement minYOE
         query += `
     ?expStats iadas:minYOE ?minYOEStr .
-    BIND(xsd:decimal(?minYOEStr) AS ?minYOE)
+    BIND(xsd:decimal(REPLACE(?minYOEStr, ",", ".")) AS ?minYOE)
     FILTER(?minYOE >= ${filters.minYOE})`;
 
         console.log(` Filtre expérience minimum: minYOE >= ${filters.minYOE}`);
@@ -1253,7 +1253,7 @@ SELECT ?analysis ?vi ?vd ?categoryVI ?categoryVD ?mediator ?moderator ?resultatR
         // Seulement maxYOE
         query += `
     ?expStats iadas:maxYOE ?maxYOEStr .
-    BIND(xsd:decimal(?maxYOEStr) AS ?maxYOE)
+    BIND(xsd:decimal(REPLACE(?maxYOEStr, ",", ".")) AS ?maxYOE)
     FILTER(?maxYOE <= ${filters.maxYOE})`;
 
         console.log(` Filtre expérience maximum: maxYOE <= ${filters.maxYOE}`);

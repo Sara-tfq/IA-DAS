@@ -5,6 +5,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadLastUpdateDate() {
     try {
+        // Vérifier d'abord si on a une date stockée localement
+        const storedUpdate = localStorage.getItem('lastOntologyUpdate');
+        
+        if (storedUpdate) {
+            const lastUpdate = new Date(storedUpdate);
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            
+            const formattedDate = lastUpdate.toLocaleDateString('fr-FR', options);
+            document.getElementById('lastUpdateDate').textContent = formattedDate;
+            return;
+        }
+        
         // Récupérer la date de dernière mise à jour depuis l'API
         const response = await fetch('/api/ontology/last-update');
         
@@ -48,3 +66,28 @@ function setDefaultUpdateDate() {
     const formattedDate = now.toLocaleDateString('fr-FR', options);
     document.getElementById('lastUpdateDate').textContent = formattedDate;
 }
+
+// Fonction globale pour forcer la mise à jour de la date depuis d'autres pages
+function updateHomePageDate() {
+    // Stocker la date actuelle dans le localStorage
+    const now = new Date();
+    localStorage.setItem('lastOntologyUpdate', now.toISOString());
+    
+    // Si on est sur la page d'accueil, mettre à jour immédiatement
+    const lastUpdateElement = document.getElementById('lastUpdateDate');
+    if (lastUpdateElement) {
+        const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        
+        const formattedDate = now.toLocaleDateString('fr-FR', options);
+        lastUpdateElement.textContent = formattedDate;
+    }
+}
+
+// Rendre la fonction accessible globalement
+window.updateHomePageDate = updateHomePageDate;

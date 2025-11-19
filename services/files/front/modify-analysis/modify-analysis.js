@@ -1022,6 +1022,11 @@ WHERE {
 
                 if (response.status === 200) {
                     showMessage('success', `✅ Analyse modifiée avec succès ! ${successCount} objets mis à jour.`);
+                    
+                    // Mettre à jour la date de dernière mise à jour
+                    if (typeof window.updateHomePageDate === 'function') {
+                        window.updateHomePageDate();
+                    }
                 } else {
                     showMessage('warning', `⚠️ Modification partielle : ${successCount}/${totalCount} objets mis à jour.`);
                 }

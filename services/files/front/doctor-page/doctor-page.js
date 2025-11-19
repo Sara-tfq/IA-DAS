@@ -629,23 +629,53 @@ function createCompleteExcelExport(completeAnalyses, originalData) {
     const searchSheet = XLSX.utils.aoa_to_sheet(searchData);
     XLSX.utils.book_append_sheet(workbook, searchSheet, "Résultats Recherche");
     
-    // ========== FEUILLE 2: ANALYSES COMPLÈTES ==========
+    // ========== FEUILLE 2: ANALYSES COMPLÈTES (TOUTES LES COLONNES DYNAMIQUES) ==========
     if (completeAnalyses.length > 0) {
-        // Définir toutes les colonnes possibles de l'ontologie
-        const allColumns = [
-            'Analysis_ID', 'Title', 'Authors', 'Year', 'DOI', 'Journal', 'Country',
-            'Types of study', 'N', 'Population', 'Sexe', 'Age', 'AgeForAnalysis_Mean',
-            'SDAnalysis', 'MinAge', 'MaxAge', 'BMI', 'BMI_Mean', 'BMI_SD',
-            'Sport_name', 'Sport_level', 'Type_of _sport_practice', 'Subcategory_of_sport',
-            'ACADS', 'VD', 'Measure_VD', 'VI', 'Measure_VI',
-            'Mediator', 'Measure_Mediator', 'Moderator', 'Measure_Moderator',
-            'Resultat_de_relation', 'Degre_r', 'Degre_p', 'Signe_p', 'Degre_beta', 'Degre_RS',
-            'Type_of_analysis', 'N_mobilise_dans_les analyse', 'Authors_conclusions',
-            'Limites', 'Perspectives', 'Multiplicity_analyse'
-        ];
+        // Récupérer TOUTES les colonnes disponibles dynamiquement
+        const allColumnsSet = new Set();
+        
+        // Passer par toutes les analyses pour trouver TOUTES les colonnes possibles
+        completeAnalyses.forEach(analysis => {
+            if (!analysis.error && analysis.rawData) {
+                Object.keys(analysis.rawData).forEach(key => {
+                    // Éviter les métadonnées internes mais les garder dans une section séparée
+                    if (!key.startsWith('__') || key === '__PROPERTY_COUNT__' || key === '__DATA_SOURCE__' || key === '__ENTITIES_FOUND__') {
+                        allColumnsSet.add(key);
+                    }
+                });
+            }
+        });
+        
+        // Trier les colonnes par ordre de préférence
+        const allColumns = [...allColumnsSet].sort((a, b) => {
+            // Ordre de priorité pour les colonnes importantes
+            const priority = [
+                'Analysis_ID', 'Title', 'Authors', 'Year ', 'DOI', 'Journal', 'Country',
+                'Types of study', 'N', 'Population', 'Sexe', 'Age', 'AgeForAnalysis_Mean',
+                'SDAnalysis', 'MinAge', 'MaxAge', 'BMI', 'BMI_Mean', 'BMI_SD',
+                'Sport_name', 'Sport_level', 'Type_of _sport_practice', 'Subcategory_of_sport',
+                'ACADS', 'VD', 'Measure_VD', 'VI', 'Measure_VI',
+                'Mediator', 'Measure_Mediator', 'Moderator', 'Measure_Moderator',
+                'Resultat_de_relation', 'Degre_r', 'Degre_p ', 'Signe_p', 'Degre_beta', 'Degre_RS',
+                'Type_of_analysis', 'N_mobilise_dans_les analyse', 'Authors_conclusions',
+                'Limites', 'Perspectives', 'Multiplicity_analyse'
+            ];
+            
+            const aIndex = priority.indexOf(a);
+            const bIndex = priority.indexOf(b);
+            
+            if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            
+            // Pour les colonnes non prioritaires, trier alphabétiquement
+            return a.localeCompare(b);
+        });
+        
+        console.log(`📊 Export Excel: ${allColumns.length} colonnes dynamiques trouvées`);
         
         const analysesData = [];
-        analysesData.push(allColumns); // En-têtes
+        analysesData.push(allColumns); // En-têtes dynamiques
         
         completeAnalyses.forEach(analysis => {
             const row = allColumns.map(column => {
@@ -653,7 +683,18 @@ function createCompleteExcelExport(completeAnalyses, originalData) {
                     return column === 'Analysis_ID' ? analysis.id : 
                            column === 'ERROR' ? analysis.error : '';
                 }
-                return analysis.rawData?.[column] || '';
+                
+                const value = analysis.rawData?.[column];
+                
+                // Gérer les objets complexes (comme __COMPLETE_RAW_DATA__)
+                if (typeof value === 'object' && value !== null) {
+                    if (column === '__COMPLETE_RAW_DATA__') {
+                        return `${Object.keys(value).length} propriétés SPARQL`;
+                    }
+                    return JSON.stringify(value);
+                }
+                
+                return value || '';
             });
             analysesData.push(row);
         });
@@ -677,7 +718,37 @@ function createCompleteExcelExport(completeAnalyses, originalData) {
     const metadataSheet = XLSX.utils.aoa_to_sheet(metadataData);
     XLSX.utils.book_append_sheet(workbook, metadataSheet, "Métadonnées");
     
-    // ========== FEUILLE 4: STATISTIQUES ==========
+    // ========== FEUILLE 4: TOUTES LES PROPRIÉTÉS SPARQL BRUTES ==========
+    if (completeAnalyses.length > 0) {
+        const sparqlData = [['Analysis_ID', 'Entité', 'Propriété SPARQL', 'Valeur', 'Type Entité', 'Sous-Entité']];
+        
+        completeAnalyses.forEach(analysis => {
+            if (!analysis.error && analysis.rawData && analysis.rawData['__COMPLETE_RAW_DATA__']) {
+                const rawProperties = analysis.rawData['__COMPLETE_RAW_DATA__'];
+                
+                Object.entries(rawProperties).forEach(([propertyKey, values]) => {
+                    values.forEach(propInfo => {
+                        sparqlData.push([
+                            analysis.id,
+                            propInfo.entity || '',
+                            propInfo.originalProperty || propertyKey,
+                            propInfo.value || '',
+                            propInfo.entityType || '',
+                            propInfo.subEntity || ''
+                        ]);
+                    });
+                });
+            }
+        });
+        
+        if (sparqlData.length > 1) { // Plus que juste les en-têtes
+            const sparqlSheet = XLSX.utils.aoa_to_sheet(sparqlData);
+            XLSX.utils.book_append_sheet(workbook, sparqlSheet, "Propriétés SPARQL Brutes");
+            console.log(`📋 Ajout de ${sparqlData.length - 1} propriétés SPARQL brutes à l'export`);
+        }
+    }
+
+    // ========== FEUILLE 5: STATISTIQUES ==========
     if (completeAnalyses.length > 0) {
         const stats = calculateAnalysesStatistics(completeAnalyses);
         const statsData = [

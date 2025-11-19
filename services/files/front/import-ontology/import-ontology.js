@@ -211,6 +211,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 updateProgress(100, 'Reconstruction terminée !');
                 logToConsole('🎉 Reconstruction terminée avec succès !');
+                
+                // Mettre à jour la date de dernière mise à jour
+                if (typeof window.updateHomePageDate === 'function') {
+                    window.updateHomePageDate();
+                }
+                
                 setTimeout(() => {
                     alert('✅ Ontologie reconstruite avec succès !\nVous pouvez maintenant utiliser la nouvelle ontologie.');
                     window.location.href = './update-page.html';
@@ -227,6 +233,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (result.success) {
             updateProgress(100, 'Terminé !');
             logToConsole('🎉 Reconstruction terminée avec succès !');
+            
+            // Mettre à jour la date de dernière mise à jour
+            if (typeof window.updateHomePageDate === 'function') {
+                window.updateHomePageDate();
+            }
+            
             setTimeout(() => {
                 alert('✅ Ontologie reconstruite !');
                 window.location.href = './update-page.html';
