@@ -256,7 +256,7 @@ class AnalysisPanel {
   contentDiv.innerHTML = listHTML;
 }
 
-exportAnalysesToPDF() {
+exportAnalysesToPDF(queryInfo = null) {
   console.log('🔍 DEBUG: Début exportAnalysesToPDF');
   console.log('🔍 window.jspdf exists:', !!window.jspdf);
   console.log('🔍 window.jspdf value:', window.jspdf);
@@ -271,6 +271,17 @@ exportAnalysesToPDF() {
     console.log('✅ Tentative création jsPDF...');
     const doc = new window.jspdf.jsPDF();
     console.log('✅ jsPDF créé avec succès:', doc);
+    
+    // Configuration des polices pour les caractères spéciaux
+    // Utiliser une police qui supporte les caractères Unicode étendus
+    try {
+      doc.addFont('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap', 'NotoSans', 'normal');
+      doc.setFont('NotoSans');
+    } catch (fontError) {
+      console.warn('❌ Police personnalisée non disponible, utilisation de la police par défaut');
+      // Fallback: utiliser helvetica qui supporte mieux l'Unicode
+      doc.setFont('helvetica');
+    }
     
     // Configuration
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -289,16 +300,34 @@ exportAnalysesToPDF() {
     
     y += lineHeight * 1.5;
     
-    // Informations générales - Dans un encadré
+    // Informations générales - Dans un encadré étendu
+    const uniqueArticles = [...new Set(this.currentAnalysesData.map(a => a.rawData?.DOI || a.rawData?.Title || a.id))];
+    const exportDate = new Date().toLocaleDateString('fr-FR');
+    const lastUpdateDate = new Date().toLocaleDateString('fr-FR'); // TODO: récupérer la vraie date de mise à jour
+    const queryText = queryInfo?.query || `Analyses liées à "${this.currentNodeName}"`;
+    
+    // Calculer la hauteur nécessaire pour l'encadré
+    const encadreHeight = queryInfo ? lineHeight * 6 : lineHeight * 5;
+    
     doc.setDrawColor(52, 152, 219); // Bleu
     doc.setLineWidth(0.5);
-    doc.rect(margin, y, pageWidth - 2 * margin, lineHeight * 2.5);
+    doc.rect(margin, y, pageWidth - 2 * margin, encadreHeight);
     
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    doc.text(`Nombre d'analyses: ${this.currentAnalysesData.length}`, margin + 5, y + lineHeight);
-    doc.text(`Date d'export: ${new Date().toLocaleDateString('fr-FR')}`, margin + 5, y + lineHeight * 2);
-    y += lineHeight * 4;
+    doc.text(`Nombre d'analyses (relations): ${this.currentAnalysesData.length}`, margin + 5, y + lineHeight);
+    doc.text(`Nombre d'articles considérés: ${uniqueArticles.length}`, margin + 5, y + lineHeight * 2);
+    doc.text(`Date d'export: ${exportDate}`, margin + 5, y + lineHeight * 3);
+    doc.text(`Dernière mise à jour: ${lastUpdateDate}`, margin + 5, y + lineHeight * 4);
+    
+    // Ajouter la requête si disponible
+    if (queryInfo) {
+      doc.setFont(undefined, 'italic');
+      doc.text(`Requête: ${queryText}`, margin + 5, y + lineHeight * 5);
+      doc.setFont(undefined, 'normal');
+    }
+    
+    y += encadreHeight + lineHeight;
     
     // Parcourir chaque analyse
     this.currentAnalysesData.forEach((analysis, index) => {
@@ -402,14 +431,56 @@ exportAnalysesToPDF() {
         
         let modMedLine = '';
         if (analysis.moderator && analysis.moderator !== 'N/A') {
-          modMedLine += `Moderateur: ${analysis.moderator}`;
+          modMedLine += `Modérateur: ${analysis.moderator}`;
         }
         if (analysis.mediator && analysis.mediator !== 'N/A') {
           if (modMedLine) modMedLine += ' | ';
-          modMedLine += `Mediateur: ${analysis.mediator}`;
+          modMedLine += `Médiateur: ${analysis.mediator}`;
         }
         
         doc.text(modMedLine, margin + 8, y);
+        y += lineHeight * 1.2;
+      }
+      
+      // === STATISTIQUES DÉTAILLÉES ===
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(100, 100, 100);
+      
+      let statsLine = '';
+      const data = analysis.rawData || {};
+      
+      // Degré de relation
+      if (data.Degre_de_relation && data.Degre_de_relation !== 'N/A') {
+        statsLine += `Degré: ${data.Degre_de_relation}`;
+      }
+      
+      // Type d'analyse
+      if (data.Type_of_analysis && data.Type_of_analysis !== 'N/A') {
+        if (statsLine) statsLine += ' | ';
+        statsLine += `Type: ${data.Type_of_analysis}`;
+      }
+      
+      // Valeurs statistiques (r, p, beta)
+      let statValues = [];
+      if (data.Degre_r && data.Degre_r !== 'N/A') {
+        statValues.push(`r=${data.Degre_r}`);
+      }
+      if (data['Degre_p '] && data['Degre_p '] !== 'N/A') {
+        const pSign = data.Signe_p && data.Signe_p !== 'N/A' ? data.Signe_p : '';
+        statValues.push(`p${pSign}${data['Degre_p ']}`);
+      }
+      if (data.Degre_beta && data.Degre_beta !== 'N/A') {
+        statValues.push(`β=${data.Degre_beta}`);
+      }
+      
+      if (statValues.length > 0) {
+        if (statsLine) statsLine += ' | ';
+        statsLine += statValues.join(', ');
+      }
+      
+      if (statsLine) {
+        doc.text(statsLine, margin + 8, y);
         y += lineHeight * 1.2;
       }
       
@@ -501,6 +572,17 @@ showExportSuccess(fileName) {
 }
 
 formatAPATitleForPDF(analysis) {
+  // Utiliser directement la référence APA formatée depuis l'ontologie si disponible
+  if (analysis.reference && analysis.reference.trim() !== '') {
+    return analysis.reference;
+  }
+  
+  // Sinon, vérifier dans rawData
+  if (analysis.rawData?.reference && analysis.rawData.reference.trim() !== '') {
+    return analysis.rawData.reference;
+  }
+  
+  // Fallback : reconstruction manuelle (ancien comportement)
   const data = analysis.rawData || {};
   const authors = data.Authors || 'Auteur inconnu';
   const year = data['Year '] || 'Année inconnue';
@@ -516,6 +598,17 @@ formatAPATitleForPDF(analysis) {
 }
 
   formatAPATitle(analysis) {
+    // Utiliser directement la référence APA formatée depuis l'ontologie si disponible
+    if (analysis.reference && analysis.reference.trim() !== '') {
+      return analysis.reference;
+    }
+    
+    // Sinon, vérifier dans rawData
+    if (analysis.rawData?.reference && analysis.rawData.reference.trim() !== '') {
+      return analysis.rawData.reference;
+    }
+    
+    // Fallback : reconstruction manuelle (ancien comportement)
     const authors = analysis.rawData?.Authors || 'Auteur inconnu';
     const year = analysis.rawData?.['Year '] || 'Année inconnue';          
     const title = analysis.rawData?.Title || analysis.title || `Analyse ${analysis.id}`;

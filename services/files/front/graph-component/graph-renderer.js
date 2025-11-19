@@ -16,6 +16,9 @@ class GraphRenderer {
     this.longClickNode = null;
     this.longClickEvent = null;
     this.longClickInProgress = false;
+    
+    // État de la légende - vérifie localStorage pour la persistance
+    this.legendCollapsed = localStorage.getItem('ia-das-legend-collapsed') === 'true';
   }
 
   updateDimensions() {
@@ -37,19 +40,13 @@ class GraphRenderer {
     // FORCER le graphe réseau pour toutes les données ontologiques
     this.createSVG();
     this.renderNetworkGraph();
-    // this.addControls();
-  }
-
-  render() {
-    // FORCER le graphe réseau pour toutes les données ontologiques
-    this.createSVG();
-    this.renderNetworkGraph();
-    // this.addControls();
+    this.addColorLegend();
   }
 
   createSVG() {
-    // Supprimer l'ancien SVG s'il existe
+    // Supprimer l'ancien SVG et légende s'ils existent
     d3.select(this.container).select('svg').remove();
+    d3.select(this.container).select('.graph-legend').remove();
 
     this.svg = d3.select(this.container)
       .append('svg')
@@ -776,12 +773,305 @@ class GraphRenderer {
   //     .text(`${this.parsedData.networkData.nodes.length} nœuds, ${this.parsedData.networkData.links.length} liens`);
   // }
 
-  addColorLegend(controls) {
-    const legend = controls.append('div')
-      .style('margin-bottom', '10px')
-      .style('font-size', '12px');
+  addColorLegend() {
+    // Créer un conteneur pour la légende en dehors du SVG
+    const legendContainer = d3.select(this.container)
+      .insert('div', 'svg')
+      .attr('class', 'graph-legend')
+      .style('background-color', '#f8f9fa')
+      .style('border', '1px solid #dee2e6')
+      .style('border-radius', '8px')
+      .style('padding', '15px')
+      .style('margin-bottom', '15px')
+      .style('font-family', '"Segoe UI", sans-serif')
+      .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)');
 
+    // En-tête avec titre et bouton fermer
+    const headerDiv = legendContainer.append('div')
+      .style('display', 'flex')
+      .style('justify-content', 'space-between')
+      .style('align-items', 'center')
+      .style('margin-bottom', '15px');
 
+    // Titre de la légende
+    headerDiv.append('h4')
+      .style('margin', '0')
+      .style('font-size', '16px')
+      .style('font-weight', 'bold')
+      .style('color', '#2c3e50')
+      .style('border-bottom', '2px solid #3498db')
+      .style('padding-bottom', '5px')
+      .text('🎨 Légende des couleurs');
+
+    // Bouton pour fermer/ouvrir la légende
+    const toggleButton = headerDiv.append('button')
+      .style('background', 'none')
+      .style('border', '1px solid #dee2e6')
+      .style('border-radius', '4px')
+      .style('padding', '5px 8px')
+      .style('cursor', 'pointer')
+      .style('font-size', '14px')
+      .style('color', '#6c757d')
+      .style('transition', 'all 0.2s ease')
+      .text('─')
+      .attr('title', 'Fermer la légende');
+
+    // Conteneur pour le contenu de la légende
+    const contentContainer = legendContainer.append('div')
+      .attr('class', 'legend-content');
+
+    // Section Variables Dépendantes (ACADS)
+    const acadSection = contentContainer.append('div')
+      .style('margin-bottom', '20px');
+
+    acadSection.append('h5')
+      .style('margin', '0 0 10px 0')
+      .style('font-size', '14px')
+      .style('font-weight', 'bold')
+      .style('color', '#27ae60')
+      .text('Variables Dépendantes (ACADS)');
+
+    const acadLegend = acadSection.append('div')
+      .style('display', 'flex')
+      .style('flex-wrap', 'wrap')
+      .style('gap', '15px');
+
+    // Éléments ACADS avec couleurs du parser
+    const acadItems = [
+      { label: 'DEAB', color: '#f54542', description: 'Troubles du comportement alimentaire définis' },
+      { label: 'Multiple', color: '#821111', description: 'Analyses concernant plusieurs ACADS' }
+    ];
+
+    acadItems.forEach(item => {
+      const itemDiv = acadLegend.append('div')
+        .style('display', 'flex')
+        .style('align-items', 'center')
+        .style('gap', '8px');
+
+      itemDiv.append('div')
+        .style('width', '16px')
+        .style('height', '16px')
+        .style('background-color', item.color)
+        .style('border-radius', '50%')
+        .style('border', '2px solid white')
+        .style('box-shadow', '0 0 3px rgba(0,0,0,0.3)');
+
+      itemDiv.append('span')
+        .style('font-size', '12px')
+        .style('font-weight', 'bold')
+        .style('color', '#2c3e50')
+        .text(item.label);
+
+      itemDiv.append('span')
+        .style('font-size', '11px')
+        .style('color', '#7f8c8d')
+        .text(`- ${item.description}`);
+    });
+
+    // Section Variables Indépendantes (Facteurs)
+    const factorSection = contentContainer.append('div')
+      .style('margin-bottom', '20px');
+
+    factorSection.append('h5')
+      .style('margin', '0 0 10px 0')
+      .style('font-size', '14px')
+      .style('font-weight', 'bold')
+      .style('color', '#27ae60')
+      .text('Variables Indépendantes (Facteurs)');
+
+    const factorLegend = factorSection.append('div')
+      .style('display', 'flex')
+      .style('flex-direction', 'column')
+      .style('gap', '8px');
+
+    // Éléments Facteurs avec couleurs du parser
+    const factorItems = [
+      { label: 'Interpersonnel DEAB', color: '#00112b', description: 'Relations sociales, famille, pairs' },
+      { label: 'Intrapersonnel DEAB', color: '#0050ac', description: 'Facteurs psychologiques individuels' },
+      { label: 'Autres comportements', color: '#72a4d7', description: 'Comportements non spécifiques aux DEAB' },
+      { label: 'Socioculturel DEAB', color: '#bee0fd', description: 'Facteurs culturels et sociétaux' }
+    ];
+
+    factorItems.forEach(item => {
+      const itemDiv = factorLegend.append('div')
+        .style('display', 'flex')
+        .style('align-items', 'center')
+        .style('gap', '8px')
+        .style('margin-bottom', '3px');
+
+      itemDiv.append('div')
+        .style('width', '16px')
+        .style('height', '16px')
+        .style('background-color', item.color)
+        .style('border-radius', '50%')
+        .style('border', '2px solid white')
+        .style('box-shadow', '0 0 3px rgba(0,0,0,0.3)');
+
+      itemDiv.append('span')
+        .style('font-size', '12px')
+        .style('font-weight', 'bold')
+        .style('color', '#2c3e50')
+        .text(item.label);
+
+      itemDiv.append('span')
+        .style('font-size', '11px')
+        .style('color', '#7f8c8d')
+        .text(`- ${item.description}`);
+    });
+
+    // Section Médiateurs/Modérateurs
+    const mediatorSection = contentContainer.append('div')
+      .style('margin-bottom', '15px');
+
+    mediatorSection.append('h5')
+      .style('margin', '0 0 10px 0')
+      .style('font-size', '14px')
+      .style('font-weight', 'bold')
+      .style('color', '#27ae60')
+      .text('Médiateurs et Modérateurs');
+
+    const mediatorLegend = mediatorSection.append('div')
+      .style('display', 'flex')
+      .style('flex-wrap', 'wrap')
+      .style('gap', '15px');
+
+    const mediatorItems = [
+      { label: 'Médiateur', color: '#FFD700', description: 'Variable intermédiaire' },
+      { label: 'Modérateur', color: '#FF8C00', description: 'Variable modifiante' }
+    ];
+
+    mediatorItems.forEach(item => {
+      const itemDiv = mediatorLegend.append('div')
+        .style('display', 'flex')
+        .style('align-items', 'center')
+        .style('gap', '8px');
+
+      itemDiv.append('div')
+        .style('width', '16px')
+        .style('height', '16px')
+        .style('background-color', item.color)
+        .style('border-radius', '50%')
+        .style('border', '2px solid white')
+        .style('box-shadow', '0 0 3px rgba(0,0,0,0.3)');
+
+      itemDiv.append('span')
+        .style('font-size', '12px')
+        .style('font-weight', 'bold')
+        .style('color', '#2c3e50')
+        .text(item.label);
+
+      itemDiv.append('span')
+        .style('font-size', '11px')
+        .style('color', '#7f8c8d')
+        .text(`- ${item.description}`);
+    });
+
+    // Section Relations (couleurs des liens)
+    const relationSection = contentContainer.append('div');
+
+    relationSection.append('h5')
+      .style('margin', '0 0 10px 0')
+      .style('font-size', '14px')
+      .style('font-weight', 'bold')
+      .style('color', '#27ae60')
+      .text('Types de relations (couleurs des liens)');
+
+    const relationLegend = relationSection.append('div')
+      .style('display', 'flex')
+      .style('flex-wrap', 'wrap')
+      .style('gap', '15px');
+
+    const relationItems = [
+      { label: 'Facteur de risque (+)', color: '#E53E3E', description: 'Relation positive' },
+      { label: 'Facteur protecteur (-)', color: '#38A169', description: 'Relation négative/protectrice' },
+      { label: 'Non significatif (NS)', color: '#718096', description: 'Relation non significative' }
+    ];
+
+    relationItems.forEach(item => {
+      const itemDiv = relationLegend.append('div')
+        .style('display', 'flex')
+        .style('align-items', 'center')
+        .style('gap', '8px');
+
+      itemDiv.append('div')
+        .style('width', '20px')
+        .style('height', '3px')
+        .style('background-color', item.color)
+        .style('border-radius', '2px');
+
+      itemDiv.append('span')
+        .style('font-size', '12px')
+        .style('font-weight', 'bold')
+        .style('color', '#2c3e50')
+        .text(item.label);
+
+      itemDiv.append('span')
+        .style('font-size', '11px')
+        .style('color', '#7f8c8d')
+        .text(`- ${item.description}`);
+    });
+
+    // Instructions d'interaction
+    const instructionSection = contentContainer.append('div')
+      .style('margin-top', '15px')
+      .style('padding-top', '15px')
+      .style('border-top', '1px solid #dee2e6');
+
+    instructionSection.append('h5')
+      .style('margin', '0 0 8px 0')
+      .style('font-size', '13px')
+      .style('font-weight', 'bold')
+      .style('color', '#e67e22')
+      .text('💡 Interactions');
+
+    const instructions = instructionSection.append('div')
+      .style('font-size', '11px')
+      .style('color', '#7f8c8d')
+      .style('line-height', '1.4');
+
+    instructions.append('div').text('• Double-clic sur un nœud : Ouvrir le panneau d\'analyses');
+    instructions.append('div').text('• Clic prolongé : Afficher la hiérarchie');
+    instructions.append('div').text('• Clic simple : Fixer/libérer un nœud');
+    instructions.append('div').text('• Survol : Afficher les informations');
+
+    // Appliquer l'état initial de la légende (fermé/ouvert)
+    if (this.legendCollapsed) {
+      contentContainer.style('display', 'none');
+      toggleButton.text('+').attr('title', 'Ouvrir la légende');
+    }
+
+    // Ajouter l'événement de clic sur le bouton toggle
+    toggleButton.on('click', () => {
+      const isCurrentlyCollapsed = contentContainer.style('display') === 'none';
+      
+      if (isCurrentlyCollapsed) {
+        // Ouvrir la légende
+        contentContainer.style('display', 'block');
+        toggleButton.text('─').attr('title', 'Fermer la légende');
+        this.legendCollapsed = false;
+      } else {
+        // Fermer la légende
+        contentContainer.style('display', 'none');
+        toggleButton.text('+').attr('title', 'Ouvrir la légende');
+        this.legendCollapsed = true;
+      }
+      
+      // Sauvegarder l'état dans localStorage
+      localStorage.setItem('ia-das-legend-collapsed', this.legendCollapsed.toString());
+    });
+
+    // Effet hover sur le bouton
+    toggleButton
+      .on('mouseenter', function() {
+        d3.select(this)
+          .style('background-color', '#e9ecef')
+          .style('border-color', '#adb5bd');
+      })
+      .on('mouseleave', function() {
+        d3.select(this)
+          .style('background-color', 'transparent')
+          .style('border-color', '#dee2e6');
+      });
   }
 
   addInteractionInstructions(controls) {
@@ -977,15 +1267,15 @@ class GraphRenderer {
     const allHierarchyNodes = [];
     const allHierarchyLinks = [];
 
-    // === CRÉER LES NŒUDS PARENTS (DIAGONAL HAUT-DROITE - OPPOSÉ AUX ENFANTS) ===
+    // === CRÉER LES NŒUDS PARENTS (DIAGONAL BAS-GAUCHE) ===
     const parentLevelDistance = 70; // Distance entre niveaux
     
-    hierarchyData.parents.forEach((parent, index) => {
+    hierarchyData.children.forEach((parent, index) => {
       const level = index + 1; // Niveau de profondeur
       const distance = parentLevelDistance * level;
       
-      // Position diagonale haut-droite (opposé aux enfants)
-      const angleRad = (315 * Math.PI) / 180; // 315° = haut-droite
+      // Position diagonale bas-gauche
+      const angleRad = (225 * Math.PI) / 180; // 225° = bas-gauche
       const x = centerNode.x + Math.cos(angleRad) * distance;
       const y = centerNode.y + Math.sin(angleRad) * distance;
 
@@ -1004,26 +1294,26 @@ class GraphRenderer {
 
       allHierarchyNodes.push(parentNode);
 
-      // Lien avec flèche vers le nœud central
+      // Lien hiérarchique : Généralisation du centre vers le parent
       allHierarchyLinks.push({
-        source: parentNode,
-        target: centerNode,
+        source: centerNode,
+        target: parentNode,
         type: 'hierarchy_parent_link',
         id: `hierarchy_parent_link_${index}`,
-        direction: 'to_center',
+        direction: 'center_to_parent', // Généralisation vers le parent
         level: level
       });
     });
 
-    // === CRÉER LES NŒUDS ENFANTS (DIAGONAL BAS-GAUCHE - OPPOSÉ AUX PARENTS) ===
+    // === CRÉER LES NŒUDS ENFANTS (DIAGONAL HAUT-DROITE - OPPOSÉ AUX PARENTS) ===
     const childLevelDistance = 70;
     
-    hierarchyData.children.forEach((child, index) => {
+    hierarchyData.parents.forEach((child, index) => {
       const level = index + 1;
       const distance = childLevelDistance * level;
       
-      // Position diagonale bas-gauche (opposé aux parents)
-      const angleRad = (225 * Math.PI) / 180; // 225° = bas-gauche
+      // Position diagonale haut-droite (opposé aux parents)
+      const angleRad = (315 * Math.PI) / 180; // 315° = haut-droite
       const x = centerNode.x + Math.cos(angleRad) * distance;
       const y = centerNode.y + Math.sin(angleRad) * distance;
 
@@ -1042,13 +1332,13 @@ class GraphRenderer {
 
       allHierarchyNodes.push(childNode);
 
-      // Lien avec flèche depuis le nœud central
+      // Lien hiérarchique : Spécialisation de l'enfant vers le centre
       allHierarchyLinks.push({
-        source: centerNode,
-        target: childNode,
+        source: childNode,
+        target: centerNode,
         type: 'hierarchy_child_link',
         id: `hierarchy_child_link_${index}`,
-        direction: 'from_center',
+        direction: 'child_to_center', // Spécialisation de l'enfant vers le centre
         level: level
       });
     });
@@ -1065,7 +1355,7 @@ class GraphRenderer {
     // === SYNCHRONISATION AVEC SIMULATION ===
     this.setupHierarchySync();
 
-    console.log(`✅ Hiérarchie diagonale: ${hierarchyData.parents.length} parents, ${hierarchyData.children.length} enfants`);
+    console.log(`✅ Hiérarchie diagonale: ${hierarchyData.children.length} parents, ${hierarchyData.parents.length} enfants`);
   }
 
   // ========================================
@@ -1120,15 +1410,7 @@ class GraphRenderer {
       .style('pointer-events', 'none')
       .text(d => d.label);
 
-    // Indicateur de niveau
-    nodeGroups.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('dy', d => d.type === 'hierarchy_parent' ? '-25px' : '25px')
-      .style('font-size', '10px')
-      .style('fill', '#666')
-      .style('font-weight', 'bold')
-      .style('pointer-events', 'none')
-      .text(d => `N${d.level}`);
+    // Indicateurs de niveau N1, N2, N3 supprimés pour plus de clarté
 
     // Animation d'apparition en cascade
     nodeGroups.style('opacity', 0)
@@ -1166,7 +1448,10 @@ class GraphRenderer {
       })
       .style('stroke-width', d => Math.max(2, 4 - d.level * 0.5))
       .style('opacity', 0.8)
-      .attr('marker-end', d => d.direction === 'from_center' ? 'url(#arrow-child)' : 'url(#arrow-parent)')
+      .attr('marker-end', d => 
+        d.direction === 'center_to_parent' ? 'url(#arrow-specialization)' : 
+        d.direction === 'child_to_center' ? 'url(#arrow-specialization)' : 
+        'url(#arrow-specialization)')
       .style('stroke-dasharray', d => d.level > 1 ? '4,2' : 'none'); // Pointillés pour niveaux éloignés
 
     // Animation d'apparition en cascade
@@ -1184,23 +1469,9 @@ class GraphRenderer {
     
     const defs = this.svg.append('defs');
 
-    // Flèche pour parents (vers le centre) - Verte
+    // Flèche unique pour la spécialisation hiérarchique - Verte
     defs.append('marker')
-      .attr('id', 'arrow-parent')
-      .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 8)
-      .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
-      .attr('orient', 'auto')
-      .append('path')
-      .attr('d', 'M0,-5L10,0L0,5')
-      .style('fill', '#2E7D32')
-      .style('opacity', 0.8);
-
-    // Flèche pour enfants (depuis le centre) - Verte
-    defs.append('marker')
-      .attr('id', 'arrow-child')
+      .attr('id', 'arrow-specialization')
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 8)
       .attr('refY', 0)

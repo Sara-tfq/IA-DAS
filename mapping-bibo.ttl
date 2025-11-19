@@ -15,6 +15,11 @@
 # Définition de l'ontologie principale
 # ============================================
 
+# Corriger le niveau de sport ne pas le mettre dans sport mais plutot dans population.
+# Ajouter l'hierarchie des sports.
+# Faire le lien vers les variables en appelant le lien depuis d'analyse.
+
+
 <http://ia-das.org/onto#>
     a owl:Ontology ;
     dcterms:title "IA-DAS - Intelligence Artificielle , Désordre Alimentaire sportif"@fr ;

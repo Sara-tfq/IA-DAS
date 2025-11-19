@@ -3,7 +3,7 @@
     </div>
     <div id="formMode">
         <div class="acad-section">
-            <h3>ACAD</h3>
+            <h3>Attitudes et Comportements Alimentaires Dysfonctionnels (ACAD)</h3>
 
             <div class="variable-row">
                 <label for="categoryVD">Catégorie ACAD :</label>
@@ -23,7 +23,7 @@
 
        
         <div class="factors-section">
-            <h3>Variable</h3>
+            <h3>Variables reliées aux ACAD<br></h3>
 
             <div class="variable-row">
                 <label for="categoryVI">Catégorie Variable :</label>
@@ -42,9 +42,13 @@
         </div>
 
         <div class="relations-section">
-            <h3>Type de relations</h3>
+            <h3>Type de relations d'après la littérature scientifique</h3>
 
             <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="all-relations" name="relationDirection" value="">
+                    <label for="all-relations">Tout type de relation</label>
+                </div>
                 <div class="radio-option">
                     <input type="radio" id="positive" name="relationDirection" value="+">
                     <label for="positive">À risque</label>
@@ -72,6 +76,7 @@
             </div>
 
             <div class="demographics-grid">
+                <!-- COLONNE 1: Sexe + Sport -->
                 <select id="gender">
                     <option value="">Sexe</option>
                     <option value="Female">Femme</option>
@@ -79,14 +84,15 @@
                     <option value="Mixed">Mixte</option>
                 </select>
 
+                <!-- COLONNE 2: Âge -->
                 <div class="age-container">
                     <select id="ageCategory">
                         <option value="">Catégorie d'âge</option>
-                        <option value="adolescent">Adolescent (10-17)</option>
-                        <option value="jeune-adulte">Jeune adulte (18-25)</option>
-                        <option value="adulte">Adulte (26-40)</option>
-                        <option value="adulte-mature">Adulte mature (41-65)</option>
-                        <option value="senior">Senior (65+)</option>
+                        <option value="adolescent">Adolescent (15-19)</option>
+                        <option value="jeune-adulte">Jeune adulte (18-26)</option>
+                        <option value="adulte">Adulte (26-35)</option>
+                        <option value="adulte-mature">Adulte mature (35-50)</option>
+                        <option value="senior">Senior (50-80)</option>
                         <option value="custom">Personnalisé...</option>
                     </select>
                     
@@ -97,11 +103,14 @@
                     </div>
                 </div>
 
-                <div class="autocomplete-container">
-                    <input type="text" id="sportType" placeholder="Chargement des sports..." disabled>
-                    <div class="autocomplete-dropdown" id="sportType-dropdown"></div>
+                <!-- COLONNE 1: Catégorie Sport -->
+                <div class="variable-row">
+                    <select id="sportCategory">
+                        <option value="">Catégorie Sport</option>
+                    </select>
                 </div>
 
+                <!-- COLONNE 2: Fréquence -->
                 <div class="frequency-container">
                     <select id="exerciseFrequency">
                         <option value="">Fréquence d'exercice</option>
@@ -119,9 +128,16 @@
                     </div>
                 </div>
 
+                <!-- COLONNE 1: Sport -->
+                <div class="autocomplete-container">
+                    <input type="text" id="sportType" placeholder="Chargement des sports..." disabled>
+                    <div class="autocomplete-dropdown" id="sportType-dropdown"></div>
+                </div>
+
+                <!-- COLONNE 2: Expérience -->
                 <div class="experience-container">
                     <select id="experienceCategory">
-                        <option value="">Catégorie expérience</option>
+                        <option value="">Années d'expérience</option>
                         <option value="debutant">Débutant (< 2 ans)</option>
                         <option value="intermediaire">Intermédiaire (2-7 ans)</option>
                         <option value="experimente">Expérimenté (7-15 ans)</option>

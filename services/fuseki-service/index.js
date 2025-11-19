@@ -4,11 +4,12 @@ const fs = require('fs');
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 
-console.log(' === DÉBUT DEBUG FUSEKI LOADER (DUAL FILES) ===');
+console.log(' === DÉBUT DEBUG FUSEKI LOADER (3 NOUVEAUX FICHIERS) ===');
 
-// Lecture et analyse des DEUX fichiers TTL
-const dataTtl = fs.readFileSync('/init/data.ttl', 'utf8');
-const taxonomyTtl = fs.readFileSync('/init/ia-das-taxonomy.ttl', 'utf8');
+// Lecture et analyse des TROIS fichiers TTL
+const mainOntology = fs.readFileSync('/init/ia-das-ontology-clean.ttl', 'utf8');
+const variableHierarchy = fs.readFileSync('/init/variable-hierarchy-clean.ttl', 'utf8');
+const sportHierarchy = fs.readFileSync('/init/sport-hierarchy-simple-clean.ttl', 'utf8');
 
 const FUSEKI_URL = 'http://fuseki:3030/ds';
 const DATA_URL = `${FUSEKI_URL}/data`;
@@ -74,9 +75,10 @@ async function waitForFuseki(retries = 0) {
       console.log(`\nFUSEKI PRÊT! Temps d'attente: ${formatTime(elapsedTime)}`);
       console.log(' Début du chargement des données RDF...\n');
       
-      // NOUVEAU: Charger les deux fichiers séquentiellement
-      await uploadData();
-      await uploadTaxonomy();
+      // NOUVEAU: Charger les trois fichiers séquentiellement
+      await uploadMainOntology();
+      await uploadVariableHierarchy();
+      await uploadSportHierarchy();
       
     } else {
       const errorText = await res.text();
@@ -111,14 +113,19 @@ async function waitForFuseki(retries = 0) {
   }
 }
 
-async function uploadData() {
-  console.log('\n === UPLOAD DATA.TTL ===');
-  return await uploadFile(dataTtl, 'data.ttl', '📊');
+async function uploadMainOntology() {
+  console.log('\n === UPLOAD IA-DAS-ONTOLOGY-CLEAN.TTL ===');
+  return await uploadFile(mainOntology, 'ia-das-ontology-clean.ttl', 'ONT');
 }
 
-async function uploadTaxonomy() {
-  console.log('\n=== UPLOAD IA-DAS-TAXONOMY.TTL ===');
-  return await uploadFile(taxonomyTtl, 'ia-das-taxonomy.ttl', '🌳');
+async function uploadVariableHierarchy() {
+  console.log('\n=== UPLOAD VARIABLE-HIERARCHY-CLEAN.TTL ===');
+  return await uploadFile(variableHierarchy, 'variable-hierarchy-clean.ttl', 'VAR');
+}
+
+async function uploadSportHierarchy() {
+  console.log('\n=== UPLOAD SPORT-HIERARCHY-SIMPLE-CLEAN.TTL ===');
+  return await uploadFile(sportHierarchy, 'sport-hierarchy-simple-clean.ttl', 'SPT');
 }
 
 async function uploadFile(ttlContent, fileName, icon) {
@@ -259,8 +266,9 @@ async function verifyDataLoaded() {
   const totalTime = Math.round((Date.now() - startTime) / 1000);
   console.log(`\n CHARGEMENT COMPLET TERMINÉ! Temps total: ${formatTime(totalTime)}`);
   console.log(' Dataset "ds" contient maintenant:');
-  console.log(' Données ontologiques (data.ttl)');
-  console.log(' Hiérarchie taxonomique (ia-das-taxonomy.ttl)');
+  console.log(' - Ontologie principale (ia-das-ontology-clean.ttl)');
+  console.log(' - Hiérarchie des variables (variable-hierarchy-clean.ttl)');
+  console.log(' - Hiérarchie des sports (sport-hierarchy-simple-clean.ttl)');
 }
 
 // Gestion des signaux

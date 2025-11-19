@@ -46,9 +46,20 @@ services:
     depends_on:
       - fuseki
     volumes:
-      - ./fuseki/data.ttl:/init/data.ttl
-      - ./fuseki/ia-das-taxonomy.ttl:/init/ia-das-taxonomy.ttl
-      
+      - ./pipeline-ontologie/resultats/ia-das-ontology-clean.ttl:/init/ia-das-ontology-clean.ttl
+      - ./pipeline-ontologie/resultats/variable-hierarchy-clean.ttl:/init/variable-hierarchy-clean.ttl
+      - ./pipeline-ontologie/resultats/sport-hierarchy-simple-clean.ttl:/init/sport-hierarchy-simple-clean.ttl
+    networks:
+      - webnet
+  database-service:
+    build: ./services/database-service
+    container_name: database-service
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./fuseki:/app/fuseki
+      - ./pipeline-ontologie:/app/pipeline-ontologie
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - webnet
 

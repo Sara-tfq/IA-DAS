@@ -21,21 +21,22 @@ http.createServer(function (request, response) {
         return;
     }
 
-    // Ensuite seulement on analyse l’URL
-    let filePath = request.url.split("/").filter(function (elem) {
+    // Ensuite seulement on analyse l'URL (ignorer les paramètres GET)
+    let urlWithoutParams = request.url.split("?")[0];
+    let filePath = urlWithoutParams.split("/").filter(function (elem) {
         return elem !== "..";
     });
 
     try {
         if (filePath[1] === "api" && filePath[2] === "auth") {
             handleAuth(request, response);
-        } else if (filePath[1] === "api" && filePath[2] === "query") {
+        } else if (filePath[1] === "api" && (filePath[2] === "query" || filePath[2] === "interface-data")) {
             console.log("REST API call, redirecting to SPARQL Generator");
             console.log(`Request URL: ${request.url}`);
-            if (filePath[1] === "api" && filePath[2] === "query") {
-                console.log("REST API call, redirecting to SPARQL Generator");
-                proxy.web(request, response, { target: "http://sparql-generator:8003" });
-            }
+            proxy.web(request, response, { target: "http://sparql-generator:8003" });
+        } else if (request.url === '/rebuild-ontology' && request.method === 'POST') {
+            console.log("Ontology rebuild request, redirecting to database service");
+            proxy.web(request, response, { target: "http://database-service:8005" });
         } else if (request.url.includes('update-page.html')) {
             // TEMPORAIRE: Protection côté client uniquement (voir rapport sécurité)
             console.log("Accès à update-page.html - redirection vers frontend");

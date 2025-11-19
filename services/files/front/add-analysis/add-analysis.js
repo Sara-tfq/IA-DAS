@@ -242,6 +242,11 @@ document.addEventListener('DOMContentLoaded', function () {
 Tous les objets ont été créés dans Fuseki.`;
 
                         alert(successMsg);
+                        
+                        // Mettre à jour la date de dernière mise à jour
+                        if (typeof window.updateHomePageDate === 'function') {
+                            window.updateHomePageDate();
+                        }
 
                         // Optionnel : réinitialiser le formulaire
                         if (confirm('Voulez-vous réinitialiser le formulaire pour ajouter une nouvelle analyse ?')) {
@@ -361,4 +366,75 @@ Vérifiez que le serveur SPARQL est démarré sur le port 8003.`);
 
     console.log('JavaScript d\'ajout d\'analyse initialisé');
     console.log('Utilise debugForm() dans la console pour voir les données');
+    
+    // ========== INITIALISATION DE L'AUTOCOMPLÉTION ==========
+    
+    // Attendre que tous les services soient chargés
+    setTimeout(async () => {
+        try {
+            console.log('🎯 Initialisation de l\'autocomplétion...');
+            
+            // Initialiser le gestionnaire d'autocomplétion
+            if (window.autocompleteManager) {
+                await window.autocompleteManager.init();
+                
+                // Activer l'autocomplétion sur le formulaire
+                const success = window.enableFormAutocomplete('#addAnalysisForm');
+                
+                if (success) {
+                    console.log('✅ Autocomplétion activée avec succès');
+                    
+                    // Afficher les statistiques
+                    const stats = window.autocompleteManager.getStats();
+                    console.log(`📊 ${stats.activeComponents} champs avec autocomplétion activés`);
+                    
+                    // Message informatif pour l'utilisateur
+                    console.log('💡 L\'autocomplétion est maintenant active sur les champs de texte');
+                    console.log('   Tapez dans un champ pour voir les suggestions depuis l\'ontologie');
+                    
+                } else {
+                    console.error('❌ Échec de l\'activation de l\'autocomplétion');
+                }
+                
+            } else {
+                console.error('❌ Gestionnaire d\'autocomplétion non disponible');
+            }
+            
+        } catch (error) {
+            console.error('❌ Erreur lors de l\'initialisation de l\'autocomplétion:', error);
+        }
+    }, 1000); // Petit délai pour s'assurer que tout est chargé
+    
+    // Fonction de debug pour l'autocomplétion
+    window.debugAutocompleteForm = function() {
+        console.log('=== DEBUG AUTOCOMPLÉTION FORMULAIRE ===');
+        
+        if (window.autocompleteManager) {
+            const stats = window.autocompleteManager.getStats();
+            console.table(stats.fields);
+            
+            if (window.ontologyAutocomplete) {
+                const cacheStats = window.ontologyAutocomplete.getCacheStats();
+                console.log('Cache stats:', cacheStats);
+            }
+            
+            return stats;
+        } else {
+            console.error('Gestionnaire d\'autocomplétion non disponible');
+            return null;
+        }
+    };
+    
+    // Test d'une suggestion spécifique
+    window.testFieldAutocomplete = async function(fieldName, query = '') {
+        if (window.ontologyAutocomplete) {
+            console.log(`🧪 Test autocomplétion pour "${fieldName}" avec requête "${query}"`);
+            const suggestions = await window.ontologyAutocomplete.getSuggestions(fieldName, query);
+            console.log(`📋 ${suggestions.length} suggestions trouvées:`, suggestions);
+            return suggestions;
+        } else {
+            console.error('Service d\'ontologie non disponible');
+            return [];
+        }
+    };
 });

@@ -34,6 +34,38 @@ class InputCompetenceComponent extends HTMLElement {
             'q3-autres': {
                 text: 'Pour les autres comportements, à quels types d\'ACAD sont-ils reliés ?',
                 description: 'Étudie les liens entre les autres comportements et les différents types d\'ACAD.'
+            },
+            'q6-female': {
+                text: 'Quelles sont les relations ACAD-facteurs selon le sexe - Femme ?',
+                description: 'Explore les relations spécifiques entre ACAD et facteurs dans les populations féminines.'
+            },
+            'q6-male': {
+                text: 'Quelles sont les relations ACAD-facteurs selon le sexe - Homme ?',
+                description: 'Explore les relations spécifiques entre ACAD et facteurs dans les populations masculines.'
+            },
+            'q6-mixed': {
+                text: 'Quelles sont les relations ACAD-facteurs selon le sexe - Mixte ?',
+                description: 'Explore les relations spécifiques entre ACAD et facteurs dans les populations mixtes.'
+            },
+            'q7-volleyball-men-21': {
+                text: 'Quelles sont les relations ACAD-facteurs chez les hommes pratiquant le volleyball avec un âge moyen de 21 ans ?',
+                description: 'Analyse spécifique des relations ACAD-facteurs pour les hommes de 21 ans pratiquant le volleyball.'
+            },
+            'q8-individual': {
+                text: 'Quelles sont les relations ACAD-facteurs pour les sports individuels ?',
+                description: 'Explore les relations spécifiques entre ACAD et facteurs dans les sports individuels.'
+            },
+            'q8-team': {
+                text: 'Quelles sont les relations ACAD-facteurs pour les sports d\'équipe ?',
+                description: 'Explore les relations spécifiques entre ACAD et facteurs dans les sports d\'équipe.'
+            },
+            'q8-mixed': {
+                text: 'Quelles sont les relations ACAD-facteurs pour les sports mixtes ?',
+                description: 'Explore les relations spécifiques entre ACAD et facteurs dans les sports mixtes.'
+            },
+            'q8-aesthetic': {
+                text: 'Quelles sont les relations ACAD-facteurs pour les sports esthétiques ?',
+                description: 'Explore les relations spécifiques entre ACAD et facteurs dans les sports esthétiques.'
             }
         };
     }
@@ -122,6 +154,110 @@ class InputCompetenceComponent extends HTMLElement {
                             <div class="sub-option" data-question="q3-autres">
                                 <span class="sub-icon">➤</span>
                                 <span>Autres comportements</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 4 : Relations selon le genre -->
+                    <div class="accordion-item">
+                        <div class="accordion-header" data-toggle="accordion-4">
+                            <h3>Quelles sont les relations ACAD-facteurs selon le genre ?</h3>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content" id="accordion-4">
+                            <div class="sub-option" data-question="q4-male">
+                                <span class="sub-icon">➤</span>
+                                <span>Populations masculines</span>
+                            </div>
+                            <div class="sub-option" data-question="q4-female">
+                                <span class="sub-icon">➤</span>
+                                <span>Populations féminines</span>
+                            </div>
+                            <div class="sub-option" data-question="q4-mixed">
+                                <span class="sub-icon">➤</span>
+                                <span>Populations mixtes</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 5 : Relations selon le type de sport -->
+                    <div class="accordion-item">
+                        <div class="accordion-header" data-toggle="accordion-5">
+                            <h3>Quelles sont les relations ACAD-facteurs selon le type de sport pratiqué ?</h3>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content" id="accordion-5">
+                            <div class="sub-option" data-question="q5-individual">
+                                <span class="sub-icon">➤</span>
+                                <span>Sports individuels</span>
+                            </div>
+                            <div class="sub-option" data-question="q5-team">
+                                <span class="sub-icon">➤</span>
+                                <span>Sports d'équipe</span>
+                            </div>
+                            <div class="sub-option" data-question="q5-mixed">
+                                <span class="sub-icon">➤</span>
+                                <span>Sports mixtes</span>
+                            </div>
+                            <div class="sub-option" data-question="q5-aesthetic">
+                                <span class="sub-icon">➤</span>
+                                <span>Sports esthétiques</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 6 : Relations selon le sexe -->
+                    <div class="accordion-item">
+                        <div class="accordion-header" data-toggle="accordion-6">
+                            <h3>Quelles sont les relations ACAD-facteurs selon le sexe ?</h3>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content" id="accordion-6">
+                            <div class="sub-option" data-question="q6-female">
+                                <span class="sub-icon">➤</span>
+                                <span>Femme</span>
+                            </div>
+                            <div class="sub-option" data-question="q6-male">
+                                <span class="sub-icon">➤</span>
+                                <span>Homme</span>
+                            </div>
+                            <div class="sub-option" data-question="q6-mixed">
+                                <span class="sub-icon">➤</span>
+                                <span>Mixte</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 7 : Volleyball hommes 21 ans -->
+                    <div class="accordion-item">
+                        <div class="accordion-header" data-question="q7-volleyball-men-21">
+                            <h3>Quelles sont les relations ACAD-facteurs chez les hommes pratiquant le volleyball avec un âge moyen de 21 ans ?</h3>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                    </div>
+
+                    <!-- Question 8 : Catégories de sport -->
+                    <div class="accordion-item">
+                        <div class="accordion-header" data-toggle="accordion-8">
+                            <h3>Quelles sont les relations ACAD-facteurs selon la catégorie de sport ?</h3>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content" id="accordion-8">
+                            <div class="sub-option" data-question="q8-individual">
+                                <span class="sub-icon">➤</span>
+                                <span>Sports individuels</span>
+                            </div>
+                            <div class="sub-option" data-question="q8-team">
+                                <span class="sub-icon">➤</span>
+                                <span>Sports d'équipe</span>
+                            </div>
+                            <div class="sub-option" data-question="q8-mixed">
+                                <span class="sub-icon">➤</span>
+                                <span>Sports mixtes</span>
+                            </div>
+                            <div class="sub-option" data-question="q8-aesthetic">
+                                <span class="sub-icon">➤</span>
+                                <span>Sports esthétiques</span>
                             </div>
                         </div>
                     </div>

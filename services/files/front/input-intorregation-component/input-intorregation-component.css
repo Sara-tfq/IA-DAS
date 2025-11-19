@@ -2,7 +2,7 @@
     width: 100%;
     background-color: #6099bc;
     border-radius: 8px;
-    padding: 10px;
+    padding: 6px;
     color: rgb(0, 0, 0);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
@@ -12,7 +12,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
 }
 
 .header-controls h2 {
@@ -46,11 +46,121 @@
     font-size: 0.8em;
 }
 
+/* CSS pour les toggles de sélection multiple */
+.multiple-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+    font-size: 0.8em;
+}
+
+.multiple-toggle input[type="checkbox"] {
+    transform: scale(0.9);
+}
+
+.multiple-toggle label {
+    color: #555;
+    cursor: pointer;
+    user-select: none;
+}
+
+.multiple-toggle label:hover {
+    color: #333;
+}
+
+/* CSS pour sélections multiples activées */
+select[multiple] {
+    min-height: 80px;
+    background-color: #f8f9fa;
+    border: 2px solid #4CAF50;
+    border-radius: 4px;
+    padding: 4px;
+    font-size: 0.9em;
+}
+
+select[multiple] option {
+    padding: 3px 6px;
+    margin: 1px 0;
+    border-radius: 2px;
+}
+
+select[multiple] option:checked {
+    background-color: #4CAF50;
+    color: white;
+}
+
+select[multiple] option:hover {
+    background-color: #e8f5e8;
+}
+
+/* Indicateur visuel quand le mode multiple est actif */
+.multiple-active .multiple-toggle label {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+/* CSS pour le système de tags des sports multiples */
+.selected-sports-tags {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    min-height: 30px;
+    padding: 4px 6px;
+    margin-bottom: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: flex-start;
+    display: none; /* Caché par défaut */
+}
+
+.selected-sports-tags.show {
+    display: flex;
+}
+
+.selected-sports-tags .placeholder-text {
+    color: #999;
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+.sport-tag {
+    background-color: #4CAF50;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.75em;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.sport-tag .remove-btn {
+    cursor: pointer;
+    font-weight: bold;
+    background: none;
+    border: none;
+    color: white;
+    padding: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.sport-tag .remove-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
 /* Layout principal - 4 colonnes */
 #formMode {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 2fr;
-    gap: 10px;
+    gap: 7px;
     align-items: start;
     width: 100%;
 }
@@ -65,11 +175,12 @@
 }
 
 .acad-section h3 {
-    margin: 0 0 6px 0;
-    font-size: 0.6em;
+    margin: 0 0 3px 0;
+    font-size: 0.55em;
     font-weight: 600;
     color: #2c3e50;
     text-align: center;
+    line-height: 1.1;
 }
 
 /* COLONNE 2: Facteurs */
@@ -82,11 +193,12 @@
 }
 
 .factors-section h3 {
-    margin: 0 0 6px 0;
-    font-size: 0.6em;
+    margin: 0 0 3px 0;
+    font-size: 0.55em;
     font-weight: 600;
     color: #2c3e50;
     text-align: center;
+    line-height: 1.1;
 }
 
 /* COLONNE 3: Relations */
@@ -99,11 +211,12 @@
 }
 
 .relations-section h3 {
-    margin: 0 0 6px 0;
-    font-size: 0.6em;
+    margin: 0 0 3px 0;
+    font-size: 0.55em;
     font-weight: 600;
     color: #2c3e50;
     text-align: center;
+    line-height: 1.1;
 }
 
 .demographics-section {
@@ -116,11 +229,12 @@
     overflow-x: hidden;        /* Pas de scroll horizontal */
 }
 .demographics-section h3 {
-    margin: 0 0 6px 0;
-    font-size: 0.6em;
+    margin: 0 0 3px 0;
+    font-size: 0.55em;
     font-weight: 600;
     color: #2c3e50;
     text-align: center;
+    line-height: 1.1;
     top: 0;
     padding: 2px 0;
 }

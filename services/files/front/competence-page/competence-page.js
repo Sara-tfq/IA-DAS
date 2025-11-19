@@ -1153,21 +1153,50 @@ function exportCompetenceAnalysis(data, questionContext) {
 }
 
 // Fonctions d'export simplifiées
-function exportToExcel() {
+async function exportToExcel() {
     if (!currentData || !currentData.results || !currentData.results.bindings) {
         alert('Aucune donnée à exporter');
         return;
     }
     
     try {
-        const excelData = convertToExcel(currentData);
+        console.log('Export Excel avec toutes les analyses de compétence...');
+        
+        // Afficher un indicateur de chargement
+        const originalText = 'Export Excel';
+        const exportBtn = document.getElementById('exportExcel');
+        if (exportBtn) {
+            exportBtn.textContent = 'Export en cours...';
+            exportBtn.disabled = true;
+        }
+        
+        // Récupérer toutes les analyses complètes
+        const completeAnalyses = await getAllCompleteAnalysesForCompetence(currentData.results.bindings);
+        
+        // Créer le fichier Excel avec toutes les informations
+        const excelData = createCompleteCompetenceExcelExport(completeAnalyses, currentData, currentQuery);
+        
         const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-        const filename = `competence_data_${currentQuery?.questionId || 'unknown'}_${timestamp}.xlsx`;
+        const filename = `competence_complet_${currentQuery?.questionId || 'unknown'}_${timestamp}.xlsx`;
         downloadExcelFile(excelData, filename);
-        console.log('Export Excel réussi:', filename);
+        console.log('Export Excel complet réussi:', filename);
+        
+        // Restaurer le bouton
+        if (exportBtn) {
+            exportBtn.textContent = originalText;
+            exportBtn.disabled = false;
+        }
+        
     } catch (error) {
         console.error('Erreur export Excel:', error);
         alert(`Erreur lors de l'export Excel: ${error.message}`);
+        
+        // Restaurer le bouton en cas d'erreur
+        const exportBtn = document.getElementById('exportExcel');
+        if (exportBtn) {
+            exportBtn.textContent = 'Export Excel';
+            exportBtn.disabled = false;
+        }
     }
 }
 
@@ -1184,6 +1213,339 @@ function exportToTurtle() {
         console.error('Erreur export Turtle:', error);
         alert(`Erreur lors de l'export Turtle: ${error.message}`);
     }
+}
+
+// Récupère toutes les analyses complètes pour la page compétence
+async function getAllCompleteAnalysesForCompetence(bindings) {
+    console.log(`Récupération de ${bindings.length} analyses complètes pour compétence...`);
+    
+    // Extraire les IDs d'analyses uniques
+    const analysisIds = new Set();
+    bindings.forEach(binding => {
+        Object.keys(binding).forEach(key => {
+            const value = binding[key]?.value || binding[key];
+            if (value && isAnalysisId(key, value)) {
+                // Nettoyer l'ID d'analyse
+                let cleanId = value;
+                if (cleanId.includes('#')) {
+                    cleanId = cleanId.split('#').pop();
+                } else if (cleanId.includes('/')) {
+                    cleanId = cleanId.split('/').pop();
+                }
+                if (cleanId.startsWith('Analysis_')) {
+                    cleanId = cleanId.replace('Analysis_', '');
+                }
+                analysisIds.add(cleanId);
+            }
+        });
+    });
+    
+    console.log(`${analysisIds.size} analyses uniques trouvées pour compétence:`, Array.from(analysisIds));
+    
+    // Récupérer les données complètes via FusekiAnalysisRetriever
+    const completeAnalyses = [];
+    
+    if (window.fusekiRetriever && typeof window.fusekiRetriever.getAnalysisData === 'function') {
+        const promises = Array.from(analysisIds).map(async analysisId => {
+            try {
+                const analysisData = await window.fusekiRetriever.getAnalysisData(analysisId);
+                return analysisData;
+            } catch (error) {
+                console.error(`Erreur pour analyse ${analysisId}:`, error);
+                return {
+                    id: analysisId,
+                    error: error.message,
+                    rawData: { Analysis_ID: analysisId, ERROR: error.message }
+                };
+            }
+        });
+        
+        const results = await Promise.all(promises);
+        completeAnalyses.push(...results);
+    } else {
+        console.warn('FusekiAnalysisRetriever non disponible, export basique seulement');
+        // Fallback : créer des analyses basiques depuis les bindings
+        Array.from(analysisIds).forEach(analysisId => {
+            completeAnalyses.push({
+                id: analysisId,
+                rawData: { Analysis_ID: analysisId, Source: 'Données limitées' }
+            });
+        });
+    }
+    
+    console.log(`${completeAnalyses.length} analyses complètes récupérées pour compétence`);
+    return completeAnalyses;
+}
+
+// Crée un export Excel complet spécifique aux compétences
+function createCompleteCompetenceExcelExport(completeAnalyses, originalData, queryInfo) {
+    const workbook = XLSX.utils.book_new();
+    
+    // ========== FEUILLE 1: QUESTION DE COMPÉTENCE ==========
+    const questionData = [
+        ['Propriété', 'Valeur'],
+        ['Question ID', queryInfo?.questionId || 'N/A'],
+        ['Type de Question', getCompetenceQuestionTitle(queryInfo?.questionId) || 'N/A'],
+        ['Date Export', new Date().toLocaleString('fr-FR')],
+        ['Nombre de Résultats', originalData.results.bindings.length],
+        ['Variables Recherchées', originalData.head.vars.join(', ')],
+        ['Source', 'Ontologie IA-DAS - Questions de Compétences']
+    ];
+    
+    const questionSheet = XLSX.utils.aoa_to_sheet(questionData);
+    XLSX.utils.book_append_sheet(workbook, questionSheet, "Question de Compétence");
+    
+    // ========== FEUILLE 2: RÉSULTATS BRUTS ==========
+    const originalBindings = originalData.results.bindings;
+    const originalVariables = originalData.head.vars;
+    
+    const searchData = [];
+    searchData.push(originalVariables); // En-têtes
+    
+    originalBindings.forEach(binding => {
+        const row = originalVariables.map(variable => {
+            const value = binding[variable];
+            return value ? (value.value || value) : '';
+        });
+        searchData.push(row);
+    });
+    
+    const searchSheet = XLSX.utils.aoa_to_sheet(searchData);
+    XLSX.utils.book_append_sheet(workbook, searchSheet, "Résultats Recherche");
+    
+    // ========== FEUILLE 3: ANALYSES COMPLÈTES (TOUTES LES COLONNES DYNAMIQUES) ==========
+    if (completeAnalyses.length > 0) {
+        // Récupérer TOUTES les colonnes disponibles dynamiquement
+        const allColumnsSet = new Set();
+        
+        // Passer par toutes les analyses pour trouver TOUTES les colonnes possibles
+        completeAnalyses.forEach(analysis => {
+            if (!analysis.error && analysis.rawData) {
+                Object.keys(analysis.rawData).forEach(key => {
+                    // Éviter les métadonnées internes mais les garder dans une section séparée
+                    if (!key.startsWith('__') || key === '__PROPERTY_COUNT__' || key === '__DATA_SOURCE__' || key === '__ENTITIES_FOUND__') {
+                        allColumnsSet.add(key);
+                    }
+                });
+            }
+        });
+        
+        // Trier les colonnes par ordre de préférence
+        const allColumns = [...allColumnsSet].sort((a, b) => {
+            // Ordre de priorité pour les colonnes importantes
+            const priority = [
+                'Analysis_ID', 'Title', 'Authors', 'Year ', 'DOI', 'Journal', 'Country',
+                'Types of study', 'N', 'Population', 'Sexe', 'Age', 'AgeForAnalysis_Mean',
+                'SDAnalysis', 'MinAge', 'MaxAge', 'BMI', 'BMI_Mean', 'BMI_SD',
+                'Sport_name', 'Sport_level', 'Type_of _sport_practice', 'Subcategory_of_sport',
+                'ACADS', 'VD', 'Measure_VD', 'VI', 'Measure_VI',
+                'Mediator', 'Measure_Mediator', 'Moderator', 'Measure_Moderator',
+                'Resultat_de_relation', 'Degre_r', 'Degre_p ', 'Signe_p', 'Degre_beta', 'Degre_RS',
+                'Type_of_analysis', 'N_mobilise_dans_les analyse', 'Authors_conclusions',
+                'Limites', 'Perspectives', 'Multiplicity_analyse'
+            ];
+            
+            const aIndex = priority.indexOf(a);
+            const bIndex = priority.indexOf(b);
+            
+            if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            
+            // Pour les colonnes non prioritaires, trier alphabétiquement
+            return a.localeCompare(b);
+        });
+        
+        console.log(`📊 Export Excel Compétence: ${allColumns.length} colonnes dynamiques trouvées`);
+        
+        const analysesData = [];
+        analysesData.push(allColumns); // En-têtes dynamiques
+        
+        completeAnalyses.forEach(analysis => {
+            const row = allColumns.map(column => {
+                if (analysis.error) {
+                    return column === 'Analysis_ID' ? analysis.id : 
+                           column === 'ERROR' ? analysis.error : '';
+                }
+                
+                const value = analysis.rawData?.[column];
+                
+                // Gérer les objets complexes (comme __COMPLETE_RAW_DATA__)
+                if (typeof value === 'object' && value !== null) {
+                    if (column === '__COMPLETE_RAW_DATA__') {
+                        return `${Object.keys(value).length} propriétés SPARQL`;
+                    }
+                    return JSON.stringify(value);
+                }
+                
+                return value || '';
+            });
+            analysesData.push(row);
+        });
+        
+        const analysesSheet = XLSX.utils.aoa_to_sheet(analysesData);
+        XLSX.utils.book_append_sheet(workbook, analysesSheet, "Analyses Complètes");
+    }
+    
+    // ========== FEUILLE 4: STATISTIQUES PAR COMPÉTENCE ==========
+    if (completeAnalyses.length > 0) {
+        const stats = calculateCompetenceStatistics(completeAnalyses, queryInfo);
+        const statsData = [
+            ['Statistique', 'Valeur'],
+            ...Object.entries(stats).map(([key, value]) => [key, value])
+        ];
+        
+        const statsSheet = XLSX.utils.aoa_to_sheet(statsData);
+        XLSX.utils.book_append_sheet(workbook, statsSheet, "Statistiques");
+    }
+    
+    // ========== FEUILLE 5: TOUTES LES PROPRIÉTÉS SPARQL BRUTES ==========
+    if (completeAnalyses.length > 0) {
+        const sparqlData = [['Analysis_ID', 'Entité', 'Propriété SPARQL', 'Valeur', 'Type Entité', 'Sous-Entité']];
+        
+        completeAnalyses.forEach(analysis => {
+            if (!analysis.error && analysis.rawData && analysis.rawData['__COMPLETE_RAW_DATA__']) {
+                const rawProperties = analysis.rawData['__COMPLETE_RAW_DATA__'];
+                
+                Object.entries(rawProperties).forEach(([propertyKey, values]) => {
+                    values.forEach(propInfo => {
+                        sparqlData.push([
+                            analysis.id,
+                            propInfo.entity || '',
+                            propInfo.originalProperty || propertyKey,
+                            propInfo.value || '',
+                            propInfo.entityType || '',
+                            propInfo.subEntity || ''
+                        ]);
+                    });
+                });
+            }
+        });
+        
+        if (sparqlData.length > 1) { // Plus que juste les en-têtes
+            const sparqlSheet = XLSX.utils.aoa_to_sheet(sparqlData);
+            XLSX.utils.book_append_sheet(workbook, sparqlSheet, "Propriétés SPARQL Brutes");
+            console.log(`📋 Compétence: Ajout de ${sparqlData.length - 1} propriétés SPARQL brutes à l'export`);
+        }
+    }
+
+    // ========== FEUILLE 6: ANALYSE PAR CATÉGORIE ==========
+    if (completeAnalyses.length > 0) {
+        const categoryAnalysis = analyzeByCategoryForCompetence(completeAnalyses);
+        
+        const categoryData = [
+            ['Catégorie', 'Nombre d\'analyses', 'Pourcentage'],
+            ...Object.entries(categoryAnalysis).map(([category, count]) => [
+                category, 
+                count, 
+                `${Math.round((count / completeAnalyses.length) * 100)}%`
+            ])
+        ];
+        
+        const categorySheet = XLSX.utils.aoa_to_sheet(categoryData);
+        XLSX.utils.book_append_sheet(workbook, categorySheet, "Analyse par Catégorie");
+    }
+    
+    return workbook;
+}
+
+// Calcule des statistiques spécifiques aux compétences
+function calculateCompetenceStatistics(analyses, queryInfo) {
+    const stats = {};
+    
+    // Informations générales
+    stats['Question de Compétence'] = getCompetenceQuestionTitle(queryInfo?.questionId) || queryInfo?.questionId || 'N/A';
+    stats['Type d\'Analyse'] = 'Question de Compétence Prédéfinie';
+    
+    // Analyses avec/sans erreur
+    const validAnalyses = analyses.filter(a => !a.error);
+    const errorAnalyses = analyses.filter(a => a.error);
+    
+    stats['Total Analyses'] = analyses.length;
+    stats['Analyses Valides'] = validAnalyses.length;
+    stats['Analyses en Erreur'] = errorAnalyses.length;
+    stats['Taux de Succès'] = `${Math.round((validAnalyses.length / analyses.length) * 100)}%`;
+    
+    // Statistiques détaillées sur les données valides
+    if (validAnalyses.length > 0) {
+        const countries = new Set();
+        const journals = new Set();
+        const sports = new Set();
+        const relations = new Set();
+        const years = [];
+        
+        validAnalyses.forEach(analysis => {
+            const raw = analysis.rawData;
+            if (raw?.Country && raw.Country !== 'N/A') countries.add(raw.Country);
+            if (raw?.Journal && raw.Journal !== 'N/A') journals.add(raw.Journal);
+            if (raw?.Sport_name && raw.Sport_name !== 'N/A') sports.add(raw.Sport_name);
+            if (raw?.Resultat_de_relation && raw.Resultat_de_relation !== 'N/A') relations.add(raw.Resultat_de_relation);
+            
+            if (raw?.['Year ']) {
+                const year = parseInt(raw['Year ']);
+                if (!isNaN(year)) years.push(year);
+            }
+        });
+        
+        stats['Pays Couverts'] = countries.size;
+        stats['Journaux Différents'] = journals.size;
+        stats['Sports Étudiés'] = sports.size;
+        stats['Types Relations'] = relations.size;
+        
+        if (years.length > 0) {
+            stats['Période - Année Min'] = Math.min(...years);
+            stats['Période - Année Max'] = Math.max(...years);
+            stats['Période - Moyenne'] = Math.round(years.reduce((a, b) => a + b, 0) / years.length);
+        }
+        
+        // Relations les plus fréquentes
+        const relationCounts = {};
+        validAnalyses.forEach(analysis => {
+            const relation = analysis.rawData?.Resultat_de_relation;
+            if (relation && relation !== 'N/A') {
+                relationCounts[relation] = (relationCounts[relation] || 0) + 1;
+            }
+        });
+        
+        const topRelation = Object.entries(relationCounts)
+            .sort(([,a], [,b]) => b - a)[0];
+        
+        if (topRelation) {
+            stats['Relation Plus Fréquente'] = `${topRelation[0]} (${topRelation[1]} fois)`;
+        }
+    }
+    
+    return stats;
+}
+
+// Analyse par catégorie pour les compétences
+function analyzeByCategoryForCompetence(analyses) {
+    const categories = {};
+    
+    analyses.forEach(analysis => {
+        if (analysis.error) {
+            categories['Erreur'] = (categories['Erreur'] || 0) + 1;
+            return;
+        }
+        
+        const raw = analysis.rawData;
+        
+        // Catégoriser par variable dépendante (ACADS)
+        const acads = raw?.ACADS || raw?.VD || 'Non spécifié';
+        categories[`VD: ${acads}`] = (categories[`VD: ${acads}`] || 0) + 1;
+        
+        // Catégoriser par résultat de relation
+        const relation = raw?.Resultat_de_relation || 'Relation non spécifiée';
+        categories[`Relation: ${relation}`] = (categories[`Relation: ${relation}`] || 0) + 1;
+        
+        // Catégoriser par type de sport
+        const sport = raw?.Sport_name || 'Sport non spécifié';
+        if (sport !== 'Sport non spécifié') {
+            categories[`Sport: ${sport}`] = (categories[`Sport: ${sport}`] || 0) + 1;
+        }
+    });
+    
+    return categories;
 }
 
 function convertToExcel(data) {
