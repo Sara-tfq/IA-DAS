@@ -20,10 +20,11 @@
         rr:class owl:Class
     ] ;
     
-    rr:predicateObjectMap [
-        rr:predicate rdfs:subClassOf ;
-        rr:objectMap [ rr:constant iadas:Variable ]
-    ] ;
+    # // To remove 
+    # rr:predicateObjectMap [
+    #     rr:predicate rdfs:subClassOf ;
+    #     rr:objectMap [ rr:constant iadas:Variable ]
+    # ] ;
     
     rr:predicateObjectMap [
         rr:predicate rdfs:label ;

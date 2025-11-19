@@ -410,7 +410,6 @@
 <http://ia-das.org/onto#Current_body_weight_-_ideal_body_weight> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Impetus_of_bodily_expectations> .
 <http://ia-das.org/onto#DEAB> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
 <http://ia-das.org/onto#DEAB> <http://www.w3.org/2000/01/rdf-schema#label> "DEAB" .
-<http://ia-das.org/onto#DEAB> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Variable> .
 <http://ia-das.org/onto#Daily_life_thin-fat_other> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
 <http://ia-das.org/onto#Daily_life_thin-fat_other> <http://www.w3.org/2000/01/rdf-schema#label> "Daily life thin-fat other" .
 <http://ia-das.org/onto#Daily_life_thin-fat_other> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Social_and_Sport_pressure_related_to_significant_others> .
@@ -889,13 +888,11 @@
 <http://ia-das.org/onto#Interpersonal_distrust> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Conflicted_and_Negative_Relationships> .
 <http://ia-das.org/onto#Interpersonal_factor_related_to_DEAB> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
 <http://ia-das.org/onto#Interpersonal_factor_related_to_DEAB> <http://www.w3.org/2000/01/rdf-schema#label> "Interpersonal factor related to DEAB" .
-<http://ia-das.org/onto#Interpersonal_factor_related_to_DEAB> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Variable> .
 <http://ia-das.org/onto#Interpersonal_sensitivity> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
 <http://ia-das.org/onto#Interpersonal_sensitivity> <http://www.w3.org/2000/01/rdf-schema#label> "Interpersonal sensitivity" .
 <http://ia-das.org/onto#Interpersonal_sensitivity> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Personality_traits> .
 <http://ia-das.org/onto#Intrapersonal_factor_related_to_DEAB> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
 <http://ia-das.org/onto#Intrapersonal_factor_related_to_DEAB> <http://www.w3.org/2000/01/rdf-schema#label> "Intrapersonal factor related to DEAB" .
-<http://ia-das.org/onto#Intrapersonal_factor_related_to_DEAB> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Variable> .
 <http://ia-das.org/onto#Intrinsic_motivation> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
 <http://ia-das.org/onto#Intrinsic_motivation> <http://www.w3.org/2000/01/rdf-schema#label> "Intrinsic motivation" .
 <http://ia-das.org/onto#Intrinsic_motivation> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Exercise_motivation> .
@@ -1102,7 +1099,6 @@
 <http://ia-das.org/onto#Orthorexic_behavior> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Orthorexia> .
 <http://ia-das.org/onto#Other_behaviors> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
 <http://ia-das.org/onto#Other_behaviors> <http://www.w3.org/2000/01/rdf-schema#label> "Other behaviors" .
-<http://ia-das.org/onto#Other_behaviors> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Variable> .
 <http://ia-das.org/onto#Over_identification> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
 <http://ia-das.org/onto#Over_identification> <http://www.w3.org/2000/01/rdf-schema#label> "Over identification" .
 <http://ia-das.org/onto#Over_identification> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Kindness_and_compassion> .
@@ -1656,7 +1652,6 @@
 <http://ia-das.org/onto#Sociocultural_attitudes_toward_appearance-internalization> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Norms_internalization> .
 <http://ia-das.org/onto#Sociocultural_factor_related_to_DEAB> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
 <http://ia-das.org/onto#Sociocultural_factor_related_to_DEAB> <http://www.w3.org/2000/01/rdf-schema#label> "Sociocultural factor related to DEAB" .
-<http://ia-das.org/onto#Sociocultural_factor_related_to_DEAB> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Variable> .
 <http://ia-das.org/onto#Sociocultural_factors_> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
 <http://ia-das.org/onto#Sociocultural_factors_> <http://www.w3.org/2000/01/rdf-schema#label> "Sociocultural factors " .
 <http://ia-das.org/onto#Sociocultural_factors_> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://ia-das.org/onto#Social_and_Sport_pressure> .
